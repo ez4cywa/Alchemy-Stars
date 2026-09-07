@@ -127,6 +127,7 @@ public sealed partial class MainWindow : Window
     private void SaveDefaultsClick(object? sender, RoutedEventArgs e) => ViewModel.SaveDefaults();
     private void CloseDialogClick(object? sender, RoutedEventArgs e) => ViewModel.CloseDialog();
     private async void OpenUpstreamClick(object? sender, RoutedEventArgs e) => await ViewModel.OpenUpstreamAsync();
+    private async void OpenProjectRepositoryClick(object? sender, RoutedEventArgs e) => await ViewModel.OpenProjectRepositoryAsync();
 
     private void DropZoneDragOver(object? sender, DragEventArgs e) =>
         e.DragEffects = HasFiles(e) ? DragDropEffects.Copy : DragDropEffects.None;

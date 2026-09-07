@@ -2,7 +2,7 @@
 
 # Alchemy Stars
 
-> **Avalonia AOT preview branch:** this test line targets .NET 11 Preview 7, Avalonia 12.1.2 and version `1.3.0-preview.11`. The complete desktop workflow now runs as a self-contained Native AOT application. Production remains v1.1.9 on `main`; the existing WPF application is still the stable baseline until .NET 11 GA. Do not distribute this build as a stable release.
+> **Avalonia AOT preview branch:** this source branch targets .NET 11 Preview 7, Avalonia 12.1.2 and version `1.3.0-preview.12`. This revision is source-only; the latest downloadable prerelease remains `1.3.0-preview.11`. Production remains v1.1.9 on `main`, and the existing WPF application is still the stable baseline until .NET 11 GA.
 
 See the [Avalonia preview quick guide](docs/avalonia-aot-user-guide.md), [migration report](docs/avalonia-aot-migration.md) and [.NET 11 preview compatibility report](docs/dotnet11-preview.md).
 
@@ -108,7 +108,7 @@ This preview branch requires .NET SDK `11.0.100-preview.7.26381.103` to build. `
 
 `run-tests.ps1` builds the stable WPF baseline and runs the Maya-backed conversion regressions. `verify-avalonia-aot.ps1` publishes the trimmed native application, runs its AOT contract/project export checks, starts a real Win32 window, validates Windows UI Automation names/focus/target bounds, and renders all four pages plus a centered dialog at the 900 × 600 minimum size.
 
-Every functional preview change increments the prerelease revision; this test version is `1.3.0-preview.11`. The stable release remains `1.1.9`.
+Every functional preview change increments the prerelease revision; this source revision is `1.3.0-preview.12` and has no separate GitHub release. The latest packaged preview remains `1.3.0-preview.11`, while the stable release remains `1.1.9`.
 
 The 1.1.9 UI audit fixes the clipped About icon, toolbar overflow, cramped layer paths, and low-contrast controls. See the [UI audit and validation notes](design-system/alchemy-stars/pages/ui-audit-1.1.9.md) for coverage and limitations.
 

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.0-preview.12 — 2026-09-07
+
+- Added the current Alchemy Stars GitHub repository to About with a visible repository address, localized explanatory text, keyboard-operable native button, UI Automation name and direct browser action. The Native AOT accessibility smoke now verifies its name, target height and keyboard focus.
+- Kept the upstream Alchemist attribution and link in the same source card, separated from the current-project information by a clear divider.
+- This is a source-only branch update; no new tag or GitHub Release is created. The latest downloadable preview remains `1.3.0-preview.11`.
+
 ## 1.3.0-preview.11 — 2026-09-06
 
 - Added structural CAST model-part detection for view hands, weapons and attachments. Complete bilateral arm chains take precedence over helper `j_gun` and weapon tags, while weapon/attachment roots and mechanism topology drive the remaining recommendations.

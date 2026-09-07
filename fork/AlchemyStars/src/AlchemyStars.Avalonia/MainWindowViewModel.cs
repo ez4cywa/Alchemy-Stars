@@ -15,6 +15,8 @@ public enum WorkspacePage
 
 public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
 {
+    public const string ProjectRepositoryUrl = "https://github.com/ez4cywa/Alchemy-Stars";
+
     private readonly IAnimationExportEngine engine;
     private readonly WorkspaceProjectStore projectStore;
     private readonly ApplicationPreferencesStore preferences;
@@ -80,6 +82,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
     public AnimationTimelineViewModel Timeline { get; }
     public string Version => AnimationExportEngine.EngineVersion;
     public string RuntimeDescription => $"{System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription} · {System.Runtime.InteropServices.RuntimeInformation.OSArchitecture}";
+    public string ProjectRepositoryDisplayName => "github.com/ez4cywa/Alchemy-Stars";
     public string CurrentProjectLabel => string.IsNullOrWhiteSpace(CurrentProjectPath) ? Text.Untitled : CurrentProjectPath;
     public string CurrentPageTitle => SelectedPage switch
     {
@@ -540,6 +543,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
 
     public Task OpenUpstreamAsync() => picker.OpenUriAsync(new Uri("https://github.com/Scobalula/Alchemist"));
 
+    public Task OpenProjectRepositoryAsync() => picker.OpenUriAsync(new Uri(ProjectRepositoryUrl));
+
     public void SetPathFromDrop(object target, string path, string role)
     {
         var normalized = PathInput.Normalize(path);
@@ -875,6 +880,9 @@ public sealed class UiText
     public string AboutOverview => L("炼金之星改进自 Scobalula/Alchemist。本测试版已将完整工作流迁移至 Avalonia，并通过 Native AOT 发布；WPF 版本在 .NET 11 正式版迁移前继续作为生产基线。", "Alchemy Stars improves Scobalula/Alchemist. This preview migrates the complete workflow to Avalonia and publishes with Native AOT; WPF remains the production baseline until the .NET 11 GA migration.");
     public string Capabilities => L("支持基于骨架结构的模型部件自动识别、完整或仅动画 CAST、FBX、SMD、SEAnim、普通/叠加/手势动画层、左右手 IK、相关骨骼烘焙、DQS 蒙皮和旧版 .aprj。合成工作区通过 GPU 加速的 Skia 绘制预览平滑 CAST 灰模、骨架和逐帧动画；安全第一人称取景保持武器完整显示，动画层轨道按源文件真实帧数和偏移显示。", "Supports skeleton-based model-part detection, full-scene or animation-only CAST, FBX, SMD, SEAnim, normal/additive/gesture layers, IK, relevant-bone baking, DQS skinning and legacy .aprj files. The composition workspace uses GPU-backed Skia drawing for smooth CAST geometry, skeleton and frame preview; safe first-person framing keeps the weapon visible, while layer tracks reflect true source frame counts and offsets.");
     public string Build => L("版本与环境", "Build and environment");
+    public string ProjectRepositoryTitle => L("项目 GitHub", "Project GitHub");
+    public string ProjectRepositoryHelp => L("源代码、问题反馈、版本记录与发布包均维护在项目仓库中。", "Source code, issue tracking, version history and release packages are maintained in the project repository.");
+    public string OpenProjectRepository => L("打开炼金之星项目仓库", "Open the Alchemy Stars repository");
     public string UpstreamTitle => L("来源与致谢", "Origin and attribution");
     public string UpstreamHelp => L("炼金之星保留 Alchemist 与 RedFox 的转换基础，并在其上改进生产工作流。", "Alchemy Stars retains the Alchemist and RedFox conversion foundation and improves its production workflow.");
     public string Upstream => L("打开原项目", "Open upstream project");

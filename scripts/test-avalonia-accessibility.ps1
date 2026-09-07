@@ -107,7 +107,37 @@ try {
         throw 'The centered dialog did not provide a reliable keyboard focus target.'
     }
 
-    Write-Output 'Windows UI Automation names, keyboard focus, 44x44 key targets and duration-aware track geometry: PASS'
+    ([System.Windows.Automation.InvokePattern]$closeButton.GetCurrentPattern(
+        [System.Windows.Automation.InvokePattern]::Pattern)).Invoke()
+    Start-Sleep -Milliseconds 150
+    ([System.Windows.Automation.InvokePattern]$elements['About'].GetCurrentPattern(
+        [System.Windows.Automation.InvokePattern]::Pattern)).Invoke()
+
+    $repositoryName = 'Open the Alchemy Stars repository'
+    $repositoryButton = $null
+    do {
+        $repositoryCondition = [System.Windows.Automation.PropertyCondition]::new(
+            [System.Windows.Automation.AutomationElement]::NameProperty,
+            $repositoryName)
+        $repositoryButton = $window.FindFirst(
+            [System.Windows.Automation.TreeScope]::Descendants,
+            [System.Windows.Automation.AndCondition]::new($buttonCondition, $repositoryCondition))
+        if ($null -eq $repositoryButton) { Start-Sleep -Milliseconds 100 }
+    } while ($null -eq $repositoryButton -and [DateTime]::UtcNow -lt $deadline)
+    if ($null -eq $repositoryButton -or -not $repositoryButton.Current.IsKeyboardFocusable) {
+        throw 'The About project repository action is missing or not keyboard operable.'
+    }
+    $repositoryBounds = $repositoryButton.Current.BoundingRectangle
+    if ($repositoryBounds.Height -lt 43) {
+        throw "The About project repository target is smaller than 44 DIPs: $($repositoryBounds.Height)"
+    }
+    $repositoryButton.SetFocus()
+    Start-Sleep -Milliseconds 150
+    if (-not $repositoryButton.Current.HasKeyboardFocus) {
+        throw 'The About project repository action could not receive keyboard focus.'
+    }
+
+    Write-Output 'Windows UI Automation names, keyboard focus, 44x44 key targets, About repository action and duration-aware track geometry: PASS'
 }
 finally {
     $process.Refresh()

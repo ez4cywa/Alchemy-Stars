@@ -92,7 +92,8 @@ internal static class SelfTest
                 CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo("zh-CN");
                 var preferences = new ApplicationPreferencesStore(Path.Combine(testDirectory, "settings.json"));
                 var projectStore = new WorkspaceProjectStore();
-                var viewModel = new MainWindowViewModel(engine, projectStore, preferences, new SelfTestFilePicker());
+                var filePicker = new SelfTestFilePicker();
+                var viewModel = new MainWindowViewModel(engine, projectStore, preferences, filePicker);
                 Require(viewModel.IsChinese, "Chinese system language was not detected.");
                 Require(viewModel.Text.ProductName == "炼金之星", "Chinese product name mismatch.");
                 Require(viewModel.Text.ImportAnimationsMenu == "导入动画…"
@@ -105,6 +106,9 @@ internal static class SelfTest
                     && viewModel.Text.ImportLayersMenu == "Import animation layers…"
                     && viewModel.Text.ImportPartsMenu == "Import model parts…"
                     && viewModel.Text.FitSubjectMenu == "Fit subject (F)", "English context menus are not localized.");
+                viewModel.OpenProjectRepositoryAsync().GetAwaiter().GetResult();
+                Require(filePicker.LastOpenedUri?.AbsoluteUri == MainWindowViewModel.ProjectRepositoryUrl,
+                    "About did not open the current project repository.");
                 viewModel.Preview.ToggleFirstPerson();
                 Require(viewModel.Preview.IsFirstPerson
                     && viewModel.Preview.CameraModeLabel == "Return to orbit view / 1"
@@ -292,10 +296,16 @@ internal static class SelfTest
 
     private sealed class SelfTestFilePicker : IWorkspaceFilePicker
     {
+        public Uri? LastOpenedUri { get; private set; }
+
         public Task<IReadOnlyList<string>> PickFilesAsync(FilePickerPurpose purpose, bool allowMultiple) =>
             Task.FromResult<IReadOnlyList<string>>([]);
         public Task<string?> PickProjectDestinationAsync(string? currentPath) => Task.FromResult<string?>(null);
         public Task<string?> PickFolderAsync(string? currentPath) => Task.FromResult<string?>(null);
-        public Task OpenUriAsync(Uri uri) => Task.CompletedTask;
+        public Task OpenUriAsync(Uri uri)
+        {
+            LastOpenedUri = uri;
+            return Task.CompletedTask;
+        }
     }
 }
