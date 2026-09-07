@@ -50,7 +50,8 @@ public sealed record AnimationExportJob(
     string RightHandPoseFile = "",
     string LeftIkTargetOverride = "",
     string RightIkTargetOverride = "",
-    IReadOnlyList<AnimationLayerSpec>? Layers = null);
+    IReadOnlyList<AnimationLayerSpec>? Layers = null,
+    int WeaponFollowMode = 0);
 
 public sealed record AnimationExportOptions(
     IkChainSpec LeftHandIk,

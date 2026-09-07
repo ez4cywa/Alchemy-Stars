@@ -30,6 +30,8 @@ internal static class Program
 
         if (args.Contains("--self-test", StringComparer.OrdinalIgnoreCase))
             return SelfTest.Run();
+        var combinedIndex = Array.IndexOf(args, "--combined-dual-smoke");
+        if (combinedIndex >= 0) return CombinedDualSmoke.Run(args.Skip(combinedIndex + 1).ToArray());
         var dualIndex = Array.IndexOf(args, "--dual-smoke");
         if (dualIndex >= 0) return DualWieldSmoke.Run(args.Skip(dualIndex + 1).ToArray());
         if (GetOption(args, "--preview-test") is { } previewTest)

@@ -78,18 +78,18 @@ namespace Alchemist.UI
             string format,
             bool castAnimationOnly,
             bool bakeRelevantBonesOnly,
-            bool matchOldCallOfDuty)
+            bool matchOldCallOfDuty, int weaponFollowMode = 0, string followMount = "tag_weapon")
         {
             if (string.IsNullOrEmpty(animation.OutputFolder))
                 throw new ArgumentException("No output folder was provided.");
-            var baked = Bake(mergePlan, animation, lSettings, rSettings, bakeRelevantBonesOnly, matchOldCallOfDuty);
+            var baked = Bake(mergePlan, animation, lSettings, rSettings, bakeRelevantBonesOnly, matchOldCallOfDuty, weaponFollowMode, followMount);
             return SaveBaked(mergePlan, baked,
                 Path.Combine(animation.OutputFolder, prefix + animation.OutputName + suffix + format), format, castAnimationOnly);
         }
 
         internal static SkeletonAnimation Bake(
             SkeletonMergePlan mergePlan, Animation animation, IKSettings lSettings, IKSettings rSettings,
-            bool bakeRelevantBonesOnly, bool matchOldCallOfDuty)
+            bool bakeRelevantBonesOnly, bool matchOldCallOfDuty, int weaponFollowMode = 0, string followMount = "tag_weapon")
         {
             var skeleton = mergePlan.Skeleton;
             Logging.Logger.Info($"Attempting to convert: {animation.Name}");
@@ -152,9 +152,62 @@ namespace Alchemist.UI
             plSampler?.SetTransformType(TransformType.Additive);
             prSampler?.SetTransformType(TransformType.Additive);
 
-            if (animation.EnableLeftHandIK)
+            // CAST rotations may be slightly non-unit after quantization. Build rigid
+            // transforms from normalized local rotations, as DCC importers do.
+            (Vector3 Position, Quaternion Rotation) FollowWorld(SkeletonBone bone)
+            {
+                var rotation = Quaternion.Normalize(bone.LocalRotation);
+                if (bone.Parent is null) return (bone.LocalTranslation, rotation);
+                var parent = FollowWorld(bone.Parent);
+                return (parent.Position + Vector3.Transform(bone.LocalTranslation, parent.Rotation),
+                    Quaternion.Normalize(parent.Rotation * rotation));
+            }
+            if (weaponFollowMode is < 0 or > 2) throw new InvalidDataException("未知武器跟随选项 / Unknown weapon follow mode.");
+            SkeletonBone? followHand = null, followAnchor = null;
+            var gripPosition = Vector3.Zero;
+            var gripRotation = Quaternion.Identity;
+            if (weaponFollowMode != 0)
+            {
+                if (matchOldCallOfDuty) throw new InvalidDataException("武器跟随请关闭旧版 COD 兼容 / Disable legacy COD transforms for weapon follow.");
+                var handName = weaponFollowMode == 1 ? lSettings.EndBoneName : rSettings.EndBoneName;
+                followHand = skeleton.Bones.SingleOrDefault(b => b.Name == handName)
+                    ?? throw new InvalidDataException("武器跟随手腕不存在 / Follow wrist is missing: " + handName);
+                followAnchor = skeleton.Bones.SingleOrDefault(b => b.Name == followMount)
+                    ?? throw new InvalidDataException("武器跟随挂点不存在 / Follow mount is missing: " + followMount);
+                for (var ancestor = followHand; ancestor is not null; ancestor = ancestor.Parent)
+                    if (ReferenceEquals(ancestor, followAnchor)) throw new InvalidDataException("武器挂点不能是跟随手腕或其祖先 / Mount cannot be the followed wrist or its ancestor.");
+                bool AttachedToAnchor(SkeletonBone bone)
+                {
+                    for (var parent = bone.Parent; parent is not null; parent = parent.Parent)
+                        if (ReferenceEquals(parent, followAnchor)) return true;
+                    return false;
+                }
+                if (!mergePlan.Sources.Where(source => source.Type == PartType.Weapon).Any(source => source.BoneMap.Any(index => AttachedToAnchor(skeleton.Bones[index]))))
+                    throw new InvalidDataException("所选武器不在跟随挂点下 / No weapon is attached below the follow mount: " + followMount);
+                skeleton.InitializeAnimationTransforms();
+                mainSampler.Update(0, AnimationSampleType.AbsoluteFrameTime);
+                plSampler?.Update(0, AnimationSampleType.AbsoluteFrameTime);
+                prSampler?.Update(0, AnimationSampleType.AbsoluteFrameTime);
+                skeleton.Update();
+                if (skeleton.Bones.Any(b => Vector3.DistanceSquared(b.BaseScale, Vector3.One) > 1e-8f))
+                    throw new InvalidDataException("武器跟随需要单位骨骼缩放 / Weapon follow requires unit bone scale.");
+                // Capture the original held pose, including its configured IK. The
+                // playback solver is skipped on the following side, not this reference.
+                var referencePlayer = new AnimationPlayer("GripReference");
+                if (animation.EnableLeftHandIK) CreateIKSolver("GripLeft", lSettings, skeleton, referencePlayer);
+                if (animation.EnableRightHandIK) CreateIKSolver("GripRight", rSettings, skeleton, referencePlayer);
+                foreach (var solver in referencePlayer.Solvers) solver.Update(0);
+                skeleton.Update();
+                var referenceHand = FollowWorld(followHand);
+                var referenceAnchor = FollowWorld(followAnchor);
+                var inverse = Quaternion.Inverse(referenceHand.Rotation);
+                gripPosition = Vector3.Transform(referenceAnchor.Position - referenceHand.Position, inverse);
+                gripRotation = Quaternion.Normalize(inverse * referenceAnchor.Rotation);
+            }
+
+            if (animation.EnableLeftHandIK && weaponFollowMode != 1)
                 lSolver = CreateIKSolver("LSolver", lSettings, skeleton, player);
-            if (animation.EnableRightHandIK)
+            if (animation.EnableRightHandIK && weaponFollowMode != 2)
                 rSolver = CreateIKSolver("RSolver", rSettings, skeleton, player);
 
             // Add layers
@@ -333,7 +386,22 @@ namespace Alchemist.UI
             for (int i = 0; i < player.FrameCount; i++)
             {
                 skeleton.InitializeAnimationTransforms();
-                player.Update(i, AnimationSampleType.AbsoluteFrameTime);
+                if (followHand is null || followAnchor is null) player.Update(i, AnimationSampleType.AbsoluteFrameTime);
+                else
+                {
+                    foreach (var layer in player.Layers) layer.Update(i, AnimationSampleType.AbsoluteFrameTime);
+                    skeleton.Update();
+                    var handWorld = FollowWorld(followHand);
+                    var position = handWorld.Position + Vector3.Transform(gripPosition, handWorld.Rotation);
+                    var rotation = Quaternion.Normalize(handWorld.Rotation * gripRotation);
+                    var parentWorld = followAnchor.Parent is null ? (Position: Vector3.Zero, Rotation: Quaternion.Identity) : FollowWorld(followAnchor.Parent);
+                    var inverseParent = Quaternion.Inverse(parentWorld.Rotation);
+                    followAnchor.LocalTranslation = Vector3.Transform(position - parentWorld.Position, inverseParent);
+                    followAnchor.LocalRotation = Quaternion.Normalize(inverseParent * rotation);
+                    skeleton.Update();
+                    // The opposite hand can still solve against the now-moving weapon target.
+                    foreach (var solver in player.Solvers) solver.Update(i);
+                }
 
                 if (bakeRelevantBonesOnly)
                 {

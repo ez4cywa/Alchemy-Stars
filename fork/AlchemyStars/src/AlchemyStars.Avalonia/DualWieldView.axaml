@@ -78,6 +78,14 @@
         <StackPanel><TextBlock Text="{Binding Text.OutputFolder}" Classes="field-label" /><Grid ColumnDefinitions="*,8,44"><TextBox Text="{Binding SelectedDual.OutputFolder}" AutomationProperties.Name="{Binding Text.OutputFolder}" /><Button Grid.Column="2" Classes="icon secondary" Click="FolderClick" ToolTip.Tip="{Binding Text.Browse}" AutomationProperties.Name="{Binding Text.Browse}"><Image Classes="product-icon" Source="avares://AlchemyStars.Avalonia/Assets/AppleBlue/import-assets.png" RenderOptions.BitmapInterpolationMode="HighQuality" Stretch="Uniform" IsHitTestVisible="False" /></Button></Grid></StackPanel>
        </StackPanel>
       </Expander>
+      <Expander Classes="property-group" IsExpanded="True"><Expander.Header><StackPanel Orientation="Horizontal" Spacing="8"><Image Classes="product-icon" Source="avares://AlchemyStars.Avalonia/Assets/AppleBlue/weapon-processing-mode.png" RenderOptions.BitmapInterpolationMode="HighQuality" Stretch="Uniform" IsHitTestVisible="False" /><TextBlock Text="{Binding Text.DualMode}" VerticalAlignment="Center" /></StackPanel></Expander.Header><StackPanel Spacing="16" IsEnabled="{Binding HasSelectedDual}">
+       <ComboBox x:Name="DualModePicker" ItemsSource="{Binding Text.DualModes}" SelectedIndex="{Binding SelectedDual.ModeIndex, Mode=TwoWay}" AutomationProperties.Name="{Binding Text.DualMode}" />
+       <StackPanel Spacing="16" IsVisible="{Binding SelectedDual.IsCombinedModel}">
+        <TextBlock Text="{Binding Text.DualCombinedHelp}" Classes="muted" TextWrapping="Wrap" />
+        <StackPanel><TextBlock Text="{Binding Text.DualBranchLeft}" Classes="field-label" TextWrapping="Wrap" /><TextBox Text="{Binding SelectedDual.LeftWeaponBranch}" AutomationProperties.Name="{Binding Text.DualBranchLeft}" /></StackPanel>
+        <StackPanel><TextBlock Text="{Binding Text.DualBranchRight}" Classes="field-label" TextWrapping="Wrap" /><TextBox Text="{Binding SelectedDual.RightWeaponBranch}" AutomationProperties.Name="{Binding Text.DualBranchRight}" /></StackPanel>
+       </StackPanel>
+      </StackPanel></Expander>
       <Expander Classes="property-group" Header="{Binding Text.DualSources}" IsExpanded="True"><StackPanel Spacing="16" IsEnabled="{Binding HasSelectedDual}">
       <StackPanel><TextBlock Text="{Binding Text.DualLeft}" Classes="field-label" />
       <ComboBox x:Name="LeftSourcePicker" ItemsSource="{Binding Animations}" SelectedItem="{Binding DualLeftSource, Mode=TwoWay}" HorizontalAlignment="Stretch" AutomationProperties.Name="{Binding Text.DualLeft}" ToolTip.Tip="{Binding DualLeftSource.Name}">

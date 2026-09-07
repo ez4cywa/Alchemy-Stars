@@ -31,7 +31,7 @@ public sealed class WorkspaceProjectStore
     public void Save(WorkspaceDocument document, string filePath)
     {
         ArgumentNullException.ThrowIfNull(document);
-        document.SchemaVersion = document.DualAnimations.Count > 0 ? 2 : document.SchemaVersion;
+        document.SchemaVersion = document.Animations.Any(a => a.WeaponFollowMode != 0) ? 4 : document.DualAnimations.Any(t => t.Mode != DualModelMode.Attached) ? 3 : document.DualAnimations.Count > 0 ? 2 : document.SchemaVersion;
         ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
         var fullPath = Path.GetFullPath(filePath);
         var directory = Path.GetDirectoryName(fullPath)
@@ -66,7 +66,7 @@ public sealed class WorkspaceProjectStore
                 animation.RightHandPoseFile,
                 animation.LeftIKTargetBoneName,
                 animation.RightIKTargetBoneName,
-                animation.Layers.Select(layer => new AnimationLayerSpec(layer.Name, layer.Type, layer.Offset)).ToArray())).ToArray(),
+                animation.Layers.Select(layer => new AnimationLayerSpec(layer.Name, layer.Type, layer.Offset)).ToArray(), animation.WeaponFollowMode)).ToArray(),
             new AnimationExportOptions(
                 new IkChainSpec(document.LeftIKStartBoneName, document.LeftIKMidBoneName, document.LeftIKEndBoneName, document.LeftIKTargetBoneName),
                 new IkChainSpec(document.RightIKStartBoneName, document.RightIKMidBoneName, document.RightIKEndBoneName, document.RightIKTargetBoneName),
@@ -80,7 +80,7 @@ public sealed class WorkspaceProjectStore
 
     private static void Normalize(WorkspaceDocument document)
     {
-        if (document.SchemaVersion > 2) throw new InvalidDataException("This project requires a newer Alchemy Stars version.");
+        if (document.SchemaVersion > 4) throw new InvalidDataException("This project requires a newer Alchemy Stars version.");
         document.DualAnimations ??= [];
         document.OutputFormat = OutputFormats.Normalize(document.OutputFormat);
         document.Parts ??= [];

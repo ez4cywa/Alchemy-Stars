@@ -157,7 +157,7 @@ internal static class DualWieldSmoke
         }
         Require(leftMeshes == 18 && rightMeshes == 18, "Companion must retain all 18 meshes for each weapon.");
     }
-    private static void VerifyMountWorlds(WorkspaceDocument document, WorkspaceDualAnimation task, ModelNode output,
+    internal static void VerifyMountWorlds(WorkspaceDocument document, WorkspaceDualAnimation task, ModelNode output,
         SkeletonAnimation result, Graphics3DTranslatorFactory translator, int frames)
     {
         var hands = CastReader.Load(document.Parts.Single(p => p.Type == ModelPartKind.ViewHands).FilePath)
@@ -187,6 +187,11 @@ internal static class DualWieldSmoke
                 var bone = bones[index]; var target = clip.Targets.SingleOrDefault(t => t.BoneName == bone.Name);
                 var p = target?.TranslationFrameCount > 0 ? target.SampleTranslation(frame) : bone.LocalPosition;
                 var q = target?.RotationFrameCount > 0 ? target.SampleRotation(frame) : bone.LocalRotation;
+                var type = target?.TransformType == TransformType.Parent ? clip.TransformType : target?.TransformType;
+                if (target?.TranslationFrameCount > 0 && type is TransformType.Relative or TransformType.Additive)
+                    p += bone.LocalPosition;
+                if (target?.RotationFrameCount > 0 && type == TransformType.Additive)
+                    q = bone.LocalRotation * q;
                 matrix *= Matrix4x4.CreateFromQuaternion(Quaternion.Normalize(q)) * Matrix4x4.CreateTranslation(p);
             }
             return matrix;

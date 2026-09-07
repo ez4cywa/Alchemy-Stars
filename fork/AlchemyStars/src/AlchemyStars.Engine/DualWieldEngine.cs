@@ -41,7 +41,9 @@ public sealed class DualWieldEngine
         if (document.MatchOldCallOfDuty)
             throw new InvalidDataException("双持任务请关闭旧版 COD 兼容 / Disable legacy COD transforms for dual wield.");
         if (!float.IsFinite(left.OutputFramerate) || left.OutputFramerate <= 0 || left.OutputFramerate != right.OutputFramerate)
-            throw new InvalidDataException("左右任务必须使用相同的有效帧率 / Source tasks must use the same valid frame rate.");
+            throw new InvalidDataException(IsChinese
+                ? $"左右任务输出帧率不一致或无效。\n左侧：{Path.GetFileName(left.Name)} — {left.OutputFramerate:g} FPS\n右侧：{Path.GetFileName(right.Name)} — {right.OutputFramerate:g} FPS\n\n请在“动画 → 输出目标 → 输出帧率”中设置相同的正数帧率，并与源动画及叠加层保持一致。"
+                : $"Source task frame rates differ or are invalid.\nLeft: {Path.GetFileName(left.Name)} — {left.OutputFramerate:g} FPS\nRight: {Path.GetFileName(right.Name)} — {right.OutputFramerate:g} FPS\n\nSet matching positive output frame rates in Animations → Output target, matching the source and layer files.");
         var format = preview ? ".cast" : OutputFormats.Normalize(document.OutputFormat);
         var outputs = GetOutputFiles(document, task, preview);
         var output = outputs[0];
@@ -65,11 +67,30 @@ public sealed class DualWieldEngine
 
         var hands = document.Parts.Single(p => p.Type == ModelPartKind.ViewHands);
         var weapon = document.Parts.Single(p => p.Type == ModelPartKind.Weapon);
+        if (!Enum.IsDefined(task.Mode)) throw new InvalidDataException("未知双持模式 / Unknown dual model mode.");
+        CombinedWeaponSplitter.Result? split = null;
+        if (task.Mode == DualModelMode.CombinedWeapons)
+        {
+            HashSet<string> Targets(WorkspaceAnimation selected, string marker)
+            {
+                var file = Path.GetFileName(selected.Name);
+                var markerIndex = file.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
+                var prefix = markerIndex >= 0 ? file[..(markerIndex + marker.Length)] : null;
+                var paths = document.Animations.Where(a => a.Id == selected.Id || prefix is not null && Path.GetFileName(a.Name).StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                    .Select(a => a.Name).Where(p => Path.GetExtension(p).Equals(".cast", StringComparison.OrdinalIgnoreCase)).Distinct();
+                return paths.SelectMany(p => CastReader.Load(p).RootNodes.SelectMany(Walk).OfType<CurveNode>().Select(c => c.NodeName))
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            }
+            var automatic = string.IsNullOrEmpty(task.LeftWeaponBranch) || string.IsNullOrEmpty(task.RightWeaponBranch);
+            split = CombinedWeaponSplitter.Split(weapon.FilePath, task.LeftWeaponBranch, task.RightWeaponBranch,
+                automatic ? Targets(left, "_l_") : new(StringComparer.OrdinalIgnoreCase),
+                automatic ? Targets(right, "_r_") : new(StringComparer.OrdinalIgnoreCase));
+        }
         var h = new Part { FilePath = hands.FilePath, Type = PartType.ViewHands };
         var w = new Part { FilePath = weapon.FilePath, Type = PartType.Weapon, ParentBoneTag = task.SourceMount };
-        var leftPlan = SkeletonMergePlan.Build([h, w], false);
-        var rightPlan = SkeletonMergePlan.Build([h, w], false);
-        var finalPlan = SkeletonMergePlan.BuildAttachedDual(h, w, task.LeftMount, task.RightMount);
+        var leftPlan = SkeletonMergePlan.Build([h, w], false, split?.Left);
+        var rightPlan = SkeletonMergePlan.Build([h, w], false, split?.Right);
+        var finalPlan = SkeletonMergePlan.BuildAttachedDual(h, w, task.LeftMount, task.RightMount, split?.Left, split?.Right);
         if (task.LeftMount.Equals(task.RightMount, StringComparison.OrdinalIgnoreCase))
             throw new InvalidDataException("左右挂点必须不同 / Left and right mounts must differ.");
         foreach (var bone in finalPlan.Skeleton.Bones)
@@ -81,13 +102,22 @@ public sealed class DualWieldEngine
         {
             var job = request.Animations[document.Animations.IndexOf(source)];
             // The inherited pipeline samples in frames. Reject FPS conversion rather than relabeling time.
-            foreach (var path in new[] { job.SourceFile }.Concat((job.Layers ?? []).Select(l => l.FilePath)))
+            foreach (var (path, index) in new[] { job.SourceFile }.Concat((job.Layers ?? []).Select(l => l.FilePath)).Select((path, index) => (path, index)))
             {
                 var clip = AnimationConverter.TranslatorFactory.Load<SkeletonAnimation>(path);
                 var rate = Path.GetExtension(path).Equals(".cast", StringComparison.OrdinalIgnoreCase)
                     ? AnimationClipMetadataReader.Read(path).Framerate : clip.Framerate;
                 if (rate != job.Framerate)
-                    throw new InvalidDataException("源动画／叠加层帧率与任务不一致 / Source/layer frame rate must match the task.");
+                {
+                    var side = ReferenceEquals(source, left) ? (IsChinese ? "左侧" : "Left") : (IsChinese ? "右侧" : "Right");
+                    var role = index == 0 ? (IsChinese ? "源动画" : "Source animation") : (IsChinese ? $"叠加层 {index}" : $"Layer {index}");
+                    var hint = index == 0
+                        ? (IsChinese ? $"请将该动画任务的“输出帧率”改为 {rate:g} FPS，并确认另一侧任务和所有叠加层使用相同帧率。" : $"Set this task's output frame rate to {rate:g} FPS, and use the same rate for the other task and all layers.")
+                        : (IsChinese ? "请将叠加动画重采样到任务帧率，或统一所有来源与任务的帧率。如果此文件是单帧手部姿势，请移到对应的“手部姿势文件”栏。" : "Resample this layer to the task frame rate, or match all source and task rates. If this is a single-frame hand pose, use the corresponding Hand pose file field instead.");
+                    throw new InvalidDataException(IsChinese
+                        ? $"{side}任务的{role}帧率不匹配。\n任务：{Path.GetFileName(source.Name)}\n文件：{path}\n文件帧率：{rate:g} FPS\n任务输出帧率：{job.Framerate:g} FPS\n\n{hint}\n当前双持处理不会自动重采样。"
+                        : $"{side} task: {role} frame rate mismatch.\nTask: {Path.GetFileName(source.Name)}\nFile: {path}\nFile frame rate: {rate:g} FPS\nTask output frame rate: {job.Framerate:g} FPS\n\n{hint}\nDual processing does not automatically resample animation.");
+                }
                 plan.BindAnimation(clip);
                 var known = plan.Skeleton.Bones.Select(b => b.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
                 foreach (var target in clip.Targets.Where(t => !known.Contains(t.BoneName))) unknown.Add(target.BoneName);
@@ -96,13 +126,15 @@ public sealed class DualWieldEngine
             }
             return AnimationConverter.Bake(plan, AnimationExportEngine.ToCompatibilityAnimation(job),
                 AnimationExportEngine.ToIkSettings(request.Options.LeftHandIk, job.LeftIkTargetOverride),
-                AnimationExportEngine.ToIkSettings(request.Options.RightHandIk, job.RightIkTargetOverride), false, false);
+                AnimationExportEngine.ToIkSettings(request.Options.RightHandIk, job.RightIkTargetOverride), false, false, job.WeaponFollowMode, task.SourceMount);
         }
         var leftClip = Bake(left, leftPlan);
         var rightClip = Bake(right, rightPlan);
         var count = (int)leftClip.GetAnimationFrameCount();
         if (count <= 0 || count != (int)rightClip.GetAnimationFrameCount())
-            throw new InvalidDataException("左右处理结果帧数不同，请调整叠加层／偏移 / Processed source durations differ; adjust layers or offsets.");
+            throw new InvalidDataException(IsChinese
+                ? $"左右处理结果帧数不同或为空。\n左侧：{Path.GetFileName(left.Name)} — {count} 帧\n右侧：{Path.GetFileName(right.Name)} — {(int)rightClip.GetAnimationFrameCount()} 帧\n\n请检查左右源动作长度，以及叠加层的起始偏移和长度，使处理后的总帧数一致。"
+                : $"Processed source durations differ or are empty.\nLeft: {Path.GetFileName(left.Name)} — {count} frames\nRight: {Path.GetFileName(right.Name)} — {(int)rightClip.GetAnimationFrameCount()} frames\n\nCheck source durations and layer offsets/durations so both processed tasks have the same frame count.");
         var skeleton = finalPlan.Skeleton;
         SkeletonBone Find(Skeleton s, string name) => s.Bones.SingleOrDefault(b => string.Equals(b.Name, name, StringComparison.OrdinalIgnoreCase))
             ?? throw new InvalidDataException("挂点不存在 / Mount is missing: " + name);
@@ -162,6 +194,8 @@ public sealed class DualWieldEngine
 
     internal static bool IsLeft(string name) => name.Contains("_le", StringComparison.OrdinalIgnoreCase)
         || name.EndsWith("_left", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsChinese => System.Globalization.CultureInfo.CurrentUICulture.Name.StartsWith("zh", StringComparison.OrdinalIgnoreCase);
 
     private static IEnumerable<CastNode> Walk(CastNode node)
     {

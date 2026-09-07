@@ -20,6 +20,10 @@ public partial class DualWieldView : UserControl
         var selected = ViewModel.SelectedDual;
         if (selected is not null)
         {
+            var mode = selected.ModeIndex;
+            DualModePicker.SelectedIndex = 1 - mode;
+            if (selected.ModeIndex != 1 - mode) throw new InvalidOperationException("Dual mode selector did not update task.");
+            DualModePicker.SelectedIndex = mode;
             var original = selected.ExportWeaponModels;
             ExportModelsSwitch.IsChecked = !original;
             if (selected.ExportWeaponModels == original) throw new InvalidOperationException("Model export switch did not update the task.");

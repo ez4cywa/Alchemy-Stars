@@ -108,6 +108,8 @@ public sealed class WorkspacePart : ObservableModel
 
 public sealed class WorkspaceAnimation : ObservableModel
 {
+    private int weaponFollowMode;
+    public int WeaponFollowMode { get => weaponFollowMode; set { if (value >= 0) SetProperty(ref weaponFollowMode, value); } }
     public string Id { get; set; } = Guid.NewGuid().ToString("N");
     private float outputFramerate = 30;
     private string name = string.Empty;

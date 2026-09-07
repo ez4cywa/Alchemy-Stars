@@ -1,8 +1,19 @@
 namespace AlchemyStars.Engine;
 
+public enum DualModelMode { Attached = 0, CombinedWeapons = 1 }
+
 /// <summary>References editable source tasks, never cached/exported source files.</summary>
 public sealed class WorkspaceDualAnimation : ObservableModel
 {
+    private DualModelMode mode;
+    private string leftBranch = "", rightBranch = "";
+    public DualModelMode Mode { get => mode; set { if (SetProperty(ref mode, value)) { RaisePropertyChanged(nameof(ModeIndex)); RaisePropertyChanged(nameof(IsCombinedModel)); } } }
+    [System.Text.Json.Serialization.JsonIgnore]
+    public int ModeIndex { get => (int)Mode; set { if (value >= 0) Mode = (DualModelMode)value; } }
+    [System.Text.Json.Serialization.JsonIgnore]
+    public bool IsCombinedModel => Mode == DualModelMode.CombinedWeapons;
+    public string LeftWeaponBranch { get => leftBranch; set => SetProperty(ref leftBranch, value?.Trim() ?? ""); }
+    public string RightWeaponBranch { get => rightBranch; set => SetProperty(ref rightBranch, value?.Trim() ?? ""); }
     private string name = "dual", left = "", right = "", folder = "";
     private string leftMount = "tag_weapon_left", rightMount = "tag_weapon_right", sourceMount = "tag_weapon";
     private bool exportWeaponModels = true;

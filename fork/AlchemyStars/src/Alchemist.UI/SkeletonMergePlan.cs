@@ -19,13 +19,13 @@ internal sealed class SkeletonMergePlan
     public Dictionary<string, string> RightWeaponNames { get; } = new(StringComparer.OrdinalIgnoreCase);
     private readonly List<Identity> identities = [];
 
-    public static SkeletonMergePlan Build(IEnumerable<Part> parts, bool matchOldCallOfDuty)
+    public static SkeletonMergePlan Build(IEnumerable<Part> parts, bool matchOldCallOfDuty, byte[]? weaponSnapshot = null)
     {
         var plan = new SkeletonMergePlan();
         foreach (var part in PartOrdering.ForSkeletonMerge(parts))
         {
             var path = Path.GetFullPath(part.FilePath);
-            var snapshot = File.ReadAllBytes(path);
+            var snapshot = part.Type == PartType.Weapon && weaponSnapshot is not null ? weaponSnapshot : File.ReadAllBytes(path);
             using var stream = new MemoryStream(snapshot, writable: false);
             var models = CastReader.Load(stream).RootNodes.SelectMany(DescendantsAndSelf).OfType<ModelNode>().ToArray();
             if (models.Length == 0)
@@ -42,13 +42,13 @@ internal sealed class SkeletonMergePlan
         return plan;
     }
 
-    public static SkeletonMergePlan BuildAttachedDual(Part hands, Part weapon, string leftMount, string rightMount)
+    public static SkeletonMergePlan BuildAttachedDual(Part hands, Part weapon, string leftMount, string rightMount, byte[]? leftSnapshot = null, byte[]? rightSnapshot = null)
     {
         var plan = new SkeletonMergePlan();
         void AddPart(Part part, string? side, Dictionary<string, string>? names)
         {
             var path = Path.GetFullPath(part.FilePath);
-            var snapshot = File.ReadAllBytes(path);
+            var snapshot = (side == "left" ? leftSnapshot : side == "right" ? rightSnapshot : null) ?? File.ReadAllBytes(path);
             using var stream = new MemoryStream(snapshot, writable: false);
             var models = CastReader.Load(stream).RootNodes.SelectMany(DescendantsAndSelf).OfType<ModelNode>().ToArray();
             if (models.Length != 1) throw new InvalidDataException("Dual wield requires one model node per input file.");

@@ -1,0 +1,38 @@
+{
+  "name": "alchemy-apple-blue-weapon-options",
+  "label": "Alchemy Stars 蓝色功能图标",
+  "preamble": "A cohesive Alchemy Stars desktop animation-editor spot icon family, matching its Apple-inspired white/parchment interface and Action Blue controls. Refined flat geometric outline drawings, blue monoline, softly rounded ends, generous open negative space. These are medium-size feature illustrations, not illustrations of the Apple logo. No gradients, no shadows, no 3D, no glossy material, no chunky dark fills.",
+  "palette": [
+    "#0066cc",
+    "#ffffff"
+  ],
+  "cutout": "floodfill",
+  "thresh": 30,
+  "construction": {
+    "grid": "48-unit grid, 34-unit live area, consistent optical mass and equal padding",
+    "stroke": "uniform 2-unit Action Blue outline, round caps and joins",
+    "corner_radius": "consistent 4-unit rounded rectangle corners",
+    "angles": "horizontal, vertical, 45 degrees",
+    "detail_budget": "one recognizable core metaphor and at most 3 secondary details per icon",
+    "fill_rule": "open outlines; occasional tiny white inset, never large solid fills",
+    "color_rule": "Action Blue #0066cc outlines; white #ffffff only as small optional inset; no other icon colors",
+    "shared_parts": "same rounded panel, same arrow, same keyframe diamond and same joint node throughout",
+    "perspective": "flat frontal schematic, no isometric projection",
+    "shadow": "none",
+    "motif": "small keyframe diamond integrated where it helps describe animation, never a detached decorative sparkle",
+    "weight_hierarchy": "blue linework defines every silhouette, any white inset is subordinate"
+  },
+  "fits": "48-128px feature, category and empty-state icons; retain vector glyphs for dense toolbars",
+  "icons": [
+    {
+      "index": 1,
+      "name": "weapon-follow",
+      "metaphor": "one gripping hand with a curved follow arrow"
+    },
+    {
+      "index": 2,
+      "name": "weapon-processing-mode",
+      "metaphor": "one model part branching into left and right parts"
+    }
+  ]
+}

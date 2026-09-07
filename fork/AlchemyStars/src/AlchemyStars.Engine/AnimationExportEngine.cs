@@ -47,7 +47,7 @@ public sealed class AnimationExportEngine : IAnimationExportEngine
                 ToExtension(request.Options.Format),
                 request.Options.CastAnimationOnly,
                 request.Options.BakeRelevantBonesOnly,
-                request.Options.MatchOldCallOfDuty));
+                request.Options.MatchOldCallOfDuty, job.WeaponFollowMode));
         }
 
         return new AnimationExportResult(outputs);

@@ -25,6 +25,10 @@ def load(path):
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
 rig = load(complete)
+expected_bones = set(rig.data.bones.keys())
+expected_meshes = [obj for obj in bpy.context.scene.objects if obj.type == "MESH"]
+expected_mesh_count = len(expected_meshes)
+expected_vertices = sum(len(obj.data.vertices) for obj in expected_meshes)
 frames = list(range(bpy.context.scene.frame_start, bpy.context.scene.frame_end + 1))
 expected = {}
 for frame in frames:
@@ -32,9 +36,10 @@ for frame in frames:
     expected[frame] = {bone.name: bone.matrix.copy() for bone in rig.pose.bones}
 bpy.ops.wm.read_factory_settings(use_empty=True)
 rig = load(model)
-assert len(rig.data.bones) == 221
+assert set(rig.data.bones.keys()) == expected_bones
 meshes = [obj for obj in bpy.context.scene.objects if obj.type == "MESH"]
-assert len(meshes) == 39
+assert len(meshes) == expected_mesh_count
+assert sum(len(obj.data.vertices) for obj in meshes) == expected_vertices
 assert not rig.animation_data or not rig.animation_data.action
 assert all(any(m.type == "ARMATURE" and m.object == rig for m in obj.modifiers) for obj in meshes)
 bpy.context.view_layer.objects.active = rig
@@ -51,4 +56,4 @@ for frame in frames:
         maximum = max(maximum, error)
         assert error <= 0.0002 + 0.000002 * wanted.translation.length, (frame, name)
         assert 1 - abs(actual.to_quaternion().normalized().dot(wanted.to_quaternion().normalized())) <= 0.00001
-print(json.dumps({"result": "PASS", "bones": 221, "meshes": 39, "frames": len(frames), "max_position_error": maximum}))
+print(json.dumps({"result": "PASS", "bones": len(expected_bones), "meshes": expected_mesh_count, "frames": len(frames), "max_position_error": maximum}))

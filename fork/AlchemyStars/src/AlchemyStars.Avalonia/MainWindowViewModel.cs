@@ -697,6 +697,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
             OutputName = source.OutputName,
             OutputFolder = source.OutputFolder,
             OutputFramerate = source.OutputFramerate,
+            WeaponFollowMode = source.WeaponFollowMode,
             EnableLeftHandIK = source.EnableLeftHandIK,
             EnableRightHandIK = source.EnableRightHandIK,
             UseExperimentalFeatures = source.UseExperimentalFeatures,
