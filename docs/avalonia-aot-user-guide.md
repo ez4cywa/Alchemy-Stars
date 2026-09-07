@@ -2,7 +2,7 @@
 
 # Alchemy Stars Avalonia preview quick guide
 
-This guide applies to `1.3.0-preview.11` on the test branch. WPF v1.1.9 remains the supported release until .NET 11 GA.
+This guide applies to source revision `1.3.0-preview.13` on the test branch. The latest packaged preview remains `1.3.0-preview.11`; WPF v1.1.9 remains the supported release until .NET 11 GA.
 
 The 48 DIP activity rail switches between Animations, Model parts, Settings and About. The base-animation library sits on the left, a real CAST preview in the center, composition layers across the bottom, and collapsible properties on the right. Drag the dividers or focus them and use arrow keys to resize panels. Icon commands have localized tooltips and UI Automation names; the current page remains visible in the breadcrumb.
 

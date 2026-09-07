@@ -1,4 +1,4 @@
-# 双持动画工作流（1.3.0-preview.14）
+# 双持动画工作流（1.3.0-preview.13）
 
 此功能位于 Avalonia 分支的左侧「双持动画」栏目。目前实现挂点模式：一份手臂模型、一份单持武器模型、两个独立动画任务，生成两把武器实例和统一骨架。所有计算在 Alchemy Stars 中完成；CAST 合成与预览不需要启动 Blender 或 Maya。
 
@@ -70,7 +70,7 @@ Blender 验证脚本对全部骨骼全部帧比较 CAST 与实际姿态，位置
 脚本优先使用仓库 `output/dotnet-sdk/dotnet.exe`（若存在），否则使用 PATH 中的 SDK；版本应满足 `global.json`。输出写入仓库 `output/dual-scarab`，源文件只读。也可直接运行发布程序：
 
 ```powershell
-& './output/avalonia-aot-preview14/AlchemyStars.Avalonia.exe' --dual-smoke 'E:\AAAAAAStudy\cast\scarab' './output/dual-native' --fbx
+& './output/avalonia-aot-preview13/AlchemyStars.Avalonia.exe' --dual-smoke 'E:\AAAAAAStudy\cast\scarab' './output/dual-native' --fbx
 ```
 
 2026-09-07 本机验证记录：完整解决方案 Release 构建为 0 警告、0 错误；Native AOT 发布、自检、窗口启动、双持交互和 900×600 / 1460×900 界面检查通过。双持来源选择与切换、9 组原生合成、源文件哈希保护、Blender 4.3 的 9 组 CAST 全帧检查通过。已有模型合并的独立结构测试、动画层拖放路由和安全输出默认值测试通过。

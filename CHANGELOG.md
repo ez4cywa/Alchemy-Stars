@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.3.0-preview.13 — 2026-09-08 (ez4cywa AOT integration)
+
+Simple Chinese update log, compared with target branch commit `c817e47`: [更新日志](docs/releases/1.3.0-preview.13.zh-CN.md).
+
+- Added dual-wield composition, attached and combined-weapon model modes, optional companion model export, and hand-follow with preserved grip offset.
+- Added clearer timing errors, Apple/neumorphic themes, consistent controls and icons, and resizable dual-wield panes.
+- Added Blender FBX conversion while retaining Maya support and the target repository's About-page link.
+- Integrated the final local UI branch and unified the application, engine and build scripts at preview.13. Earlier entries below retain the local development numbering as historical records.
+
+## Earlier local development history
+
 ## 1.3.0-preview.14 — 2026-09-07
 
 Consolidated Chinese release notes covering preview.12–preview.14: [release notes](docs/releases/1.3.0-preview.14.zh-CN.md). The requested download archive is named `AlchemyStars-1.3.0-preview.11-win-x64.zip`; its actual application version is preview.14.

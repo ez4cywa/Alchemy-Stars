@@ -4,10 +4,10 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$version = '1.3.0-preview.14'
+$version = '1.3.0-preview.13'
 $repositoryRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
 $releaseRoot = [System.IO.Path]::GetFullPath((Join-Path $repositoryRoot 'release'))
-$publishDirectory = [System.IO.Path]::GetFullPath((Join-Path $repositoryRoot 'output\avalonia-aot-preview14'))
+$publishDirectory = [System.IO.Path]::GetFullPath((Join-Path $repositoryRoot 'output\avalonia-aot-preview13'))
 $stagingDirectory = [System.IO.Path]::GetFullPath((Join-Path $releaseRoot "Alchemy Stars $version"))
 $resolvedArchive = if ([string]::IsNullOrWhiteSpace($ArchivePath)) {
     [System.IO.Path]::GetFullPath((Join-Path $releaseRoot "AlchemyStars-$version-win-x64.zip"))
@@ -47,7 +47,7 @@ $rootFiles = @(
     @{ Source = 'LICENSE'; Target = 'LICENSE.txt' },
     @{ Source = 'THIRD_PARTY_NOTICES.md'; Target = 'THIRD_PARTY_NOTICES.md' },
     @{ Source = 'docs\dual-wield.zh-CN.md'; Target = 'Docs\DUAL-WIELD.zh-CN.md' },
-    @{ Source = 'docs\releases\1.3.0-preview.14.zh-CN.md'; Target = 'Docs\RELEASE-NOTES.zh-CN.md' },
+    @{ Source = 'docs\releases\1.3.0-preview.13.zh-CN.md'; Target = 'Docs\RELEASE-NOTES.zh-CN.md' },
     @{ Source = 'fork\RedFox\LICENSE'; Target = 'Licenses\RedFox-LICENSE.txt' },
     @{ Source = 'third_party\cast\LICENSE'; Target = 'Licenses\Maya-CAST-LICENSE.txt' },
     @{ Source = 'docs\avalonia-aot-user-guide.md'; Target = 'Docs\USER-GUIDE.en-US.md' },
