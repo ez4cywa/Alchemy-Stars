@@ -4,6 +4,11 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:AlchemyStars.Avalonia"
     RequestedThemeVariant="Light">
+  <Application.DataTemplates>
+    <DataTemplate DataType="local:LocalizedOption" x:DataType="local:LocalizedOption">
+      <TextBlock Text="{Binding Label}" TextTrimming="CharacterEllipsis" />
+    </DataTemplate>
+  </Application.DataTemplates>
   <Application.Styles>
     <FluentTheme />
 
@@ -364,6 +369,10 @@
       <Setter Property="BorderThickness" Value="0,0,0,1" />
       <Setter Property="CornerRadius" Value="0" />
       <Setter Property="Padding" Value="14,0,14,14" />
+    </Style>
+    <!-- Keep inspector fields clear of the vertical scrollbar, including their right border. -->
+    <Style Selector="ScrollViewer.inspector-scroll">
+      <Setter Property="AllowAutoHide" Value="False" />
     </Style>
     <Style Selector="Expander.property-group /template/ ToggleButton">
       <Setter Property="MinHeight" Value="44" />

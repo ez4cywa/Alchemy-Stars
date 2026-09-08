@@ -23,6 +23,7 @@ internal static class Program
     internal static bool UtilitiesSmokeRequested { get; private set; }
     internal static bool ShortcutsSmokeRequested { get; private set; }
     internal static bool TextMenuSmokeRequested { get; private set; }
+    internal static bool InspectorSmokeRequested { get; private set; }
 
     [STAThread]
     public static int Main(string[] args)
@@ -42,6 +43,8 @@ internal static class Program
 
         if (args.Contains("--self-test", StringComparer.OrdinalIgnoreCase))
             return SelfTest.Run();
+        var gripIndex = Array.IndexOf(args, "--grip-smoke");
+        if (gripIndex >= 0) return GripSmoke.Run(args.Skip(gripIndex + 1).ToArray());
         var combinedIndex = Array.IndexOf(args, "--combined-dual-smoke");
         if (combinedIndex >= 0) return CombinedDualSmoke.Run(args.Skip(combinedIndex + 1).ToArray());
         var dualIndex = Array.IndexOf(args, "--dual-smoke");
@@ -79,6 +82,7 @@ internal static class Program
         UtilitiesSmokeRequested = args.Contains("--utilities-smoke", StringComparer.OrdinalIgnoreCase);
         ShortcutsSmokeRequested = args.Contains("--shortcuts-smoke", StringComparer.OrdinalIgnoreCase);
         TextMenuSmokeRequested = args.Contains("--textmenu-smoke", StringComparer.OrdinalIgnoreCase);
+        InspectorSmokeRequested = args.Contains("--inspector-smoke", StringComparer.OrdinalIgnoreCase);
         StartupProjectPath = args
             .Where(argument => !argument.StartsWith("--", StringComparison.Ordinal))
             .FirstOrDefault(argument => string.Equals(Path.GetExtension(argument), ".aprj", StringComparison.OrdinalIgnoreCase) && File.Exists(argument));

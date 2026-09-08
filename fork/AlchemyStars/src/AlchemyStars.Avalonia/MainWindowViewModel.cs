@@ -66,6 +66,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
         ApplyAppearance(false);
         languageMode = NormalizeLanguageMode(preferenceSnapshot.Language);
         text = new UiText(ResolveChinese(languageMode));
+        InitializeLocalizedOptions();
         NativeTextResources.Apply(text);
         Preview = new CastPreviewViewModel(text);
         Timeline = new AnimationTimelineViewModel(text);
@@ -685,6 +686,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
     private void ApplyLanguage()
     {
         Text = new UiText(IsChinese);
+        RefreshLocalizedOptions();
         NativeTextResources.Apply(Text);
         FooterStatus = Text.Ready;
         OnPropertyChanged(nameof(IsChinese));

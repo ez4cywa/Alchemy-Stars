@@ -3,8 +3,8 @@ namespace AlchemyStars.Avalonia;
 public sealed partial class UiText
 {
     public string WeaponFollow => L("武器跟随", "Weapon follow");
-    public string[] WeaponFollowModes => [L("原始动画挂点", "Original animation mount"), L("左手（保留握持偏移）", "Left hand (preserve grip)"), L("右手（保留握持偏移）", "Right hand (preserve grip)")];
-    public string WeaponFollowHelp => L("以基础动画第 0 帧、手部姿势及原有 IK 记录握持偏移，跟随叠加后的手腕；该侧 IK 自动跳过。武器内部动作保留。", "Capture grip from base frame 0, hand poses and original IK, then follow the layered wrist. IK on that side is skipped; internal weapon animation is preserved.");
+    public string[] WeaponFollowModes => [L("原始挂点（不绑定手腕）", "Original mount (not wrist-bound)"), L("左手（保留握持偏移）", "Left hand (preserve grip)"), L("右手（保留握持偏移）", "Right hand (preserve grip)")];
+    public string WeaponFollowHelp => L("武器与手臂分离时，选择握枪的左手或右手，再点击“合成预览”。原始挂点模式不绑定手腕。左右手模式以基础动画第 0 帧、手部姿势及原有 IK 保留握持偏移，跟随叠加后的手腕；该侧 IK 自动跳过，武器内部动作保留。", "If the weapon separates from the hand, select the holding hand and rebuild the preview. Original mount does not bind to a wrist. Hand-follow modes preserve the grip from base frame 0, hand poses and original IK, then follow the layered wrist. IK on that side is skipped; internal weapon animation is preserved.");
     public string DualMode => L("模型处理模式", "Model processing mode");
     public string[] DualModes => [L("挂点模式：复用单个武器", "Attached: duplicate one weapon"), L("模型已包含左右武器", "Model contains both weapons")];
     public string DualBranchLeft => L("左武器分支骨骼（留空自动识别）", "Left weapon branch (blank: auto)");

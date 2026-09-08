@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.3.0-preview.18 — 2026-09-08 (inspector and selection stability)
+
+Chinese release notes: [更新日志](docs/releases/1.3.0-preview.18.zh-CN.md).
+
+- Fixed clipped field borders in the inspector scroll area.
+- Preserve layer, model, dual-mode and weapon-follow selections during language/theme refresh.
+- Weapon follow remains off by default; withdrawn grip-IK inference and limb-stretch changes are not included.
+
 ## 1.3.0-preview.17 — 2026-09-08 (shortcuts and output defaults)
 
 Chinese release notes: [更新日志](docs/releases/1.3.0-preview.17.zh-CN.md).
