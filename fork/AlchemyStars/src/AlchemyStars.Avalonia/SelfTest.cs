@@ -88,6 +88,7 @@ internal static class SelfTest
             var previousCulture = CultureInfo.CurrentUICulture;
             var testDirectory = Path.Combine(Path.GetTempPath(), $"AlchemyStars-AotSelfTest-{Guid.NewGuid():N}");
             Directory.CreateDirectory(testDirectory);
+            OutputDirectorySmoke.RunAsync(testDirectory).GetAwaiter().GetResult();
             try
             {
                 CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo("zh-CN");
@@ -220,6 +221,8 @@ internal static class SelfTest
                 Require(viewModel.Parts[2].Type == ModelPartKind.Attachment && viewModel.Parts[2].ParentBoneTag == string.Empty,
                     "Attachment classification or parenting failed.");
                 Require(viewModel.Parts.All(part => part.AutoClassification is not null), "Automatic classification evidence was not retained for review.");
+                VerifyRememberedArms(engine, testDirectory, handsPath, weaponPath);
+                UpdateWorkflowSmoke.RunAsync(engine, testDirectory, handsPath, weaponPath).GetAwaiter().GetResult();
                 viewModel.Parts[1].Type = ModelPartKind.Attachment;
                 viewModel.SelectedPart = viewModel.Parts[1];
                 Require(viewModel.Parts[1].AutoClassification?.Kind == ModelPartKind.Weapon
@@ -227,6 +230,20 @@ internal static class SelfTest
                     "Manual part-type override hid or replaced the detection recommendation.");
                 viewModel.Parts[1].Type = ModelPartKind.Weapon;
                 Require(viewModel.AddLayerPaths([Path.Combine(testDirectory, "sprint.cast")]) == 1, "Layer-priority import routing failed.");
+                Require(viewModel.SelectedAnimation!.OutputName == "sprint", "First animation layer did not supply the default output name.");
+                var naming = new MainWindowViewModel(engine, projectStore, new ApplicationPreferencesStore(Path.Combine(testDirectory, "naming.json")), filePicker);
+                using (naming)
+                {
+                    naming.AddAnimationPaths([Path.Combine(testDirectory, "base.cast")]);
+                    naming.AddLayerPaths([Path.Combine(testDirectory, "first.cast"), Path.Combine(testDirectory, "second.cast")]);
+                    Require(naming.SelectedAnimation!.OutputName == "first", "Later layers replaced the first layer name.");
+                    naming.SelectedAnimation.Name = Path.Combine(testDirectory, "other-base.cast");
+                    Require(naming.SelectedAnimation.OutputName == "first", "Changing the base overwrote the first layer name.");
+                    naming.AddAnimationPaths([Path.Combine(testDirectory, "base.cast")]);
+                    naming.SelectedAnimation!.OutputName = "my-custom-output";
+                    naming.AddLayerPaths([Path.Combine(testDirectory, "first.cast")]);
+                    Require(naming.SelectedAnimation.OutputName == "my-custom-output", "Layer import overwrote a manual output name.");
+                }
 
                 var placements = AnimationTimelineLayout.Calculate([
                     new AnimationTimelineSpan(0, 60),
@@ -360,6 +377,51 @@ internal static class SelfTest
             bone.AddValue("p", definition.Parent < 0 ? uint.MaxValue : (uint)definition.Parent);
         }
         CastWriter.Save(path, new Cast.NET.Cast([root]));
+    }
+
+    private static void VerifyRememberedArms(IAnimationExportEngine engine, string directory, string hands, string weapon)
+    {
+        var path = Path.Combine(directory, "arms-preferences.json");
+        var preferences = new ApplicationPreferencesStore(path);
+        var store = new WorkspaceProjectStore();
+        using var vm = new MainWindowViewModel(engine, store, preferences, new SelfTestFilePicker());
+        Require(vm.RememberArms && !preferences.Snapshot().AutoUpdateEnabled, "Utility defaults must be arms on, updates off.");
+        vm.AddPartPaths([weapon]);
+        Require(!vm.HasSavedArms, "A weapon must not be remembered as arms.");
+        vm.AddPartPaths([hands]);
+        Require(preferences.Snapshot().SavedArmsPath == hands, "First arms import was not remembered.");
+        var secondHands = Path.Combine(directory, "second-hands.cast");
+        File.Copy(hands, secondHands);
+        vm.AddPartPaths([secondHands]);
+        Require(preferences.Snapshot().SavedArmsPath == hands, "Later arms replaced the first import.");
+        vm.NewProject();
+        Require(vm.Parts.Count == 1 && vm.SelectedPart?.FilePath == hands && vm.Parts[0].Type == ModelPartKind.ViewHands,
+            "New project did not reuse/select arms.");
+        using (var restarted = new MainWindowViewModel(engine, store, new ApplicationPreferencesStore(path), new SelfTestFilePicker()))
+            Require(restarted.Parts.Single().FilePath == hands, "Arms were not restored after restart.");
+        var emptyProject = Path.Combine(directory, "empty-arms-test.aprj");
+        store.Save(WorkspaceDocument.Create(), emptyProject);
+        vm.LoadProject(emptyProject);
+        Require(vm.Parts.Count == 0, "Opening an existing project injected remembered arms.");
+        vm.RememberArms = false;
+        vm.NewProject();
+        Require(vm.Parts.Count == 0 && vm.HasSavedArms && !new ApplicationPreferencesStore(path).Snapshot().RememberArms,
+            "Disabling reuse must persist and retain the path.");
+        vm.ForgetSavedArms();
+        vm.AddPartPaths([hands]);
+        Require(!vm.HasSavedArms, "Disabled remembering still saved an import.");
+        vm.RememberArms = true;
+        vm.SelectedPart = vm.Parts[0];
+        vm.SelectedPart.Type = ModelPartKind.Attachment;
+        vm.SelectedPart.Type = ModelPartKind.ViewHands;
+        Require(vm.HasSavedArms, "Explicit hand-type override was not remembered.");
+        preferences.SaveArmsPath(Path.Combine(directory, "missing.cast"));
+        vm.NewProject();
+        Require(vm.Parts.Count == 0 && vm.SavedArmsStatus.Contains("missing.cast"), "Missing arms were not skipped with status.");
+        vm.ForgetSavedArms();
+        Require(!vm.HasSavedArms && new ApplicationPreferencesStore(path).Snapshot().SavedArmsPath == string.Empty,
+            "Forget arms did not persist.");
+        Console.WriteLine("Remembered arms: import, first-only, restart/new, existing project, off, forget, manual type and missing file PASS");
     }
 
     private sealed class SelfTestFilePicker : IWorkspaceFilePicker

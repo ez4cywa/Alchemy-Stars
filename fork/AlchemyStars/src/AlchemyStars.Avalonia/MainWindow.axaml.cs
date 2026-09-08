@@ -13,6 +13,7 @@ public sealed partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        AddHandler(KeyDownEvent, WindowKeyDown, RoutingStrategies.Tunnel);
         PropertyChanged += (_, e) =>
         {
             if (e.Property == WindowStateProperty)
@@ -70,6 +71,11 @@ public sealed partial class MainWindow : Window
             preferences,
             new AvaloniaFilePickerAdapter(this, preferences, externalUriLaunch));
         DataContext = viewModel;
+        InitializeShortcuts();
+        Closing += (_, eventArgs) =>
+        {
+            if (viewModel.IsUpdateHandoffInProgress) eventArgs.Cancel = true;
+        };
         EventHandler appearanceChanged = (_, _) => viewModel.RefreshAppearanceLabel();
         ActualThemeVariantChanged += appearanceChanged;
         Closed += (_, _) => ActualThemeVariantChanged -= appearanceChanged;
@@ -91,6 +97,15 @@ public sealed partial class MainWindow : Window
     }
 
     private MainWindowViewModel ViewModel => (MainWindowViewModel)DataContext!;
+    private async void ChooseUnifiedOutputDirectoryClick(object? sender, RoutedEventArgs e) => await ViewModel.ChooseUnifiedOutputDirectoryAsync();
+    private void ClearUnifiedOutputDirectoryClick(object? sender, RoutedEventArgs e) => ViewModel.ClearUnifiedOutputDirectory();
+    private async void ChooseSavedArmsClick(object? sender, RoutedEventArgs e) => await ViewModel.ChooseSavedArmsAsync();
+    private void ForgetSavedArmsClick(object? sender, RoutedEventArgs e) => ViewModel.ForgetSavedArms();
+    private async void CheckUpdateClick(object? sender, RoutedEventArgs e) => await ViewModel.CheckForUpdatesAsync(false);
+    private async void DownloadUpdateClick(object? sender, RoutedEventArgs e) => await ViewModel.DownloadUpdateAsync();
+    private async void InstallUpdateClick(object? sender, RoutedEventArgs e) => await ViewModel.InstallUpdateAsync();
+    private void SkipUpdateClick(object? sender, RoutedEventArgs e) => ViewModel.SkipUpdate();
+    private void CancelUpdateClick(object? sender, RoutedEventArgs e) => ViewModel.CancelUpdate();
     private void ToggleAppearanceClick(object? sender, RoutedEventArgs e) => ViewModel.ToggleAppearance();
     private async void ImportThemeClick(object? sender, RoutedEventArgs e) => await ImportAppearanceAsync(false);
     private async void ImportIconsClick(object? sender, RoutedEventArgs e) => await ImportAppearanceAsync(true);
@@ -122,6 +137,11 @@ public sealed partial class MainWindow : Window
 
     internal void VerifyToolbarLayout()
     {
+        var titleOrigin = ProductTitle.TranslatePoint(default, this)
+            ?? throw new InvalidOperationException("Product title is not attached.");
+        if (ProductTitle.Text != ViewModel.Text.ProductName || titleOrigin.Y > 16
+            || Math.Abs(titleOrigin.X + ProductTitle.Bounds.Width / 2 - ClientSize.Width / 2) > 1)
+            throw new InvalidOperationException("Product title must stay centered at the top of the window.");
         var buttons = this.GetVisualDescendants().OfType<Button>().Where(button => button.Classes.Contains("toolbar")).ToArray();
         if (buttons.Length != 4) throw new InvalidOperationException("The project toolbar must expose four commands.");
         foreach (var button in buttons)
@@ -303,7 +323,7 @@ public sealed partial class MainWindow : Window
         e.Handled = true;
     }
 
-    private async void WindowKeyDown(object? sender, KeyEventArgs e)
+    private void WindowKeyDown(object? sender, KeyEventArgs e)
     {
         if (e.Key == Key.Escape && ViewModel.IsDialogOpen)
         {
@@ -311,15 +331,7 @@ public sealed partial class MainWindow : Window
             e.Handled = true;
             return;
         }
-        if (!e.KeyModifiers.HasFlag(KeyModifiers.Control))
-            return;
-        switch (e.Key)
-        {
-            case Key.O: await ViewModel.OpenProjectAsync(); e.Handled = true; break;
-            case Key.S when e.KeyModifiers.HasFlag(KeyModifiers.Shift): await ViewModel.SaveProjectAsync(true); e.Handled = true; break;
-            case Key.S: await ViewModel.SaveProjectAsync(false); e.Handled = true; break;
-            case Key.E: await ViewModel.ExportAsync(); e.Handled = true; break;
-        }
+        if (!e.Handled) e.Handled = HandleListShortcut(e.Key, e.KeyModifiers, e.Source as Visual);
     }
 
     private void DialogKeyDown(object? sender, KeyEventArgs e)

@@ -31,11 +31,31 @@ public sealed class ApplicationPreferencesStore
     };
 
     public string AppearanceDirectory => Path.Combine(Path.GetDirectoryName(settingsPath)!, "Appearance");
+    public string UpdatesDirectory => Path.Combine(Path.GetDirectoryName(settingsPath)!, "Updates");
+
+    public void SaveRememberArms(bool enabled) => Update(p => p.RememberArms = enabled);
+    public void SaveArmsPath(string? path) => Update(p => p.SavedArmsPath = path ?? string.Empty);
+    public void RememberFirstArms(string path)
+    {
+        if (!File.Exists(path) || !string.Equals(Path.GetExtension(path), ".cast", StringComparison.OrdinalIgnoreCase)) return;
+        Update(p =>
+        {
+            if (p.RememberArms && string.IsNullOrWhiteSpace(p.SavedArmsPath)) p.SavedArmsPath = Path.GetFullPath(path);
+        });
+    }
+    public void SaveAutoUpdate(bool enabled) => Update(p => p.AutoUpdateEnabled = enabled);
+    public void SaveSkippedUpdate(string version) => Update(p => p.SkippedUpdateVersion = version);
+    public void SaveUnifiedOutputDirectory(string? path) => Update(p => p.UnifiedOutputDirectory =
+        string.IsNullOrWhiteSpace(path) ? string.Empty : Path.GetFullPath(path));
 
     public WorkspaceDocument CreateWorkspace()
     {
         var preferences = Snapshot();
-        return WorkspaceDocument.Create(preferences.DefaultOutputFormat, preferences.DefaultCastAnimationOnly, preferences.DefaultBakeRelevantBonesOnly);
+        var document = WorkspaceDocument.Create(preferences.DefaultOutputFormat, preferences.DefaultCastAnimationOnly, preferences.DefaultBakeRelevantBonesOnly);
+        if (preferences.RememberArms && File.Exists(preferences.SavedArmsPath)
+            && string.Equals(Path.GetExtension(preferences.SavedArmsPath), ".cast", StringComparison.OrdinalIgnoreCase))
+            document.Parts.Add(new WorkspacePart { FilePath = preferences.SavedArmsPath, Type = ModelPartKind.ViewHands });
+        return document;
     }
 
     public string? GetLastDirectory(string scope)
@@ -139,6 +159,11 @@ public sealed class ApplicationPreferencesStore
 
 public sealed class AppPreferenceData
 {
+    public bool RememberArms { get; set; } = true;
+    public string SavedArmsPath { get; set; } = string.Empty;
+    public bool AutoUpdateEnabled { get; set; }
+    public string SkippedUpdateVersion { get; set; } = string.Empty;
+    public string UnifiedOutputDirectory { get; set; } = string.Empty;
     public string ThemeStyle { get; set; } = "apple";
     public string ThemeMode { get; set; } = "light";
     public string Language { get; set; } = "system";
@@ -149,6 +174,11 @@ public sealed class AppPreferenceData
 
     internal AppPreferenceData Clone() => new()
     {
+        RememberArms = RememberArms,
+        SavedArmsPath = SavedArmsPath,
+        AutoUpdateEnabled = AutoUpdateEnabled,
+        SkippedUpdateVersion = SkippedUpdateVersion,
+        UnifiedOutputDirectory = UnifiedOutputDirectory,
         Language = Language,
         ThemeStyle = ThemeStyle,
         ThemeMode = ThemeMode,

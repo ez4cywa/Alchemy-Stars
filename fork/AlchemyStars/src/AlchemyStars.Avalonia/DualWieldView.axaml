@@ -38,7 +38,7 @@
   <Border Grid.Column="4" Classes="workspace-panel">
    <Grid RowDefinitions="44,*">
     <Border Classes="dock-header"><StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center"><local:ThemedIcon Classes="product-icon" IsHitTestVisible="False" Glyph="output-settings" /><TextBlock Text="{Binding Text.Inspector}" Classes="dock-title" /></StackPanel></Border>
-    <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled">
+    <ScrollViewer Classes="inspector-scroll" Grid.Row="1" HorizontalScrollBarVisibility="Disabled">
      <StackPanel>
       <TextBlock Margin="14,12" Text="{Binding Text.DualHelp}" Classes="muted" FontSize="12" TextWrapping="Wrap" />
       <Expander Classes="property-group" Header="{Binding Text.ExportTarget}" IsExpanded="True">
@@ -55,7 +55,7 @@
        </StackPanel>
       </Expander>
       <Expander x:Name="DualModeSection" Classes="property-group" Header="{Binding Text.DualMode}" IsExpanded="True"><StackPanel Spacing="16" IsEnabled="{Binding HasSelectedDual}">
-       <ComboBox x:Name="DualModePicker" ItemsSource="{Binding Text.DualModes}" SelectedIndex="{Binding SelectedDual.ModeIndex, Mode=TwoWay}" AutomationProperties.Name="{Binding Text.DualMode}" />
+       <ComboBox x:Name="DualModePicker" ItemsSource="{Binding DualModeOptions}" SelectedIndex="{Binding SelectedDual.ModeIndex, Mode=TwoWay}" AutomationProperties.Name="{Binding Text.DualMode}" />
        <StackPanel Spacing="16" IsVisible="{Binding SelectedDual.IsCombinedModel}">
         <TextBlock Text="{Binding Text.DualCombinedHelp}" Classes="muted" TextWrapping="Wrap" />
         <StackPanel><TextBlock Text="{Binding Text.DualBranchLeft}" Classes="field-label" TextWrapping="Wrap" /><TextBox Text="{Binding SelectedDual.LeftWeaponBranch}" AutomationProperties.Name="{Binding Text.DualBranchLeft}" /></StackPanel>

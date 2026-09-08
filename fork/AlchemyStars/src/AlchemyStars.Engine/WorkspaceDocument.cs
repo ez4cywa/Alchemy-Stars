@@ -90,7 +90,7 @@ public sealed class WorkspacePart : ObservableModel
     }
 
     public string ParentBoneTag { get => parentBoneTag; set => SetProperty(ref parentBoneTag, value ?? string.Empty); }
-    public ModelPartKind Type { get => type; set => SetProperty(ref type, value); }
+    public ModelPartKind Type { get => type; set { if (SetProperty(ref type, value)) RaisePropertyChanged(nameof(TypeIndex)); } }
 
     [JsonIgnore]
     public ModelPartClassification? AutoClassification { get => autoClassification; set => SetProperty(ref autoClassification, value); }
@@ -99,7 +99,7 @@ public sealed class WorkspacePart : ObservableModel
     public int TypeIndex
     {
         get => (int)Type;
-        set => Type = Enum.IsDefined((ModelPartKind)value) ? (ModelPartKind)value : ModelPartKind.Attachment;
+        set { if (Enum.IsDefined((ModelPartKind)value)) Type = (ModelPartKind)value; }
     }
 
     [JsonIgnore]
@@ -133,7 +133,7 @@ public sealed class WorkspaceAnimation : ObservableModel
             var previousStem = Path.GetFileNameWithoutExtension(name);
             if (!SetProperty(ref name, normalized))
                 return;
-            if (string.IsNullOrWhiteSpace(OutputName) || string.Equals(OutputName, previousStem, StringComparison.OrdinalIgnoreCase))
+            if (Layers.Count == 0 && (string.IsNullOrWhiteSpace(OutputName) || string.Equals(OutputName, previousStem, StringComparison.OrdinalIgnoreCase)))
                 OutputName = Path.GetFileNameWithoutExtension(normalized);
             RaisePropertyChanged(nameof(DisplayName));
         }
@@ -175,13 +175,13 @@ public sealed class WorkspaceLayer : ObservableModel
 
     public int? Offset { get => offset; set => SetProperty(ref offset, value); }
     public int Color { get => color; set => SetProperty(ref color, value); }
-    public AnimationLayerKind Type { get => type; set => SetProperty(ref type, value); }
+    public AnimationLayerKind Type { get => type; set { if (SetProperty(ref type, value)) RaisePropertyChanged(nameof(TypeIndex)); } }
 
     [JsonIgnore]
     public int TypeIndex
     {
         get => (int)Type;
-        set => Type = Enum.IsDefined((AnimationLayerKind)value) ? (AnimationLayerKind)value : AnimationLayerKind.Additive;
+        set { if (Enum.IsDefined((AnimationLayerKind)value)) Type = (AnimationLayerKind)value; }
     }
 
     [JsonIgnore]

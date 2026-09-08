@@ -110,7 +110,7 @@ public sealed partial class MainWindowViewModel
             var snapshot = WorkspaceProjectStore.Snapshot(Workspace);
             var index = DualAnimations.IndexOf(selection);
             var tasks = all ? snapshot.DualAnimations.ToArray() : [snapshot.DualAnimations[index]];
-            if (preview) tasks[0].OutputFolder = cache;
+            ApplyDualOutputDirectory(tasks, preview, cache);
             var destinationNames = tasks.SelectMany(t => DualWieldEngine.GetOutputFiles(snapshot, t, preview)).ToArray();
             if (destinationNames.Distinct(StringComparer.OrdinalIgnoreCase).Count() != destinationNames.Length)
                 throw new InvalidDataException(Text.DualDuplicateOutputs);

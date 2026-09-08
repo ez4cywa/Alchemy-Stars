@@ -66,6 +66,14 @@ public sealed partial class App : Application
                     await Task.Delay(500);
                     if (Program.DesktopSmokeRequested)
                         await DesktopSmoke.RunAsync(mainWindow, viewModel);
+                    if (Program.UtilitiesSmokeRequested)
+                        await UtilitiesSmoke.RunAsync(mainWindow, viewModel);
+                    if (Program.ShortcutsSmokeRequested)
+                        await ShortcutsSmoke.RunAsync(mainWindow, viewModel);
+                    if (Program.TextMenuSmokeRequested)
+                        await TextMenuSmoke.RunAsync(mainWindow, viewModel);
+                    if (Program.InspectorSmokeRequested)
+                        await InspectorSmoke.RunAsync(mainWindow, viewModel);
                     if (Program.AppearanceSmokeRequested)
                         await AppearanceSmoke.RunAsync(mainWindow, viewModel);
                     if (Program.AppearanceSamplesSmokeRequested)
@@ -85,6 +93,12 @@ public sealed partial class App : Application
                     desktop.Shutdown((Program.BuildPreviewSmoke || Program.PreviewSmokePath is not null) && !viewModel.Preview.HasScene ? 1 : 0);
                 };
             }
+            if (!Program.StartupSmokeRequested && !Program.AccessibilitySmokeRequested)
+                mainWindow.Opened += async (_, _) =>
+                {
+                    viewModel.ShowUpdateResult(Program.UpdateResultPath);
+                    await viewModel.CheckForUpdatesAsync(true);
+                };
             desktop.MainWindow = mainWindow;
         }
 

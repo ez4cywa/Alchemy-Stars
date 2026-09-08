@@ -2,7 +2,7 @@
 
 # Alchemy Stars Avalonia preview quick guide
 
-This guide applies to `1.3.0-preview.15`. WPF v1.1.9 remains the supported release until .NET 11 GA.
+This guide applies to `1.3.0-preview.18`. WPF v1.1.9 remains the supported release until .NET 11 GA.
 
 The sidebar switches between Animation blend, Model parts, Dual merge, Settings and About. It shows icons and labels at normal widths and collapses to icons in narrow windows. The base-animation library sits on the left, a real CAST preview in the center, composition layers across the bottom, and collapsible properties on the right. Drag the dividers or focus them and use arrow keys to resize panels. Icon commands have localized tooltips and UI Automation names; the titlebar displays the current page, with window controls at the upper right.
 
@@ -18,7 +18,21 @@ The app remembers the last directory for each picker category and can follow the
 
 For the canonical Hawk recipe, open `fork/AlchemyStars/Example/Hawk/HawkSprint.aprj`. It is the single source of truth used by managed and Native AOT export verification.
 
+## Utilities: remember an arms model
+
+Reuse the first imported arms model is enabled by default under Settings → Utilities. The app remembers the first imported arms path and adds it at startup or when creating a new project. Opening an existing `.aprj` does not insert or replace models. Only the path is remembered; the source asset is not copied.
+
+Turning the option off stops reuse without removing the saved path or current models. Choose arms model lets you specify another file. Forget arms clears only the saved path, not the source file or project models; while reuse is enabled, a later first import can be remembered again. Missing saved files are skipped with a visible status message.
+
+## GitHub updates
+
+Automatic updates are off by default. When enabled, the app checks and downloads newer releases from `ez4cywa/Alchemy-Stars` on GitHub, staying on the installed channel: preview builds select previews and stable builds select stable releases. Downloads are checked for size, SHA-256 and archive structure.
+
+Installation requires saving the current project and confirming restart after the download finishes. You can decline and continue working; a completed download never forces a restart. Older builds do not contain this updater: install preview.16 manually once before using future in-app updates.
+
 ## Custom themes and icons
+
+Appearance settings are below Utilities in Settings.
 
 Settings provides the Original, Classic Apple and Windows XP styles. Original uses the modern desktop controls with its original icons. The standalone Modern desktop style has been removed; its saved preference migrates to Original. Choose light, dark or system appearance, or use the one-click light/dark switch. Appearance preferences are saved separately from animation projects.
 
@@ -45,14 +59,26 @@ Choose **Build preview** in the composition workspace header to merge the select
 
 Keyboard commands:
 
+New in preview.17: the product name is centered at the top of the window. Importing the first animation layer supplies its filename stem as the default output name; later imports preserve it and custom names remain unchanged. Text-field Cut/Copy/Paste menus follow the selected language. Settings → Utilities → Unified output folder persists a shared destination for animation and dual-wield exports without changing project paths or preview caches; clearing it restores per-item destinations.
+
 | Command | Shortcut |
 | --- | --- |
+| New project | `Ctrl+N` |
 | Open project | `Ctrl+O` |
 | Save project | `Ctrl+S` |
 | Save project as | `Ctrl+Shift+S` |
 | Export all | `Ctrl+E` |
+| Import animations/models on the active page | `Ctrl+I` |
+| Import animation layers | `Ctrl+L` |
+| New dual task | `Ctrl+T` |
+| Build preview / open CAST preview | `F5` / `Ctrl+Shift+O` |
+| Navigate between five pages | `Ctrl+1` through `Ctrl+5` |
+| Remove focused list selection / reorder models or layers | `Delete` / `Alt+Up`, `Alt+Down` |
+| Complete shortcut reference | `F1` |
 | Toggle first-person CAST preview | `1` |
 | Close result/error dialog | `Esc` |
+
+List commands require list focus; text fields retain editing keys. Viewport commands require preview focus. Other shortcuts pause while tasks or messages are active.
 
 Merged CAST output uses DQS (`quaternion`) for skinned meshes. The bundled Maya importer respects an explicit CAST skinning method and defaults legacy files without one to DQS.
 

@@ -17,6 +17,10 @@ Add-Type -AssemblyName UIAutomationTypes
 $repositoryRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
 $standardProject = Join-Path $repositoryRoot 'fork\AlchemyStars\Example\Hawk\HawkSprint.aprj'
 $linkLog = Join-Path ([System.IO.Path]::GetTempPath()) ('AlchemyStars-about-links-' + [Guid]::NewGuid().ToString('N') + '.txt')
+$previousSettingsPath = $env:ALCHEMY_STARS_SETTINGS_PATH
+$accessibilitySettingsPath = Join-Path ([System.IO.Path]::GetTempPath()) ('AlchemyStars-accessibility-' + [Guid]::NewGuid().ToString('N') + '.json')
+# This English-name contract must not inherit a language saved by another smoke test.
+$env:ALCHEMY_STARS_SETTINGS_PATH = $accessibilitySettingsPath
 $arguments = '--accessibility-smoke --culture en-US --window-size 900x600 --page animations --dialog success --external-link-log "' + $linkLog + '" "' + $standardProject + '"'
 $process = Start-Process -FilePath $executable -ArgumentList $arguments -WorkingDirectory $publishPath -WindowStyle Hidden -PassThru
 try {
@@ -160,6 +164,7 @@ try {
     Write-Output 'Windows UI Automation names, keyboard focus, 44x44 key targets, both About actions and duration-aware track geometry: PASS'
 }
 finally {
+    $env:ALCHEMY_STARS_SETTINGS_PATH = $previousSettingsPath
     $process.Refresh()
     if (-not $process.HasExited) {
         Stop-Process -Id $process.Id -Force
@@ -168,5 +173,8 @@ finally {
     $process.Dispose()
     if (Test-Path -LiteralPath $linkLog) {
         [System.IO.File]::Delete($linkLog)
+    }
+    if (Test-Path -LiteralPath $accessibilitySettingsPath) {
+        [System.IO.File]::Delete($accessibilitySettingsPath)
     }
 }

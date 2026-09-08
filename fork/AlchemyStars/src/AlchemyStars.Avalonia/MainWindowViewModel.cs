@@ -37,17 +37,22 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
     private string dialogMessage = string.Empty;
     private bool dialogIsError;
     private string footerStatus;
+    private readonly Dictionary<WorkspacePart, long> partSourceRequests = [];
+    private long nextPartSourceRequest;
+    internal Func<string, Task<ModelPartClassification?>> PartClassifier { get; set; } = path => Task.Run(() => ClassifyPart(path));
 
     public MainWindowViewModel(
         IAnimationExportEngine engine,
         WorkspaceProjectStore projectStore,
         ApplicationPreferencesStore preferences,
-        IWorkspaceFilePicker picker)
+        IWorkspaceFilePicker picker,
+        GitHubUpdateService? updateService = null)
     {
         this.engine = engine;
         this.projectStore = projectStore;
         this.preferences = preferences;
         this.picker = picker;
+        this.updateService = updateService ?? new GitHubUpdateService();
         var preferenceSnapshot = preferences.Snapshot();
         CustomAppearance.Initialize(preferences.AppearanceDirectory);
         themeStyleIndex = preferenceSnapshot.ThemeStyle switch
@@ -61,6 +66,8 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
         ApplyAppearance(false);
         languageMode = NormalizeLanguageMode(preferenceSnapshot.Language);
         text = new UiText(ResolveChinese(languageMode));
+        InitializeLocalizedOptions();
+        NativeTextResources.Apply(text);
         Preview = new CastPreviewViewModel(text);
         Timeline = new AnimationTimelineViewModel(text);
         workspace = preferences.CreateWorkspace();
@@ -79,6 +86,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
         private set
         {
             UnwatchDualSources();
+            partSourceRequests.Clear();
             workspace = value;
             selectedDual = null;
             WatchDualSources();
@@ -197,7 +205,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
         Workspace = preferences.CreateWorkspace();
         CurrentProjectPath = null;
         SelectedAnimation = null;
-        SelectedPart = null;
+        SelectedPart = Parts.FirstOrDefault();
         FooterStatus = Text.NewProjectCreated;
         SelectPage(WorkspacePage.Animations);
     }
@@ -273,8 +281,10 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
     {
         var normalized = NormalizeCastPaths(paths).ToArray();
         if (normalized.Length == 0) return 0;
+        var importingWorkspace = Workspace;
         FooterStatus = Text.DetectingPartTypes;
-        var attempts = await Task.WhenAll(normalized.Select(path => Task.Run(() => ClassifyPart(path))));
+        var attempts = await Task.WhenAll(normalized.Select(PartClassifier));
+        if (!ReferenceEquals(importingWorkspace, Workspace)) return 0;
         return AddPartPathsCore(normalized.Zip(attempts));
     }
 
@@ -302,6 +312,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
             };
             Parts.Add(part);
             SelectedPart = part;
+            if (classification?.Kind == ModelPartKind.ViewHands) RememberImportedArms(part);
             if (classification is not null)
             {
                 detected++;
@@ -338,6 +349,9 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
         foreach (var path in NormalizeCastPaths(paths))
         {
             var layer = new WorkspaceLayer { Name = path, Type = AnimationLayerKind.Additive };
+            if (SelectedAnimation.Layers.Count == 0 && (string.IsNullOrWhiteSpace(SelectedAnimation.OutputName)
+                || string.Equals(SelectedAnimation.OutputName, Path.GetFileNameWithoutExtension(SelectedAnimation.Name), StringComparison.OrdinalIgnoreCase)))
+                SelectedAnimation.OutputName = Path.GetFileNameWithoutExtension(path);
             SelectedAnimation.Layers.Add(layer);
             SelectedLayer = layer;
             added++;
@@ -377,11 +391,20 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
         SelectedLayer = SelectedAnimation.Layers.Count == 0 ? null : SelectedAnimation.Layers[Math.Min(index, SelectedAnimation.Layers.Count - 1)];
     }
 
-    public void MoveSelectedPart(int delta) => Move(Parts, SelectedPart, delta);
+    public void MoveSelectedPart(int delta)
+    {
+        var selected = SelectedPart;
+        Move(Parts, selected, delta);
+        SelectedPart = selected;
+    }
     public void MoveSelectedLayer(int delta)
     {
         if (SelectedAnimation is not null)
-            Move(SelectedAnimation.Layers, SelectedLayer, delta);
+        {
+            var selected = SelectedLayer;
+            Move(SelectedAnimation.Layers, selected, delta);
+            SelectedLayer = selected;
+        }
     }
 
     public async Task ReplaceAnimationSourceAsync(WorkspaceAnimation animation)
@@ -447,7 +470,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
             IsBusy = true;
             BusyMessage = Text.Exporting;
             FooterStatus = Text.Exporting;
-            var request = projectStore.CreateExportRequest(Workspace);
+            var request = ApplyUnifiedOutputDirectory(projectStore.CreateExportRequest(Workspace));
             var selection = SelectedAnimation;
             var selectedIndex = selection is null ? 0 : Animations.IndexOf(selection);
             var result = await Task.Run(() => engine.Export(request));
@@ -514,6 +537,8 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
 
     public void Dispose()
     {
+        CancelUpdate();
+        DiscardDownloadedUpdate();
         UnwatchDualSources();
         if (selectedPart is not null)
             selectedPart.PropertyChanged -= SelectedPartChanged;
@@ -611,13 +636,19 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
     private async Task ApplyPartSourceAsync(WorkspacePart part, string path)
     {
         var normalized = PathInput.Normalize(path);
+        var request = ++nextPartSourceRequest;
+        partSourceRequests[part] = request;
         part.FilePath = normalized;
-        var classification = await Task.Run(() => ClassifyPart(normalized));
+        var classification = await PartClassifier(normalized);
+        if (!partSourceRequests.TryGetValue(part, out var latest) || latest != request) return;
+        partSourceRequests.Remove(part);
+        if (!Parts.Contains(part) || !string.Equals(part.FilePath, normalized, StringComparison.OrdinalIgnoreCase)) return;
         if (classification is not null)
         {
             part.Type = classification.Kind;
             part.ParentBoneTag = classification.RecommendedParentBone;
             part.AutoClassification = classification;
+            RememberImportedArms(part);
             FooterStatus = string.Format(CultureInfo.CurrentCulture, Text.PartDetected,
                 Text.PartTypes[(int)classification.Kind]);
         }
@@ -640,6 +671,8 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
 
     private void SelectedPartChanged(object? sender, PropertyChangedEventArgs e)
     {
+        if (e.PropertyName == nameof(WorkspacePart.Type) && sender is WorkspacePart part)
+            RememberImportedArms(part);
         if (e.PropertyName is nameof(WorkspacePart.Type) or nameof(WorkspacePart.AutoClassification))
             RaisePartClassificationState();
     }
@@ -653,12 +686,17 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
     private void ApplyLanguage()
     {
         Text = new UiText(IsChinese);
+        RefreshLocalizedOptions();
+        NativeTextResources.Apply(Text);
         FooterStatus = Text.Ready;
         OnPropertyChanged(nameof(IsChinese));
         OnPropertyChanged(nameof(LanguageMode));
         OnPropertyChanged(nameof(LanguageButtonLabel));
         OnPropertyChanged(nameof(LanguageButtonAccessibleName));
         RefreshAppearanceLabel();
+        RefreshUtilitySettings();
+        RefreshOutputDirectorySettings();
+        RaiseUpdateState();
         OnPropertyChanged(nameof(CurrentProjectLabel));
         OnPropertyChanged(nameof(WindowTitle));
         RaisePartClassificationState();
