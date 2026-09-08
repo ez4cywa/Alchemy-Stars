@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.3.0-preview.15 — 2026-09-08 (custom appearance)
+
+Chinese release notes, compared with published preview.13 (`b76e996`): [更新日志](docs/releases/1.3.0-preview.15.zh-CN.md). The local historical preview.14 notes below are retained unchanged.
+
+- Added an independent Windows XP theme with 34 matching vector icons and themed controls, preserving all existing themes.
+- Completely redrew Classic Apple controls and all 34 functional icons in a dedicated platinum-light/graphite-dark skin.
+- Added a one-click light/dark appearance switch with saved preferences.
+- Added custom JSON theme and PNG icon ZIP imports from Settings, with restoration of the built-in appearance and bundled editable templates.
+- Fixed playback slider thumb clipping at the start, middle and end of the track.
+
 ## 1.3.0-preview.13 — 2026-09-08 (ez4cywa AOT integration)
 
 Simple Chinese update log, compared with target branch commit `c817e47`: [更新日志](docs/releases/1.3.0-preview.13.zh-CN.md).

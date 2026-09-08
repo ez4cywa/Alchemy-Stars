@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 
@@ -58,6 +59,9 @@ public sealed partial class MainWindow : Window
             preferences,
             new AvaloniaFilePickerAdapter(this, preferences, externalUriLaunch));
         DataContext = viewModel;
+        EventHandler appearanceChanged = (_, _) => viewModel.RefreshAppearanceLabel();
+        ActualThemeVariantChanged += appearanceChanged;
+        Closed += (_, _) => ActualThemeVariantChanged -= appearanceChanged;
         Closed += (_, _) => viewModel.Dispose();
         viewModel.PropertyChanged += (_, eventArgs) =>
         {
@@ -68,6 +72,34 @@ public sealed partial class MainWindow : Window
     }
 
     private MainWindowViewModel ViewModel => (MainWindowViewModel)DataContext!;
+    private void ToggleAppearanceClick(object? sender, RoutedEventArgs e) => ViewModel.ToggleAppearance();
+    private async void ImportThemeClick(object? sender, RoutedEventArgs e) => await ImportAppearanceAsync(false);
+    private async void ImportIconsClick(object? sender, RoutedEventArgs e) => await ImportAppearanceAsync(true);
+    private void ResetThemeClick(object? sender, RoutedEventArgs e) => ResetAppearance(false);
+    private void ResetIconsClick(object? sender, RoutedEventArgs e) => ResetAppearance(true);
+
+    private async Task ImportAppearanceAsync(bool icons)
+    {
+        try
+        {
+            var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+            {
+                Title = icons ? ViewModel.Text.ImportIcons : ViewModel.Text.ImportTheme,
+                AllowMultiple = false,
+                FileTypeFilter = [new FilePickerFileType(icons ? "PNG icon pack" : "Alchemy Stars theme") { Patterns = icons ? ["*.zip"] : ["*.json"] }],
+            });
+            if (files.Count == 0) return;
+            var path = files[0].TryGetLocalPath() ?? throw new IOException("Select a local file.");
+            ViewModel.ImportAppearance(path, icons);
+        }
+        catch (Exception error) { ViewModel.ReportAppearanceError(error); }
+    }
+
+    private void ResetAppearance(bool icons)
+    {
+        try { ViewModel.ResetCustomAppearance(icons); }
+        catch (Exception error) { ViewModel.ReportAppearanceError(error); }
+    }
 
     internal void VerifyToolbarLayout()
     {

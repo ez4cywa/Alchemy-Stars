@@ -165,18 +165,29 @@
         <StackPanel Spacing="3"><TextBlock Text="{Binding Text.OutputSettings}" Classes="display-title" FontSize="21" FontWeight="SemiBold" /><TextBlock Text="{Binding Text.OutputSettingsHelp}" Classes="muted body-copy" TextWrapping="Wrap" /></StackPanel>
         <Border Classes="card">
           <StackPanel Spacing="12">
-            <TextBlock Text="{Binding Text.Appearance}" Classes="card-title" />
+            <Grid ColumnDefinitions="*,Auto">
+              <TextBlock Text="{Binding Text.Appearance}" Classes="card-title" VerticalAlignment="Center" />
+              <Button x:Name="AppearanceToggleButton" Grid.Column="1" Click="ToggleAppearanceClick" Content="{Binding ToggleAppearanceLabel}" AutomationProperties.Name="{Binding ToggleAppearanceLabel}" />
+            </Grid>
             <TextBlock Text="{Binding Text.AppearanceHelp}" Classes="muted" TextWrapping="Wrap" />
             <Grid ColumnDefinitions="*,24,*">
               <StackPanel>
                 <TextBlock Text="{Binding Text.ThemeStyle}" Classes="field-label" />
-                <ComboBox x:Name="ThemeStylePicker" ItemsSource="{Binding Text.ThemeStyles}" SelectedIndex="{Binding ThemeStyleIndex, Mode=TwoWay}" AutomationProperties.Name="{Binding Text.ThemeStyle}" />
+                <ComboBox x:Name="ThemeStylePicker" ItemsSource="{Binding ThemeStyles}" SelectedIndex="{Binding ThemeStyleIndex, Mode=TwoWay}" AutomationProperties.Name="{Binding Text.ThemeStyle}" />
               </StackPanel>
               <StackPanel Grid.Column="2">
                 <TextBlock Text="{Binding Text.ThemeMode}" Classes="field-label" />
                 <ComboBox x:Name="ThemeModePicker" ItemsSource="{Binding Text.ThemeModes}" SelectedIndex="{Binding ThemeModeIndex, Mode=TwoWay}" AutomationProperties.Name="{Binding Text.ThemeMode}" />
               </StackPanel>
             </Grid>
+            <TextBlock Text="{Binding CustomAppearanceStatus}" TextWrapping="Wrap" />
+            <WrapPanel Orientation="Horizontal">
+              <Button x:Name="ImportThemeButton" Margin="0,0,8,8" Click="ImportThemeClick" Content="{Binding Text.ImportTheme}" />
+              <Button x:Name="ImportIconsButton" Margin="0,0,8,8" Click="ImportIconsClick" Content="{Binding Text.ImportIcons}" />
+              <Button x:Name="ResetThemeButton" Margin="0,0,8,8" Click="ResetThemeClick" Content="{Binding Text.ResetTheme}" IsEnabled="{Binding CanResetCustomTheme}" />
+              <Button x:Name="ResetIconsButton" Margin="0,0,0,8" Click="ResetIconsClick" Content="{Binding Text.ResetIcons}" IsEnabled="{Binding CanResetCustomIcons}" />
+            </WrapPanel>
+            <TextBlock Text="{Binding Text.CustomAppearanceHelp}" Classes="muted" TextWrapping="Wrap" />
           </StackPanel>
         </Border>
         <Grid ColumnDefinitions="*,16,*">
@@ -191,7 +202,7 @@
     <!-- About workspace -->
     <ScrollViewer Grid.Column="1" Grid.Row="1" IsVisible="{Binding IsAboutPage}" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
       <StackPanel Margin="30,26,30,38" Spacing="18" MaxWidth="900" HorizontalAlignment="Center">
-        <Grid ColumnDefinitions="116,26,*"><Border Width="116" Height="116" Padding="12" Background="{DynamicResource AlchemySurfaceBrush}" BorderBrush="{DynamicResource AlchemyBorderStrongBrush}" BorderThickness="1" CornerRadius="18"><Image Source="avares://AlchemyStars.Avalonia/Assets/AlchemyStarsIcon.png" Stretch="Uniform" AutomationProperties.Name="{Binding Text.ApplicationIcon}" /></Border><StackPanel Grid.Column="2" VerticalAlignment="Center" Spacing="7"><TextBlock Text="{Binding Text.AboutTitle}" Classes="display-title" FontSize="34" FontWeight="SemiBold" TextWrapping="Wrap" /><TextBlock Text="{Binding Text.AboutSubtitle}" Classes="muted" FontSize="15" TextWrapping="Wrap" /><Border Classes="preview-badge" HorizontalAlignment="Left"><TextBlock Text="1.3.0-preview.13 · .NET 11 · Native AOT" Classes="eyebrow" /></Border></StackPanel></Grid>
+        <Grid ColumnDefinitions="116,26,*"><Border Width="116" Height="116" Padding="12" Background="{DynamicResource AlchemySurfaceBrush}" BorderBrush="{DynamicResource AlchemyBorderStrongBrush}" BorderThickness="1" CornerRadius="18"><Image Source="avares://AlchemyStars.Avalonia/Assets/AlchemyStarsIcon.png" Stretch="Uniform" AutomationProperties.Name="{Binding Text.ApplicationIcon}" /></Border><StackPanel Grid.Column="2" VerticalAlignment="Center" Spacing="7"><TextBlock Text="{Binding Text.AboutTitle}" Classes="display-title" FontSize="34" FontWeight="SemiBold" TextWrapping="Wrap" /><TextBlock Text="{Binding Text.AboutSubtitle}" Classes="muted" FontSize="15" TextWrapping="Wrap" /><Border Classes="preview-badge" HorizontalAlignment="Left"><TextBlock Text="1.3.0-preview.15 · .NET 11 · Native AOT" Classes="eyebrow" /></Border></StackPanel></Grid>
         <Border Classes="hero-card"><StackPanel Spacing="10"><TextBlock Text="{Binding Text.AboutOverview}" TextWrapping="Wrap" Classes="body-copy" /><TextBlock Text="{Binding Text.Capabilities}" Classes="muted body-copy" TextWrapping="Wrap" /></StackPanel></Border>
         <Grid ColumnDefinitions="*,16,*"><Border Classes="card"><StackPanel Spacing="10"><TextBlock Text="{Binding Text.Build}" Classes="card-title" /><TextBlock Text="{Binding RuntimeDescription}" Classes="muted" /><TextBlock Text="{Binding Text.License}" Classes="muted" TextWrapping="Wrap" /></StackPanel></Border><Border Grid.Column="2" Classes="card"><StackPanel Spacing="10"><TextBlock Text="{Binding Text.ProjectRepositoryTitle}" Classes="card-title" /><TextBlock Text="{Binding Text.ProjectRepositoryHelp}" Classes="muted" TextWrapping="Wrap" /><Button Classes="secondary" Click="OpenProjectRepositoryClick" Content="{Binding ProjectRepositoryDisplayName}" HorizontalAlignment="Left" AutomationProperties.Name="{Binding Text.OpenProjectRepository}" ToolTip.Tip="{Binding Text.OpenProjectRepository}" /><Border Height="1" Margin="0,4" Background="{DynamicResource AlchemyBorderBrush}" /><TextBlock Text="{Binding Text.UpstreamTitle}" Classes="card-title" /><TextBlock Text="{Binding Text.UpstreamHelp}" Classes="muted" TextWrapping="Wrap" /><Button Classes="secondary" Click="OpenUpstreamClick" Content="{Binding Text.Upstream}" HorizontalAlignment="Left" AutomationProperties.Name="{Binding Text.Upstream}" /></StackPanel></Border></Grid>
       </StackPanel>

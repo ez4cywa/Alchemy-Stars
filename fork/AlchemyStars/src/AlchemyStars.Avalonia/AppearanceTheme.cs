@@ -1,6 +1,8 @@
 using Avalonia;
 using Avalonia.Media;
 using Avalonia.Styling;
+using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.VisualTree;
 
 namespace AlchemyStars.Avalonia;
 
@@ -9,6 +11,17 @@ internal static class AppearanceTheme
 {
     private static Application? owner;
     private static string currentStyle = "apple";
+
+    internal static void RemoveControlSkin(Application app, Styles skin)
+    {
+        if (!app.Styles.Remove(skin)) return;
+        // Avalonia's removal walks logical children. Template visuals (e.g. the
+        // primary button's ContentPresenter) can retain style frames otherwise.
+        if (app.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+            foreach (var window in desktop.Windows.ToArray())
+                foreach (var element in window.GetVisualDescendants().OfType<StyledElement>().Where(element => element.TemplatedParent is not null).ToArray())
+                    ((IStyleHost)element).StylesRemoved([skin]);
+    }
 
     public static void Apply(string style, string mode)
     {
@@ -38,8 +51,18 @@ internal static class AppearanceTheme
     private static void UpdateTokens(Application app)
     {
         var dark = app.ActualThemeVariant == ThemeVariant.Dark;
-        var classic = currentStyle == "classic-apple";
-        var relief = currentStyle == "neumorphic";
+        var style = currentStyle == "custom" ? CustomAppearance.CurrentTheme?.BaseStyle ?? "apple" : currentStyle;
+        if (style == "windows-xp")
+        {
+            ClassicAppleAppearance.Remove(app);
+            WindowsXpAppearance.Apply(app, dark);
+            if (currentStyle == "custom") CustomAppearance.Apply(app, dark);
+            return;
+        }
+        WindowsXpAppearance.Remove(app);
+        var classic = style == "classic-apple";
+        if (!classic) ClassicAppleAppearance.Remove(app);
+        var relief = style == "neumorphic";
         var r = app.Resources;
         void Brush(string name, string color)
         {
@@ -120,5 +143,7 @@ internal static class AppearanceTheme
         r["AppearanceActionRadius"] = new CornerRadius(relief ? 12 : classic ? 6 : 9999);
         r["AppearanceCardRadius"] = new CornerRadius(relief ? 20 : classic ? 10 : 18);
         r["AppearanceCardBorder"] = new Thickness(relief ? 0 : 1);
+        if (classic) ClassicAppleAppearance.Apply(app, dark);
+        if (currentStyle == "custom") CustomAppearance.Apply(app, dark);
     }
 }

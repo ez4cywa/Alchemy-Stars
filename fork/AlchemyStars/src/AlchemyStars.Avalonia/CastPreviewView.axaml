@@ -1,7 +1,7 @@
 <UserControl x:Class="AlchemyStars.Avalonia.CastPreviewView"
     xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:AlchemyStars.Avalonia" x:DataType="local:CastPreviewViewModel">
-  <Grid RowDefinitions="*,56">
+  <Grid RowDefinitions="*,Auto">
     <Grid ColumnDefinitions="40,*">
       <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
         <StackPanel Background="{DynamicResource AlchemySurfaceBrush}" IsEnabled="{Binding HasScene}">
@@ -43,10 +43,10 @@
       </Border>
     </Grid>
     <Border Grid.Row="1" Background="{DynamicResource AlchemySurfaceBrush}" BorderBrush="{DynamicResource AlchemyBorderBrush}" BorderThickness="0,1,0,0">
-      <Grid RowDefinitions="24,32">
+      <Grid RowDefinitions="Auto,32">
         <Slider x:Name="FrameSlider" Classes="preview-scrubber" Minimum="0" Maximum="{Binding LastFrame}"
           Value="{Binding Frame}" SmallChange="1" IsSnapToTickEnabled="True" TickPlacement="TopLeft"
-          TickFrequency="{Binding PreviewTickFrequency}" Margin="10,-2,10,0"
+          TickFrequency="{Binding PreviewTickFrequency}" Margin="10,2,10,2" Height="36" MinHeight="36"
           IsEnabled="{Binding CanPlay}" AutomationProperties.Name="{Binding Text.PreviewFrame}">
         <Slider.Resources>
           <x:Double x:Key="SliderTrackThemeHeight">3</x:Double>

@@ -49,10 +49,13 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
         this.preferences = preferences;
         this.picker = picker;
         var preferenceSnapshot = preferences.Snapshot();
+        CustomAppearance.Initialize(preferences.AppearanceDirectory);
         themeStyleIndex = preferenceSnapshot.ThemeStyle switch
         {
             "classic-apple" => 1,
             "neumorphic" => 2,
+            "windows-xp" => 3,
+            "custom" => CustomAppearance.CurrentTheme is not null ? 4 : 0,
             _ => 0,
         };
         themeModeIndex = preferenceSnapshot.ThemeMode switch { "dark" => 1, "system" => 2, _ => 0 };
@@ -656,6 +659,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
         OnPropertyChanged(nameof(LanguageMode));
         OnPropertyChanged(nameof(LanguageButtonLabel));
         OnPropertyChanged(nameof(LanguageButtonAccessibleName));
+        RefreshAppearanceLabel();
         OnPropertyChanged(nameof(CurrentProjectLabel));
         OnPropertyChanged(nameof(WindowTitle));
         RaisePartClassificationState();

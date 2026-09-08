@@ -4,10 +4,10 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$version = '1.3.0-preview.13'
+$version = '1.3.0-preview.15'
 $repositoryRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
 $releaseRoot = [System.IO.Path]::GetFullPath((Join-Path $repositoryRoot 'release'))
-$publishDirectory = [System.IO.Path]::GetFullPath((Join-Path $repositoryRoot 'output\avalonia-aot-preview13'))
+$publishDirectory = [System.IO.Path]::GetFullPath((Join-Path $repositoryRoot 'output\avalonia-aot-preview15'))
 $stagingDirectory = [System.IO.Path]::GetFullPath((Join-Path $releaseRoot "Alchemy Stars $version"))
 $resolvedArchive = if ([string]::IsNullOrWhiteSpace($ArchivePath)) {
     [System.IO.Path]::GetFullPath((Join-Path $releaseRoot "AlchemyStars-$version-win-x64.zip"))
@@ -47,7 +47,10 @@ $rootFiles = @(
     @{ Source = 'LICENSE'; Target = 'LICENSE.txt' },
     @{ Source = 'THIRD_PARTY_NOTICES.md'; Target = 'THIRD_PARTY_NOTICES.md' },
     @{ Source = 'docs\dual-wield.zh-CN.md'; Target = 'Docs\DUAL-WIELD.zh-CN.md' },
-    @{ Source = 'docs\releases\1.3.0-preview.13.zh-CN.md'; Target = 'Docs\RELEASE-NOTES.zh-CN.md' },
+    @{ Source = 'docs\releases\1.3.0-preview.15.zh-CN.md'; Target = 'Docs\RELEASE-NOTES.zh-CN.md' },
+    @{ Source = 'docs\samples\appearance\theme.json'; Target = 'Samples\Appearance\theme.json' },
+    @{ Source = 'docs\samples\appearance\icons-template.zip'; Target = 'Samples\Appearance\icons-template.zip' },
+    @{ Source = 'docs\samples\appearance\README.zh-CN.md'; Target = 'Samples\Appearance\README.zh-CN.md' },
     @{ Source = 'fork\RedFox\LICENSE'; Target = 'Licenses\RedFox-LICENSE.txt' },
     @{ Source = 'third_party\cast\LICENSE'; Target = 'Licenses\Maya-CAST-LICENSE.txt' },
     @{ Source = 'docs\avalonia-aot-user-guide.md'; Target = 'Docs\USER-GUIDE.en-US.md' },
@@ -84,6 +87,19 @@ foreach ($example in $manifest.StandardExamples) {
     }
 }
 
+$sampleOutput = Join-Path $repositoryRoot 'output\avalonia-aot-appearance-samples'
+[System.IO.Directory]::CreateDirectory($sampleOutput) | Out-Null
+$previousSettingsPath = $env:ALCHEMY_STARS_SETTINGS_PATH
+try {
+    $env:ALCHEMY_STARS_SETTINGS_PATH = Join-Path $sampleOutput 'settings.json'
+    $sampleArguments = '--appearance-samples-smoke --culture en-US --window-size 900x600 --render-smoke "' + (Join-Path $sampleOutput 'result.png') + '"'
+    $sampleTest = Start-Process -FilePath (Join-Path $stagingDirectory 'AlchemyStars.Avalonia.exe') -ArgumentList $sampleArguments -WorkingDirectory $stagingDirectory -WindowStyle Hidden -Wait -PassThru
+    if ($sampleTest.ExitCode -ne 0) { throw "Shipped appearance samples failed validation: $($sampleTest.ExitCode)" }
+    Write-Output 'Shipped appearance samples: native import and light/dark render PASS'
+} finally {
+    $env:ALCHEMY_STARS_SETTINGS_PATH = $previousSettingsPath
+}
+
 [System.IO.Directory]::CreateDirectory((Split-Path -Parent $resolvedArchive)) | Out-Null
 Compress-Archive -Path (Join-Path $stagingDirectory '*') -DestinationPath $resolvedArchive -CompressionLevel Optimal
 
@@ -91,7 +107,7 @@ Add-Type -AssemblyName System.IO.Compression
 $archive = [System.IO.Compression.ZipFile]::OpenRead($resolvedArchive)
 try {
     $names = @($archive.Entries.FullName -replace '\\', '/')
-    foreach ($required in @('AlchemyStars.Avalonia.exe', 'README.md', 'README.zh-CN.md', 'Example/manifest.json', 'MayaPlugin/castplugin.py', 'BlenderPlugin/io_scene_cast/__init__.py', 'BlenderPlugin/LICENSE', 'Converters/convert_cast.py', 'Docs/DUAL-WIELD.zh-CN.md', 'Docs/RELEASE-NOTES.zh-CN.md')) {
+    foreach ($required in @('AlchemyStars.Avalonia.exe', 'README.md', 'README.zh-CN.md', 'Example/manifest.json', 'MayaPlugin/castplugin.py', 'BlenderPlugin/io_scene_cast/__init__.py', 'BlenderPlugin/LICENSE', 'Converters/convert_cast.py', 'Docs/DUAL-WIELD.zh-CN.md', 'Docs/RELEASE-NOTES.zh-CN.md', 'Samples/Appearance/theme.json', 'Samples/Appearance/icons-template.zip', 'Samples/Appearance/README.zh-CN.md')) {
         if ($required -notin $names) { throw "Release archive is missing: $required" }
     }
     if (@($names | Where-Object { $_.EndsWith('.pdb', [System.StringComparison]::OrdinalIgnoreCase) }).Count -gt 0) {

@@ -23,6 +23,8 @@ public sealed class ApplicationPreferencesStore
             return Read().Clone();
     }
 
+    public string AppearanceDirectory => Path.Combine(Path.GetDirectoryName(settingsPath)!, "Appearance");
+
     public WorkspaceDocument CreateWorkspace()
     {
         var preferences = Snapshot();
@@ -67,7 +69,7 @@ public sealed class ApplicationPreferencesStore
 
     public void SaveAppearance(string style, string mode) => Update(preferences =>
     {
-        preferences.ThemeStyle = style is "classic-apple" or "neumorphic" ? style : "apple";
+        preferences.ThemeStyle = style is "classic-apple" or "neumorphic" or "windows-xp" or "custom" ? style : "apple";
         preferences.ThemeMode = mode is "dark" or "system" ? mode : "light";
     });
 
@@ -88,7 +90,7 @@ public sealed class ApplicationPreferencesStore
         data ??= new AppPreferenceData();
         data.LastDirectories ??= new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         data.DefaultOutputFormat = OutputFormats.Normalize(data.DefaultOutputFormat);
-        data.ThemeStyle = data.ThemeStyle is "classic-apple" or "neumorphic" ? data.ThemeStyle : "apple";
+        data.ThemeStyle = data.ThemeStyle is "classic-apple" or "neumorphic" or "windows-xp" or "custom" ? data.ThemeStyle : "apple";
         data.ThemeMode = data.ThemeMode is "dark" or "system" ? data.ThemeMode : "light";
         return data;
     }

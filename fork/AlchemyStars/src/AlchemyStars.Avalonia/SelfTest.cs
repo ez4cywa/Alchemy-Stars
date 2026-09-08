@@ -55,6 +55,7 @@ internal static class SelfTest
     {
         try
         {
+            CustomAppearanceSmoke.VerifyThemeParser();
             var engine = new AnimationExportEngine();
             var capabilities = engine.Capabilities;
             Require(capabilities.Version == AnimationExportEngine.EngineVersion, "Engine version mismatch.");
@@ -97,6 +98,10 @@ internal static class SelfTest
                 var classicAppearance = new ApplicationPreferencesStore(Path.Combine(testDirectory, "settings.json")).Snapshot();
                 Require(classicAppearance.ThemeStyle == "classic-apple" && classicAppearance.ThemeMode == "system",
                     "Classic Apple appearance must persist across process reloads.");
+                preferences.SaveAppearance("neumorphic", "dark");
+                preferences.SaveAppearance("windows-xp", "light");
+                Require(new ApplicationPreferencesStore(Path.Combine(testDirectory, "settings.json")).Snapshot().ThemeStyle == "windows-xp",
+                    "Windows XP appearance must persist across process reloads.");
                 preferences.SaveAppearance("neumorphic", "dark");
                 preferences.SaveLanguage("system");
                 preferences.SaveDefaults("system", preferences.CreateWorkspace());

@@ -1,0 +1,204 @@
+<Styles xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" x:Class="AlchemyStars.Avalonia.WindowsXpStyles">
+  <!-- A separate Luna control skin. Added/removed as a unit so other themes retain their templates. -->
+  <Style Selector="Window, MenuItem, ToolTip">
+    <Setter Property="FontFamily" Value="Tahoma, Microsoft YaHei UI, sans-serif" />
+  </Style>
+  <Style Selector="TextBlock.display-title"><Setter Property="FontFamily" Value="Tahoma, Microsoft YaHei UI, sans-serif" /></Style>
+  <Style Selector="TextBlock.card-title, TextBlock.body-copy, TextBlock.display-title">
+    <Setter Property="LetterSpacing" Value="0" />
+  </Style>
+  <Style Selector="TextBlock.card-title"><Setter Property="FontSize" Value="15" /></Style>
+  <Style Selector="Border.workspace-panel, Border.composition-canvas, Border.card, Border.subcard, Border.hero-card, Border.dialog-card">
+    <Setter Property="BorderBrush" Value="{DynamicResource AlchemyBorderStrongBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{DynamicResource AppearancePanelRadius}" />
+  </Style>
+  <Style Selector="Border.card, Border.subcard, Border.hero-card, Border.dialog-card">
+    <Setter Property="CornerRadius" Value="{DynamicResource AppearanceCardRadius}" />
+  </Style>
+  <Style Selector="Border.dock-header, Border.track-heading, Border.canvas-footer">
+    <Setter Property="Background" Value="{DynamicResource XpHeaderBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AlchemyBorderStrongBrush}" />
+  </Style>
+  <Style Selector="Border.dock-header TextBlock.dock-title, TextBlock.card-title">
+    <Setter Property="Foreground" Value="{DynamicResource AlchemyAccentBrush}" />
+  </Style>
+  <Style Selector="Border.feature-icon, Border.preview-badge, Border.count-badge">
+    <Setter Property="CornerRadius" Value="2" />
+    <Setter Property="Background" Value="{DynamicResource XpHeaderBrush}" />
+  </Style>
+  <Style Selector="Button, Button.icon, Button.toolbar, Button.panel-command, Button.activity, Button.activity.selected, Button.subtle, Button.primary, Button.secondary, ToggleButton.preview-command">
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Setter Property="CornerRadius" Value="{DynamicResource AppearanceButtonRadius}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AlchemyBorderStrongBrush}" />
+    <Setter Property="Background" Value="{DynamicResource XpButtonBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource AlchemyTextBrush}" />
+  </Style>
+  <Style Selector="Button:pressed, ToggleButton.preview-command:pressed">
+    <Setter Property="RenderTransform" Value="none" />
+  </Style>
+  <Style Selector="Button /template/ ContentPresenter, Button.icon /template/ ContentPresenter, Button.secondary /template/ ContentPresenter, Button.toolbar /template/ ContentPresenter, Button.panel-command /template/ ContentPresenter, Button.activity /template/ ContentPresenter, Button.subtle /template/ ContentPresenter, ToggleButton.preview-command /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource XpButtonBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource AlchemyTextBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AlchemyBorderStrongBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{DynamicResource AppearanceButtonRadius}" />
+    <Setter Property="BoxShadow" Value="{DynamicResource AppearanceRaisedShadow}" />
+  </Style>
+  <Style Selector="Button.activity.selected /template/ ContentPresenter, ToggleButton.preview-command:checked /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource XpButtonPressedBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AlchemyFocusBrush}" />
+    <Setter Property="BorderThickness" Value="2" />
+    <Setter Property="BoxShadow" Value="{DynamicResource AppearanceInsetShadow}" />
+  </Style>
+  <Style Selector="Button:pointerover /template/ ContentPresenter, ToggleButton.preview-command:pointerover /template/ ContentPresenter, Border.command-bar Button.toolbar:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource XpButtonHoverBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource XpHoverBorderBrush}" />
+  </Style>
+  <Style Selector="Button:pressed /template/ ContentPresenter, ToggleButton.preview-command:pressed /template/ ContentPresenter, Border.command-bar Button.toolbar:pressed /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource XpButtonPressedBrush}" />
+    <Setter Property="BoxShadow" Value="{DynamicResource AppearanceInsetShadow}" />
+  </Style>
+  <Style Selector="Button:focus-visible /template/ ContentPresenter, ToggleButton.preview-command:focus-visible /template/ ContentPresenter">
+    <Setter Property="BorderBrush" Value="{DynamicResource AlchemyFocusBrush}" />
+    <Setter Property="BorderThickness" Value="2" />
+  </Style>
+  <Style Selector="Button.primary">
+    <Setter Property="Background" Value="{DynamicResource XpActionBrush}" />
+    <Setter Property="Foreground" Value="White" />
+    <Setter Property="BorderBrush" Value="#194b17" />
+    <Setter Property="CornerRadius" Value="{DynamicResource AppearanceActionRadius}" />
+  </Style>
+  <Style Selector="Button.primary /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource XpActionBrush}" />
+    <Setter Property="Foreground" Value="White" />
+    <Setter Property="BorderBrush" Value="#194b17" />
+    <Setter Property="CornerRadius" Value="{DynamicResource AppearanceActionRadius}" />
+  </Style>
+  <Style Selector="Button.primary:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource XpActionHoverBrush}" />
+  </Style>
+  <Style Selector="Button.primary:pressed /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource XpActionPressedBrush}" />
+  </Style>
+  <Style Selector="Button:disabled /template/ ContentPresenter, ToggleButton.preview-command:disabled /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource XpButtonBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource AlchemyMutedTextBrush}" />
+    <Setter Property="BoxShadow" Value="none" />
+  </Style>
+  <Style Selector="TextBox, ComboBox">
+    <Setter Property="Background" Value="{DynamicResource AlchemyCanvasBrush}" />
+    <Setter Property="CornerRadius" Value="0" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AlchemyBorderStrongBrush}" />
+  </Style>
+  <Style Selector="TextBox /template/ Border#PART_BorderElement, ComboBox /template/ Border#Background">
+    <Setter Property="Background" Value="{DynamicResource AlchemyCanvasBrush}" />
+    <Setter Property="CornerRadius" Value="0" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AlchemyBorderStrongBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="BoxShadow" Value="{DynamicResource AppearanceInsetShadow}" />
+  </Style>
+  <Style Selector="TextBox:pointerover /template/ Border#PART_BorderElement, ComboBox:pointerover /template/ Border#Background">
+    <Setter Property="BorderBrush" Value="{DynamicResource XpHoverBorderBrush}" />
+  </Style>
+  <Style Selector="TextBox:focus-within /template/ Border#PART_BorderElement, ComboBox:focus-within /template/ Border#Background">
+    <Setter Property="BorderBrush" Value="{DynamicResource AlchemyFocusBrush}" />
+    <Setter Property="BorderThickness" Value="2" />
+  </Style>
+  <Style Selector="ComboBox /template/ Path">
+    <Setter Property="Fill" Value="{DynamicResource AlchemyAccentBrush}" />
+  </Style>
+  <Style Selector="ComboBox:not(.native-template) /template/ Border#DropDownOverlay">
+    <Setter Property="IsVisible" Value="True" />
+    <Setter Property="Background" Value="{DynamicResource XpHeaderBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AlchemyBorderStrongBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="BoxShadow" Value="{DynamicResource AppearanceRaisedShadow}" />
+  </Style>
+  <Style Selector="ComboBox:not(.native-template) /template/ PathIcon#DropDownGlyph">
+    <Setter Property="Data" Value="M0,0 L8,0 L4,4 Z" />
+    <Setter Property="Width" Value="8" /><Setter Property="Height" Value="4" />
+    <Setter Property="Margin" Value="0,0,12,0" />
+    <Setter Property="Foreground" Value="{DynamicResource AlchemyAccentBrush}" />
+  </Style>
+  <Style Selector="ComboBox:not(.native-template) /template/ Border#PopupBorder">
+    <Setter Property="Background" Value="{DynamicResource AlchemyCanvasBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AlchemyBorderStrongBrush}" />
+    <Setter Property="BorderThickness" Value="1" /><Setter Property="CornerRadius" Value="0" />
+  </Style>
+  <Style Selector="CheckBox">
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Grid ColumnDefinitions="18,*" Background="Transparent">
+          <Border Name="XpCheckBox" Width="16" Height="16" VerticalAlignment="Center" Background="{DynamicResource AlchemyCanvasBrush}" BorderBrush="{DynamicResource AlchemyBorderStrongBrush}" BorderThickness="1" BoxShadow="{DynamicResource AppearanceInsetShadow}">
+            <Grid>
+              <Path Name="XpCheckMark" IsVisible="False" Data="M2,6 L5,9 L11,2" Stroke="#248321" StrokeThickness="2.5" StrokeJoin="Round" Width="13" Height="12" HorizontalAlignment="Center" VerticalAlignment="Center" />
+              <Border Name="XpIndeterminate" IsVisible="False" Height="4" Width="8" Background="{DynamicResource AlchemyAccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Grid>
+          </Border>
+          <ContentPresenter Name="PART_ContentPresenter" Grid.Column="1" Margin="7,0,0,0" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" VerticalAlignment="Center" VerticalContentAlignment="Center" RecognizesAccessKey="True" />
+        </Grid>
+      </ControlTemplate>
+    </Setter>
+  </Style>
+  <Style Selector="CheckBox:checked /template/ Path#XpCheckMark"><Setter Property="IsVisible" Value="True" /></Style>
+  <Style Selector="CheckBox:indeterminate /template/ Border#XpIndeterminate"><Setter Property="IsVisible" Value="True" /></Style>
+  <Style Selector="CheckBox:pointerover /template/ Border#XpCheckBox"><Setter Property="BorderBrush" Value="{DynamicResource XpHoverBorderBrush}" /></Style>
+  <Style Selector="CheckBox:focus-visible /template/ Border#XpCheckBox"><Setter Property="BorderThickness" Value="2" /><Setter Property="BorderBrush" Value="{DynamicResource AlchemyFocusBrush}" /></Style>
+  <Style Selector="CheckBox:disabled"><Setter Property="Opacity" Value="0.48" /></Style>
+  <Style Selector="ToggleButton.dual-export-switch:not(.native-template)">
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Grid Background="Transparent">
+          <Border Name="XpSwitchTrack" Width="40" Height="22" HorizontalAlignment="Center" VerticalAlignment="Center" Background="{DynamicResource XpButtonPressedBrush}" BorderBrush="{DynamicResource AlchemyBorderStrongBrush}" BorderThickness="1" CornerRadius="2" BoxShadow="{DynamicResource AppearanceInsetShadow}">
+            <Border Name="XpSwitchThumb" Width="16" Margin="2" HorizontalAlignment="Left" Background="{DynamicResource XpButtonBrush}" BorderBrush="{DynamicResource AlchemyBorderStrongBrush}" BorderThickness="1" CornerRadius="2" BoxShadow="{DynamicResource AppearanceRaisedShadow}">
+              <Path Data="M0,0 L0,8 M3,0 L3,8" Stroke="{DynamicResource AlchemyMutedTextBrush}" StrokeThickness="1" Width="4" Height="8" HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Border>
+          </Border>
+        </Grid>
+      </ControlTemplate>
+    </Setter>
+  </Style>
+  <Style Selector="ToggleButton.dual-export-switch:checked /template/ Border#XpSwitchTrack"><Setter Property="Background" Value="{DynamicResource XpActionBrush}" /></Style>
+  <Style Selector="ToggleButton.dual-export-switch:checked /template/ Border#XpSwitchThumb"><Setter Property="HorizontalAlignment" Value="Right" /></Style>
+  <Style Selector="ToggleButton.dual-export-switch:focus-visible /template/ Border#XpSwitchTrack"><Setter Property="BorderThickness" Value="2" /><Setter Property="BorderBrush" Value="{DynamicResource AlchemyFocusBrush}" /></Style>
+  <Style Selector="ToggleButton.dual-export-switch:pointerover /template/ Border#XpSwitchTrack"><Setter Property="BorderBrush" Value="{DynamicResource XpHoverBorderBrush}" /></Style>
+  <Style Selector="Expander.property-group /template/ ToggleButton">
+    <Setter Property="Background" Value="{DynamicResource XpHeaderBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource AlchemyAccentBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AlchemyBorderStrongBrush}" />
+    <Setter Property="BorderThickness" Value="0,0,0,1" />
+  </Style>
+  <Style Selector="ListBox.asset-list, ListBox.track-list">
+    <Setter Property="Background" Value="{DynamicResource AlchemyCanvasBrush}" />
+  </Style>
+  <Style Selector="ListBoxItem, ListBox.asset-list ListBoxItem, ListBox.track-list ListBoxItem, ComboBoxItem, MenuItem">
+    <Setter Property="CornerRadius" Value="0" />
+  </Style>
+  <Style Selector="ListBoxItem:selected /template/ ContentPresenter, ComboBoxItem:selected /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AlchemySelectedBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AlchemyFocusBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+  </Style>
+  <Style Selector="MenuItem:selected /template/ Border"><Setter Property="Background" Value="{DynamicResource AlchemySelectedBrush}" /></Style>
+  <Style Selector="ContextMenu, ToolTip">
+    <Setter Property="Background" Value="{DynamicResource AlchemySurfaceRaisedBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AlchemyBorderStrongBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="0" />
+  </Style>
+  <Style Selector="Slider.preview-scrubber /template/ Thumb, ScrollBar /template/ Thumb">
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border Background="{DynamicResource XpHeaderBrush}" BorderBrush="{DynamicResource AlchemyBorderStrongBrush}" BorderThickness="1" CornerRadius="2" BoxShadow="{DynamicResource AppearanceRaisedShadow}" />
+      </ControlTemplate>
+    </Setter>
+  </Style>
+  <Style Selector="Slider.preview-scrubber /template/ Thumb"><Setter Property="Width" Value="12" /><Setter Property="Height" Value="20" /></Style>
+  <Style Selector="ScrollBar"><Setter Property="Background" Value="{DynamicResource AlchemySidebarBrush}" /></Style>
+  <Style Selector="ProgressBar /template/ Border"><Setter Property="CornerRadius" Value="0" /></Style>
+  <Style Selector="ProgressBar"><Setter Property="Foreground" Value="{DynamicResource XpActionBrush}" /></Style>
+  <Style Selector="ContentControl.clip"><Setter Property="CornerRadius" Value="2" /><Setter Property="BorderThickness" Value="1" /></Style>
+</Styles>

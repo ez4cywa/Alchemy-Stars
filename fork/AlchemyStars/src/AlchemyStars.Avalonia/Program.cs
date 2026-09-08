@@ -7,6 +7,7 @@ internal static class Program
 {
     internal static bool StartupSmokeRequested { get; private set; }
     internal static bool AppearanceSmokeRequested { get; private set; }
+    internal static bool AppearanceSamplesSmokeRequested { get; private set; }
     internal static string? RenderSmokePath { get; private set; }
     internal static PixelSize? RenderSmokeSize { get; private set; }
     internal static WorkspacePage? RenderSmokePage { get; private set; }
@@ -50,6 +51,7 @@ internal static class Program
 
         var renderPath = GetOption(args, "--render-smoke");
         AppearanceSmokeRequested = args.Contains("--appearance-smoke", StringComparer.OrdinalIgnoreCase);
+        AppearanceSamplesSmokeRequested = args.Contains("--appearance-samples-smoke", StringComparer.OrdinalIgnoreCase);
         RenderSmokePath = renderPath is not null
             ? Path.GetFullPath(renderPath)
             : null;

@@ -66,6 +66,8 @@ public sealed partial class App : Application
                     await Task.Delay(500);
                     if (Program.AppearanceSmokeRequested)
                         await AppearanceSmoke.RunAsync(mainWindow, viewModel);
+                    if (Program.AppearanceSamplesSmokeRequested)
+                        await CustomAppearanceSmoke.RunSamplesAsync(mainWindow, viewModel, Path.GetDirectoryName(Program.RenderSmokePath!)!);
                     mainWindow.VerifyToolbarLayout();
                     if (viewModel.IsDualPage)
                         mainWindow.GetVisualDescendants().OfType<DualWieldView>().Single().VerifySourceSelection();

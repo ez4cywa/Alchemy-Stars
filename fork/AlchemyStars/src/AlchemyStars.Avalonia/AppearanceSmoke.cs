@@ -16,6 +16,7 @@ internal static class AppearanceSmoke
         (0, "apple"),
         (1, "classic-apple"),
         (2, "neumorphic"),
+        (3, "windows-xp"),
     ];
 
     private static readonly (WorkspacePage Page, string Key)[] Pages =
@@ -59,7 +60,8 @@ internal static class AppearanceSmoke
                 Require(snapshot.ThemeStyle == styleKey
                     && snapshot.ThemeMode == (mode == 1 ? "dark" : "light"), "Appearance selection did not survive a disk reload.");
                 VerifyVerticalContentAlignment(window);
-                VerifyThemedIcons(window, style == 1);
+                VerifyThemedIcons(window, style == 1, style == 3);
+                await VerifyQuickToggleAsync(window, vm, style, mode);
                 if (style == 1) VerifyClassicAppleHasNoBlue(app);
                 window.VerifyToolbarLayout();
                 await VerifyTooltipsAsync(window, directory, style, mode);
@@ -69,11 +71,22 @@ internal static class AppearanceSmoke
                     await Task.Delay(40);
                     window.VerifyToolbarLayout();
                     VerifyVerticalContentAlignment(window);
+                    VerifyScrubberBounds(window);
+                    VerifyThemedIcons(window, style == 1, style == 3);
+                    if (page == WorkspacePage.Settings) VerifyCheckBoxSkin(window, style);
+                    if (page == WorkspacePage.DualAnimations)
+                    {
+                        var toggle = window.GetVisualDescendants().OfType<ToggleButton>().Single(t => t.Name == "ExportModelsSwitch");
+                        Require(toggle.GetVisualDescendants().OfType<Border>().Any(b => b.Name == "XpSwitchTrack") == (style == 3), "Dual switch retained the wrong theme template.");
+                        Require(toggle.GetVisualDescendants().OfType<Border>().Any(b => b.Name == "AppleSwitchTrack") == (style == 1), "Dual switch retained the wrong Apple template.");
+                    }
                     using var bitmap = new RenderTargetBitmap(new PixelSize((int)window.ClientSize.Width, (int)window.ClientSize.Height));
                     bitmap.Render(window);
                     bitmap.Save(Path.Combine(directory, $"{styleKey}-{(mode == 1 ? "dark" : "light")}-{pageKey}.png"), PngBitmapEncoderOptions.Default);
                 }
             }
+            RenderXpIconCatalog(directory);
+            RenderClassicIconCatalog(directory);
             vm.ThemeStyleIndex = 0;
             modePicker.SelectedIndex = 2;
             await Task.Delay(160);
@@ -87,17 +100,24 @@ internal static class AppearanceSmoke
             await Task.Delay(80);
             Require(((SolidColorBrush)app.Resources["AlchemySurfaceBrush"]!).Color == Colors.White, "Actual light change did not update palette.");
             vm.ThemeStyleIndex = 1;
+            // A quick toggle from system mode must use the actual palette, then save an explicit preference.
+            app.RequestedThemeVariant = ThemeVariant.Dark;
+            await Task.Delay(80);
+            window.FindControl<Button>("AppearanceToggleButton")!.RaiseEvent(new global::Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+            Require(vm.ThemeModeIndex == 0 && new ApplicationPreferencesStore().Snapshot().ThemeMode == "light", "System-dark quick toggle failed.");
+            vm.ThemeModeIndex = 2;
             vm.ToggleLanguage();
             await Task.Delay(80);
             Require(vm.ThemeModeIndex == 2 && vm.ThemeStyleIndex == 1, "Language refresh reset appearance selection.");
             vm.ToggleLanguage();
-            Console.WriteLine("Appearance smoke passed: three live styles, two palettes, all pages, centered control text, graphite-only Classic Apple, persistence, system delegation and language refresh.");
+            await CustomAppearanceSmoke.RunAsync(window, vm, directory);
+            Console.WriteLine("Appearance smoke passed: four live styles, custom imports, two palettes, all pages, XP icon catalog, quick light/dark toggle, centered text, persistence, system delegation and language refresh.");
         }
         finally
         {
             vm.ThemeStyleIndex = originalStyle;
             vm.ThemeModeIndex = originalMode;
-            AppearanceTheme.Apply(originalStyle switch { 1 => "classic-apple", 2 => "neumorphic", _ => "apple" }, originalMode switch { 1 => "dark", 2 => "system", _ => "light" });
+            AppearanceTheme.Apply(originalStyle switch { 1 => "classic-apple", 2 => "neumorphic", 3 => "windows-xp", _ => "apple" }, originalMode switch { 1 => "dark", 2 => "system", _ => "light" });
         }
     }
 
@@ -106,37 +126,96 @@ internal static class AppearanceSmoke
         if (!condition) throw new InvalidOperationException(message);
     }
 
+    private static void VerifyCheckBoxSkin(MainWindow window, int style)
+    {
+        var check = window.GetVisualDescendants().OfType<CheckBox>().First(control => control.IsEffectivelyVisible);
+        var original = check.IsChecked;
+        try
+        {
+            foreach (var state in new[] { false, true })
+            {
+                check.SetCurrentValue(ToggleButton.IsCheckedProperty, state);
+                window.UpdateLayout();
+                var mark = check.GetVisualDescendants().OfType<global::Avalonia.Controls.Shapes.Path>()
+                    .FirstOrDefault(path => path.Name is "AppleCheckMark" or "XpCheckMark");
+                Require((mark is not null) == (style is 1 or 3), "Checkbox retained the wrong control skin.");
+                if (mark is not null)
+                    Require(mark.Name == (style == 1 ? "AppleCheckMark" : "XpCheckMark") && mark.IsVisible == state,
+                        "Checkbox mark did not follow its checked state.");
+            }
+        }
+        finally { check.SetCurrentValue(ToggleButton.IsCheckedProperty, original); }
+    }
+
+    private static void VerifyScrubberBounds(MainWindow window)
+    {
+        foreach (var slider in window.GetVisualDescendants().OfType<Slider>().Where(s => s.Name == "FrameSlider" && s.IsEffectivelyVisible))
+        {
+            var thumb = slider.GetVisualDescendants().OfType<Thumb>().Single();
+            var track = slider.GetVisualDescendants().OfType<Track>().Single();
+            var maximum = track.Maximum;
+            var value = track.Value;
+            try
+            {
+                track.SetCurrentValue(Track.MaximumProperty, 100d);
+                foreach (var position in new[] { 0d, 50d, 100d })
+                {
+                    track.SetCurrentValue(Track.ValueProperty, position);
+                    window.UpdateLayout();
+                    var origin = thumb.TranslatePoint(default, slider)!.Value;
+                    Require(origin.X >= 0 && origin.Y >= 0 && origin.X + thumb.Bounds.Width <= slider.Bounds.Width
+                        && origin.Y + thumb.Bounds.Height <= slider.Bounds.Height,
+                        $"Playback thumb is clipped at {position}: thumb={origin}/{thumb.Bounds.Size}, slider={slider.Bounds.Size}.");
+                }
+            }
+            finally
+            {
+                track.SetCurrentValue(Track.MaximumProperty, maximum);
+                track.SetCurrentValue(Track.ValueProperty, value);
+                window.UpdateLayout();
+            }
+        }
+    }
+
     private static void VerifyVerticalContentAlignment(MainWindow window)
     {
-        foreach (var button in window.GetVisualDescendants().OfType<Button>().Where(button => button is not RepeatButton))
+        foreach (var button in window.GetVisualDescendants().OfType<Button>().Where(button => button is not RepeatButton && button.IsEffectivelyVisible))
             Require(button.VerticalContentAlignment == global::Avalonia.Layout.VerticalAlignment.Center,
                 $"Button text is not vertically centered: {AutomationProperties.GetName(button) ?? button.GetType().Name}.");
-        foreach (var toggle in window.GetVisualDescendants().OfType<ToggleButton>())
+        foreach (var toggle in window.GetVisualDescendants().OfType<ToggleButton>().Where(control => control.IsEffectivelyVisible))
             Require(toggle.VerticalContentAlignment == global::Avalonia.Layout.VerticalAlignment.Center,
                 $"Toggle text is not vertically centered: {AutomationProperties.GetName(toggle) ?? toggle.GetType().Name}.");
-        foreach (var textBox in window.GetVisualDescendants().OfType<TextBox>().Where(control => !control.AcceptsReturn))
+        foreach (var textBox in window.GetVisualDescendants().OfType<TextBox>().Where(control => !control.AcceptsReturn && control.IsEffectivelyVisible))
             Require(textBox.VerticalContentAlignment == global::Avalonia.Layout.VerticalAlignment.Center,
                 $"TextBox text is not vertically centered: {AutomationProperties.GetName(textBox) ?? textBox.GetType().Name}.");
-        foreach (var comboBox in window.GetVisualDescendants().OfType<ComboBox>())
+        foreach (var comboBox in window.GetVisualDescendants().OfType<ComboBox>().Where(control => control.IsEffectivelyVisible))
             Require(comboBox.VerticalContentAlignment == global::Avalonia.Layout.VerticalAlignment.Center,
                 $"ComboBox text is not vertically centered: {AutomationProperties.GetName(comboBox) ?? comboBox.GetType().Name}.");
-        foreach (var item in window.GetVisualDescendants().OfType<ListBoxItem>())
+        foreach (var item in window.GetVisualDescendants().OfType<ListBoxItem>().Where(control => control.IsEffectivelyVisible))
             Require(item.VerticalContentAlignment == global::Avalonia.Layout.VerticalAlignment.Center,
                 "List item text is not vertically centered.");
     }
 
-    private static void VerifyThemedIcons(MainWindow window, bool classic)
+    private static void VerifyThemedIcons(MainWindow window, bool classic, bool xp)
     {
-        var icons = window.GetVisualDescendants().OfType<ThemedIcon>().ToArray();
-        Require(icons.Length > 20, "The complete icon system was not instantiated.");
+        // Styles are applied lazily to hidden pages; visit every page and inspect its visible controls.
+        var icons = window.GetVisualDescendants().OfType<ThemedIcon>().Where(icon => icon.IsEffectivelyVisible).ToArray();
+        Require(icons.Length >= 5, "The visible icon system was not instantiated.");
         Require(icons.All(icon => icon.UseClassicGlyph == classic), "A screen retained the wrong theme icon family.");
-        foreach (var (glyph, bounds) in ThemedIcon.ClassicGlyphBounds)
-        {
-            Require(bounds.Left >= 2.5 && bounds.Top >= 2.5 && bounds.Right <= 17.5 && bounds.Bottom <= 17.5,
-                $"Classic Apple glyph '{glyph}' breaches the 2.5-unit optical safe area: {bounds}.");
-        }
+        Require(icons.All(icon => icon.UseWindowsXpGlyph == xp), "A screen retained the wrong XP icon mode.");
+        Require(icons.All(icon => icon.HasClassicIcon == classic), "Classic Apple icon artwork did not follow its mode.");
         foreach (var icon in icons)
         {
+            if (classic)
+            {
+                var expected = (icon.IconBrush as ISolidColorBrush)?.Color;
+                foreach (var path in icon.GetVisualDescendants().OfType<global::Avalonia.Controls.Shapes.Path>())
+                {
+                    var brush = path.Stroke ?? path.Fill;
+                    Require(brush is ISolidColorBrush solid && solid.Color == expected,
+                        $"Classic Apple icon tint is stale: {icon.Glyph}, expected {expected}, actual {brush}.");
+                }
+            }
             var button = icon.GetVisualAncestors().OfType<Button>().FirstOrDefault();
             if (button is null) continue;
             var origin = icon.TranslatePoint(default, button)
@@ -146,6 +225,80 @@ internal static class AppearanceSmoke
                 && origin.Y + icon.Bounds.Height <= button.Bounds.Height - 2,
                 $"Theme icon '{icon.Glyph}' is obscured or clipped by its button.");
         }
+    }
+
+    private static async Task VerifyQuickToggleAsync(MainWindow window, MainWindowViewModel vm, int style, int mode)
+    {
+        var button = window.FindControl<Button>("AppearanceToggleButton")!;
+        var label = button.Content?.ToString();
+        for (var i = 0; i < 2; i++)
+        {
+            button.RaiseEvent(new global::Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+            await Task.Delay(80);
+            var expected = i == 0 ? 1 - mode : mode;
+            Require(vm.ThemeModeIndex == expected && vm.ThemeStyleIndex == style, "Quick toggle changed the style or failed to change mode.");
+            Require(Application.Current!.ActualThemeVariant == (expected == 1 ? ThemeVariant.Dark : ThemeVariant.Light), "Quick toggle did not update the actual palette.");
+            Require(new ApplicationPreferencesStore().Snapshot().ThemeMode == (expected == 1 ? "dark" : "light"), "Quick toggle was not persisted.");
+            Require(button.Content?.ToString() == vm.ToggleAppearanceLabel, "Quick toggle label is stale.");
+        }
+        Require(button.Content?.ToString() == label, "Quick toggle label did not return to its original action.");
+    }
+
+    private static void RenderXpIconCatalog(string directory)
+    {
+        var panel = new Grid { Width = 840, Height = 550, Background = new SolidColorBrush(Color.Parse("#ece9d8")) };
+        var index = 0;
+        foreach (var glyph in ThemedIcon.GlyphNames)
+        {
+            var canvas = WindowsXpIcons.Create(glyph);
+            foreach (var path in canvas.Children.OfType<global::Avalonia.Controls.Shapes.Path>())
+            {
+                var b = path.Data!.Bounds;
+                Require(b.Left - path.StrokeThickness / 2 >= 0 && b.Top - path.StrokeThickness / 2 >= 0
+                    && b.Right + path.StrokeThickness / 2 <= 24 && b.Bottom + path.StrokeThickness / 2 <= 24,
+                    $"XP glyph clips its canvas: {glyph}, {b}");
+            }
+            var item = new StackPanel { Width = 140, Height = 90, HorizontalAlignment = global::Avalonia.Layout.HorizontalAlignment.Left,
+                VerticalAlignment = global::Avalonia.Layout.VerticalAlignment.Top, Margin = new Thickness(index % 6 * 140, index / 6 * 90, 0, 0), Spacing = 6 };
+            item.Children.Add(new Viewbox { Width = 40, Height = 40, Child = canvas, Margin = new Thickness(0, 10, 0, 0) });
+            item.Children.Add(new TextBlock { Text = glyph, FontSize = 10, Foreground = Brushes.Black, HorizontalAlignment = global::Avalonia.Layout.HorizontalAlignment.Center });
+            panel.Children.Add(item);
+            index++;
+        }
+        panel.Measure(new Size(840, 550));
+        panel.Arrange(new Rect(0, 0, 840, 550));
+        using var bitmap = new RenderTargetBitmap(new PixelSize(840, 550));
+        bitmap.Render(panel);
+        bitmap.Save(Path.Combine(directory, "windows-xp-icon-catalog.png"), PngBitmapEncoderOptions.Default);
+    }
+
+    private static void RenderClassicIconCatalog(string directory)
+    {
+        var panel = new Grid { Width = 840, Height = 550, Background = new SolidColorBrush(Color.Parse("#eeece7")) };
+        var index = 0;
+        foreach (var glyph in ThemedIcon.GlyphNames)
+        {
+            var canvas = (Canvas)ClassicAppleIcons.Create(glyph, Brushes.DimGray);
+            Require(canvas.Children.Count > 0, $"Classic Apple glyph missing: {glyph}");
+            foreach (var path in canvas.Children.OfType<global::Avalonia.Controls.Shapes.Path>())
+            {
+                var b = path.Data!.Bounds;
+                var stroke = path.Stroke is null ? 0 : path.StrokeThickness / 2;
+                Require(b.Left - stroke >= 0 && b.Top - stroke >= 0 && b.Right + stroke <= 24 && b.Bottom + stroke <= 24,
+                    $"Classic Apple glyph clips its canvas: {glyph}, {b}");
+            }
+            var item = new StackPanel { Width = 140, Height = 90, HorizontalAlignment = global::Avalonia.Layout.HorizontalAlignment.Left,
+                VerticalAlignment = global::Avalonia.Layout.VerticalAlignment.Top, Margin = new Thickness(index % 6 * 140, index / 6 * 90, 0, 0), Spacing = 6 };
+            item.Children.Add(new Viewbox { Width = 40, Height = 40, Child = canvas, Margin = new Thickness(0, 10, 0, 0) });
+            item.Children.Add(new TextBlock { Text = glyph, FontSize = 10, Foreground = Brushes.Black, HorizontalAlignment = global::Avalonia.Layout.HorizontalAlignment.Center });
+            panel.Children.Add(item);
+            index++;
+        }
+        panel.Measure(new Size(840, 550));
+        panel.Arrange(new Rect(0, 0, 840, 550));
+        using var bitmap = new RenderTargetBitmap(new PixelSize(840, 550));
+        bitmap.Render(panel);
+        bitmap.Save(Path.Combine(directory, "classic-apple-icon-catalog.png"), PngBitmapEncoderOptions.Default);
     }
 
     private static void VerifyClassicAppleHasNoBlue(Application app)

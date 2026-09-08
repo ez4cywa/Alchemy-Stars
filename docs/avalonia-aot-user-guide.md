@@ -2,7 +2,7 @@
 
 # Alchemy Stars Avalonia preview quick guide
 
-This guide applies to source revision `1.3.0-preview.13` on the test branch. The latest packaged preview remains `1.3.0-preview.11`; WPF v1.1.9 remains the supported release until .NET 11 GA.
+This guide applies to `1.3.0-preview.15`. WPF v1.1.9 remains the supported release until .NET 11 GA.
 
 The 48 DIP activity rail switches between Animations, Model parts, Settings and About. The base-animation library sits on the left, a real CAST preview in the center, composition layers across the bottom, and collapsible properties on the right. Drag the dividers or focus them and use arrow keys to resize panels. Icon commands have localized tooltips and UI Automation names; the current page remains visible in the breadcrumb.
 
@@ -17,6 +17,18 @@ The 48 DIP activity rail switches between Animations, Model parts, Settings and 
 The app remembers the last directory for each picker category and can follow the Windows display language or be pinned to Chinese/English. Project files remain compatible with the original `.aprj` structure.
 
 For the canonical Hawk recipe, open `fork/AlchemyStars/Example/Hawk/HawkSprint.aprj`. It is the single source of truth used by managed and Native AOT export verification.
+
+## Custom themes and icons
+
+Settings retains the Original, Classic Apple, Neumorphic and Windows XP styles. Choose light, dark or system appearance, or use the one-click light/dark switch. Appearance preferences are saved separately from animation projects.
+
+Preview.15 completely redraws Classic Apple controls and all 34 functional icons in an independent platinum-light/graphite-dark skin. Windows XP also has its own controls and 34 matching icons.
+
+- Import a theme: edit the bundled `Samples/Appearance/theme.json`, then choose Import theme in Settings. Use `version: 1`, a theme `name` and a built-in `baseStyle`; `light` and `dark` contain color token values, while `radii` contains control corner radii.
+- Import icons: replace named PNG files in `Samples/Appearance/icons-template.zip`, repackage as ZIP, then choose Import icons. Partial packs are supported; omitted icons retain their built-in appearance.
+- Restore defaults: use Remove custom theme and Restore built-in icons separately. Themes and icon packs are independent; original import files and animation projects are not deleted.
+
+Selecting a built-in theme disables custom colors and radii but keeps custom icons active. Imports are copied into the settings directory and persist across restarts. The bundled `Samples/Appearance/README.zh-CN.md` documents every token, all 34 icon names and import limits in Chinese.
 
 ## Merged CAST preview
 

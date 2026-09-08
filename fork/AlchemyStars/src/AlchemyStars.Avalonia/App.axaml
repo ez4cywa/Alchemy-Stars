@@ -625,6 +625,8 @@
       <Setter Property="HorizontalAlignment" Value="Center" />
     </Style>
     <Style Selector="local|ThemedIcon">
+      <Setter Property="UseWindowsXpGlyph" Value="{DynamicResource AppearanceUseWindowsXpIcons}" />
+      <Setter Property="CustomIconRevision" Value="{DynamicResource CustomIconRevision}" />
       <Setter Property="UseClassicGlyph" Value="{DynamicResource AppearanceUseClassicIcons}" />
       <Setter Property="IconBrush" Value="{DynamicResource AlchemyIconBrush}" />
     </Style>
@@ -682,6 +684,7 @@
     <Color x:Key="SystemAccentColorDark1">#0066cc</Color>
     <Color x:Key="SystemAccentColorLight1">#0071e3</Color>
     <x:Boolean x:Key="AppearanceUseClassicIcons">False</x:Boolean>
+    <x:Boolean x:Key="AppearanceUseWindowsXpIcons">False</x:Boolean>
     <x:Double x:Key="AppearanceControlFontSize">14</x:Double>
     <x:Double x:Key="AppearanceActionFontSize">17</x:Double>
     <FontWeight x:Key="AppearanceActionFontWeight">Normal</FontWeight>

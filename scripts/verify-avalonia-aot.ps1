@@ -7,7 +7,7 @@ $ErrorActionPreference = 'Stop'
 $repositoryRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
 $project = Join-Path $repositoryRoot 'fork\AlchemyStars\src\AlchemyStars.Avalonia\AlchemyStars.Avalonia.csproj'
 $outputRoot = [System.IO.Path]::GetFullPath((Join-Path $repositoryRoot 'output'))
-$publishDirectory = [System.IO.Path]::GetFullPath((Join-Path $outputRoot 'avalonia-aot-preview13'))
+$publishDirectory = [System.IO.Path]::GetFullPath((Join-Path $outputRoot 'avalonia-aot-preview15'))
 function Assert-OutputChild([string]$Path) {
     if (-not $Path.StartsWith($outputRoot + [System.IO.Path]::DirectorySeparatorChar, [System.StringComparison]::OrdinalIgnoreCase)) {
         throw "Refusing to clean a path outside the repository output directory: $Path"
@@ -117,6 +117,28 @@ foreach ($renderCase in $renderCases) {
     }
 }
 Write-Output 'Native AOT four-page and centered-dialog render smoke: PASS'
+
+$verificationSettingsPath = $env:ALCHEMY_STARS_SETTINGS_PATH
+try {
+    foreach ($size in @('900x600', '1366x768')) {
+        $appearanceDirectory = [System.IO.Path]::GetFullPath((Join-Path $outputRoot ('avalonia-aot-appearance-' + $size)))
+        Assert-OutputChild $appearanceDirectory
+        if (Test-Path -LiteralPath $appearanceDirectory) {
+            Remove-Item -LiteralPath $appearanceDirectory -Recurse -Force
+        }
+        [System.IO.Directory]::CreateDirectory($appearanceDirectory) | Out-Null
+        $env:ALCHEMY_STARS_SETTINGS_PATH = Join-Path $appearanceDirectory 'settings.json'
+        $appearanceRenderPath = Join-Path $appearanceDirectory 'result.png'
+        $appearanceArguments = '--appearance-smoke --culture en-US --window-size ' + $size + ' --render-smoke "' + $appearanceRenderPath + '" "' + $standardProject + '"'
+        $appearanceProcess = Start-Process -FilePath $executable -ArgumentList $appearanceArguments -WorkingDirectory $publishDirectory -WindowStyle Hidden -Wait -PassThru
+        if ($appearanceProcess.ExitCode -ne 0 -or -not (Test-Path -LiteralPath $appearanceRenderPath)) {
+            throw "Native AOT appearance/import regression failed at $size (exit $($appearanceProcess.ExitCode))."
+        }
+        Write-Output "Native AOT appearance/import regression at ${size}: PASS"
+    }
+} finally {
+    $env:ALCHEMY_STARS_SETTINGS_PATH = $verificationSettingsPath
+}
 
 if (Get-ChildItem -LiteralPath $publishDirectory -Filter '*.pdb' -File -Recurse) {
     throw 'Native AOT publish unexpectedly contains PDB files.'

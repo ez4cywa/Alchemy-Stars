@@ -1,30 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
  xmlns:local="using:AlchemyStars.Avalonia" xmlns:engine="using:AlchemyStars.Engine"
  x:Class="AlchemyStars.Avalonia.DualWieldView" x:DataType="local:MainWindowViewModel">
- <UserControl.Styles>
-  <Style Selector="ToggleButton.dual-export-switch">
-   <Setter Property="Width" Value="44" />
-   <Setter Property="Height" Value="44" />
-   <Setter Property="Template">
-    <ControlTemplate>
-     <Grid Background="Transparent">
-      <Border Name="SwitchTrack" Width="40" Height="20" CornerRadius="10" VerticalAlignment="Center" HorizontalAlignment="Center" BorderThickness="1" BorderBrush="{DynamicResource AlchemyMutedTextBrush}" Background="{DynamicResource AlchemySurfaceBrush}">
-       <Ellipse Name="SwitchThumb" Width="12" Height="12" Margin="3,0" HorizontalAlignment="Left" VerticalAlignment="Center" Fill="{DynamicResource AlchemyMutedTextBrush}" />
-      </Border>
-     </Grid>
-    </ControlTemplate>
-   </Setter>
-  </Style>
-  <Style Selector="ToggleButton.dual-export-switch:checked /template/ Border#SwitchTrack">
-   <Setter Property="Background" Value="{DynamicResource AlchemyAccentBrush}" />
-   <Setter Property="BorderBrush" Value="{DynamicResource AlchemyAccentBrush}" />
-  </Style>
-  <Style Selector="ToggleButton.dual-export-switch:checked /template/ Ellipse#SwitchThumb">
-   <Setter Property="HorizontalAlignment" Value="Right" />
-   <Setter Property="Fill" Value="White" />
-  </Style>
-  <Style Selector="ToggleButton.dual-export-switch:disabled"><Setter Property="Opacity" Value="0.4" /></Style>
- </UserControl.Styles>
  <Grid x:Name="DualEditor">
   <Grid.ColumnDefinitions>
    <ColumnDefinition Width="240" MinWidth="180" MaxWidth="360" />
