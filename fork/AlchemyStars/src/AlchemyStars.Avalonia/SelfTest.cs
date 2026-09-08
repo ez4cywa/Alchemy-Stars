@@ -88,6 +88,7 @@ internal static class SelfTest
             var previousCulture = CultureInfo.CurrentUICulture;
             var testDirectory = Path.Combine(Path.GetTempPath(), $"AlchemyStars-AotSelfTest-{Guid.NewGuid():N}");
             Directory.CreateDirectory(testDirectory);
+            OutputDirectorySmoke.RunAsync(testDirectory).GetAwaiter().GetResult();
             try
             {
                 CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo("zh-CN");
@@ -229,6 +230,20 @@ internal static class SelfTest
                     "Manual part-type override hid or replaced the detection recommendation.");
                 viewModel.Parts[1].Type = ModelPartKind.Weapon;
                 Require(viewModel.AddLayerPaths([Path.Combine(testDirectory, "sprint.cast")]) == 1, "Layer-priority import routing failed.");
+                Require(viewModel.SelectedAnimation!.OutputName == "sprint", "First animation layer did not supply the default output name.");
+                var naming = new MainWindowViewModel(engine, projectStore, new ApplicationPreferencesStore(Path.Combine(testDirectory, "naming.json")), filePicker);
+                using (naming)
+                {
+                    naming.AddAnimationPaths([Path.Combine(testDirectory, "base.cast")]);
+                    naming.AddLayerPaths([Path.Combine(testDirectory, "first.cast"), Path.Combine(testDirectory, "second.cast")]);
+                    Require(naming.SelectedAnimation!.OutputName == "first", "Later layers replaced the first layer name.");
+                    naming.SelectedAnimation.Name = Path.Combine(testDirectory, "other-base.cast");
+                    Require(naming.SelectedAnimation.OutputName == "first", "Changing the base overwrote the first layer name.");
+                    naming.AddAnimationPaths([Path.Combine(testDirectory, "base.cast")]);
+                    naming.SelectedAnimation!.OutputName = "my-custom-output";
+                    naming.AddLayerPaths([Path.Combine(testDirectory, "first.cast")]);
+                    Require(naming.SelectedAnimation.OutputName == "my-custom-output", "Layer import overwrote a manual output name.");
+                }
 
                 var placements = AnimationTimelineLayout.Calculate([
                     new AnimationTimelineSpan(0, 60),

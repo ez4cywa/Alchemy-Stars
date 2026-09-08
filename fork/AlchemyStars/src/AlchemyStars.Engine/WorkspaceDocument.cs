@@ -133,7 +133,7 @@ public sealed class WorkspaceAnimation : ObservableModel
             var previousStem = Path.GetFileNameWithoutExtension(name);
             if (!SetProperty(ref name, normalized))
                 return;
-            if (string.IsNullOrWhiteSpace(OutputName) || string.Equals(OutputName, previousStem, StringComparison.OrdinalIgnoreCase))
+            if (Layers.Count == 0 && (string.IsNullOrWhiteSpace(OutputName) || string.Equals(OutputName, previousStem, StringComparison.OrdinalIgnoreCase)))
                 OutputName = Path.GetFileNameWithoutExtension(normalized);
             RaisePropertyChanged(nameof(DisplayName));
         }

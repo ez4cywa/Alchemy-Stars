@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.3.0-preview.17 — 2026-09-08 (shortcuts and output defaults)
+
+Chinese release notes: [更新日志](docs/releases/1.3.0-preview.17.zh-CN.md).
+
+- Added project, import, preview, page navigation and focused-list keyboard commands, with an F1 reference and text-field/dialog guards; reordering keeps the selected item.
+- Default output names now use the first imported animation layer's filename stem, preserving custom names and later imports.
+- Added a persistent unified output folder for animation and dual-wield exports, without modifying project paths or preview caches.
+- Localized native Cut/Copy/Paste menus, including output paths, with live language switching in all three built-in themes.
+- Centered the localized product name at the top of the window with a separate command row.
+
 ## 1.3.0-preview.16 — 2026-09-08 (utilities and updates)
 
 Chinese release notes: [更新日志](docs/releases/1.3.0-preview.16.zh-CN.md). Built on the latest merged GitHub changes, including desktop-shell consolidation at `90f5e08`.

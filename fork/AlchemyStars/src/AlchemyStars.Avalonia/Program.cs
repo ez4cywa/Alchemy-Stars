@@ -21,6 +21,8 @@ internal static class Program
     internal static string? ExternalLinkLogPath { get; private set; }
     internal static string? UpdateResultPath { get; private set; }
     internal static bool UtilitiesSmokeRequested { get; private set; }
+    internal static bool ShortcutsSmokeRequested { get; private set; }
+    internal static bool TextMenuSmokeRequested { get; private set; }
 
     [STAThread]
     public static int Main(string[] args)
@@ -75,6 +77,8 @@ internal static class Program
         ExternalLinkLogPath = GetOption(args, "--external-link-log");
         UpdateResultPath = GetOption(args, "--update-result");
         UtilitiesSmokeRequested = args.Contains("--utilities-smoke", StringComparer.OrdinalIgnoreCase);
+        ShortcutsSmokeRequested = args.Contains("--shortcuts-smoke", StringComparer.OrdinalIgnoreCase);
+        TextMenuSmokeRequested = args.Contains("--textmenu-smoke", StringComparer.OrdinalIgnoreCase);
         StartupProjectPath = args
             .Where(argument => !argument.StartsWith("--", StringComparison.Ordinal))
             .FirstOrDefault(argument => string.Equals(Path.GetExtension(argument), ".aprj", StringComparison.OrdinalIgnoreCase) && File.Exists(argument));

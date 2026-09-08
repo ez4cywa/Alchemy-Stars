@@ -2,7 +2,7 @@
 
 # Alchemy Stars Avalonia preview quick guide
 
-This guide applies to `1.3.0-preview.16`. WPF v1.1.9 remains the supported release until .NET 11 GA.
+This guide applies to `1.3.0-preview.17`. WPF v1.1.9 remains the supported release until .NET 11 GA.
 
 The sidebar switches between Animation blend, Model parts, Dual merge, Settings and About. It shows icons and labels at normal widths and collapses to icons in narrow windows. The base-animation library sits on the left, a real CAST preview in the center, composition layers across the bottom, and collapsible properties on the right. Drag the dividers or focus them and use arrow keys to resize panels. Icon commands have localized tooltips and UI Automation names; the titlebar displays the current page, with window controls at the upper right.
 
@@ -59,14 +59,26 @@ Choose **Build preview** in the composition workspace header to merge the select
 
 Keyboard commands:
 
+New in preview.17: the product name is centered at the top of the window. Importing the first animation layer supplies its filename stem as the default output name; later imports preserve it and custom names remain unchanged. Text-field Cut/Copy/Paste menus follow the selected language. Settings → Utilities → Unified output folder persists a shared destination for animation and dual-wield exports without changing project paths or preview caches; clearing it restores per-item destinations.
+
 | Command | Shortcut |
 | --- | --- |
+| New project | `Ctrl+N` |
 | Open project | `Ctrl+O` |
 | Save project | `Ctrl+S` |
 | Save project as | `Ctrl+Shift+S` |
 | Export all | `Ctrl+E` |
+| Import animations/models on the active page | `Ctrl+I` |
+| Import animation layers | `Ctrl+L` |
+| New dual task | `Ctrl+T` |
+| Build preview / open CAST preview | `F5` / `Ctrl+Shift+O` |
+| Navigate between five pages | `Ctrl+1` through `Ctrl+5` |
+| Remove focused list selection / reorder models or layers | `Delete` / `Alt+Up`, `Alt+Down` |
+| Complete shortcut reference | `F1` |
 | Toggle first-person CAST preview | `1` |
 | Close result/error dialog | `Esc` |
+
+List commands require list focus; text fields retain editing keys. Viewport commands require preview focus. Other shortcuts pause while tasks or messages are active.
 
 Merged CAST output uses DQS (`quaternion`) for skinned meshes. The bundled Maya importer respects an explicit CAST skinning method and defaults legacy files without one to DQS.
 

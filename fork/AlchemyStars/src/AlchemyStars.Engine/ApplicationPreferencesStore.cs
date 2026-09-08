@@ -45,6 +45,8 @@ public sealed class ApplicationPreferencesStore
     }
     public void SaveAutoUpdate(bool enabled) => Update(p => p.AutoUpdateEnabled = enabled);
     public void SaveSkippedUpdate(string version) => Update(p => p.SkippedUpdateVersion = version);
+    public void SaveUnifiedOutputDirectory(string? path) => Update(p => p.UnifiedOutputDirectory =
+        string.IsNullOrWhiteSpace(path) ? string.Empty : Path.GetFullPath(path));
 
     public WorkspaceDocument CreateWorkspace()
     {
@@ -161,6 +163,7 @@ public sealed class AppPreferenceData
     public string SavedArmsPath { get; set; } = string.Empty;
     public bool AutoUpdateEnabled { get; set; }
     public string SkippedUpdateVersion { get; set; } = string.Empty;
+    public string UnifiedOutputDirectory { get; set; } = string.Empty;
     public string ThemeStyle { get; set; } = "apple";
     public string ThemeMode { get; set; } = "light";
     public string Language { get; set; } = "system";
@@ -175,6 +178,7 @@ public sealed class AppPreferenceData
         SavedArmsPath = SavedArmsPath,
         AutoUpdateEnabled = AutoUpdateEnabled,
         SkippedUpdateVersion = SkippedUpdateVersion,
+        UnifiedOutputDirectory = UnifiedOutputDirectory,
         Language = Language,
         ThemeStyle = ThemeStyle,
         ThemeMode = ThemeMode,

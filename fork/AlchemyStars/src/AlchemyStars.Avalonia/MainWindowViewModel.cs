@@ -66,6 +66,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
         ApplyAppearance(false);
         languageMode = NormalizeLanguageMode(preferenceSnapshot.Language);
         text = new UiText(ResolveChinese(languageMode));
+        NativeTextResources.Apply(text);
         Preview = new CastPreviewViewModel(text);
         Timeline = new AnimationTimelineViewModel(text);
         workspace = preferences.CreateWorkspace();
@@ -347,6 +348,9 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
         foreach (var path in NormalizeCastPaths(paths))
         {
             var layer = new WorkspaceLayer { Name = path, Type = AnimationLayerKind.Additive };
+            if (SelectedAnimation.Layers.Count == 0 && (string.IsNullOrWhiteSpace(SelectedAnimation.OutputName)
+                || string.Equals(SelectedAnimation.OutputName, Path.GetFileNameWithoutExtension(SelectedAnimation.Name), StringComparison.OrdinalIgnoreCase)))
+                SelectedAnimation.OutputName = Path.GetFileNameWithoutExtension(path);
             SelectedAnimation.Layers.Add(layer);
             SelectedLayer = layer;
             added++;
@@ -386,11 +390,20 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
         SelectedLayer = SelectedAnimation.Layers.Count == 0 ? null : SelectedAnimation.Layers[Math.Min(index, SelectedAnimation.Layers.Count - 1)];
     }
 
-    public void MoveSelectedPart(int delta) => Move(Parts, SelectedPart, delta);
+    public void MoveSelectedPart(int delta)
+    {
+        var selected = SelectedPart;
+        Move(Parts, selected, delta);
+        SelectedPart = selected;
+    }
     public void MoveSelectedLayer(int delta)
     {
         if (SelectedAnimation is not null)
-            Move(SelectedAnimation.Layers, SelectedLayer, delta);
+        {
+            var selected = SelectedLayer;
+            Move(SelectedAnimation.Layers, selected, delta);
+            SelectedLayer = selected;
+        }
     }
 
     public async Task ReplaceAnimationSourceAsync(WorkspaceAnimation animation)
@@ -456,7 +469,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
             IsBusy = true;
             BusyMessage = Text.Exporting;
             FooterStatus = Text.Exporting;
-            var request = projectStore.CreateExportRequest(Workspace);
+            var request = ApplyUnifiedOutputDirectory(projectStore.CreateExportRequest(Workspace));
             var selection = SelectedAnimation;
             var selectedIndex = selection is null ? 0 : Animations.IndexOf(selection);
             var result = await Task.Run(() => engine.Export(request));
@@ -672,6 +685,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
     private void ApplyLanguage()
     {
         Text = new UiText(IsChinese);
+        NativeTextResources.Apply(Text);
         FooterStatus = Text.Ready;
         OnPropertyChanged(nameof(IsChinese));
         OnPropertyChanged(nameof(LanguageMode));
@@ -679,6 +693,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
         OnPropertyChanged(nameof(LanguageButtonAccessibleName));
         RefreshAppearanceLabel();
         RefreshUtilitySettings();
+        RefreshOutputDirectorySettings();
         RaiseUpdateState();
         OnPropertyChanged(nameof(CurrentProjectLabel));
         OnPropertyChanged(nameof(WindowTitle));

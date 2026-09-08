@@ -53,6 +53,9 @@ public sealed partial class CastPreviewView : UserControl
     private void ViewportWheel(object? sender, PointerWheelEventArgs e) { Preview?.Zoom(e.Delta.Y); e.Handled = true; }
     private void ViewportKeyDown(object? sender, KeyEventArgs e)
     {
+        // Let modified global shortcuts bubble; Ctrl+1 must never toggle the camera.
+        if (e.Handled || e.KeyModifiers != KeyModifiers.None && !(e.Key == Key.F && e.KeyModifiers == KeyModifiers.Shift)
+            && !(e.Key == Key.OemPlus && e.KeyModifiers == KeyModifiers.Shift)) return;
         switch (e.Key)
         {
             case Key.Left: Preview?.Orbit(-10, 0); break;
@@ -64,6 +67,9 @@ public sealed partial class CastPreviewView : UserControl
             case Key.Add: case Key.OemPlus: Preview?.Zoom(1); break;
             case Key.Subtract: case Key.OemMinus: Preview?.Zoom(-1); break;
             case Key.Space: Preview?.TogglePlayback(); break;
+            case Key.OemOpenBrackets: Preview?.Step(-1); break;
+            case Key.OemCloseBrackets: Preview?.Step(1); break;
+            case Key.B: if (Preview is { } preview) preview.ShowBones = !preview.ShowBones; break;
             default: return;
         }
         e.Handled = true;

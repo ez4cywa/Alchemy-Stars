@@ -11,7 +11,7 @@ namespace AlchemyStars.Engine;
 
 public sealed class AnimationExportEngine : IAnimationExportEngine
 {
-    public const string EngineVersion = "1.3.0-preview.16";
+    public const string EngineVersion = "1.3.0-preview.17";
 
     /// <summary>Creates an independent bind skeleton for previewing animation-only CAST data.</summary>
     public static RedFox.Graphics3D.Skeletal.Skeleton CreatePreviewSkeleton(IReadOnlyList<ModelPartSpec> parts, bool legacy) =>

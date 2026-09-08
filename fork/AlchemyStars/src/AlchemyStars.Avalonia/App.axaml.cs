@@ -68,6 +68,10 @@ public sealed partial class App : Application
                         await DesktopSmoke.RunAsync(mainWindow, viewModel);
                     if (Program.UtilitiesSmokeRequested)
                         await UtilitiesSmoke.RunAsync(mainWindow, viewModel);
+                    if (Program.ShortcutsSmokeRequested)
+                        await ShortcutsSmoke.RunAsync(mainWindow, viewModel);
+                    if (Program.TextMenuSmokeRequested)
+                        await TextMenuSmoke.RunAsync(mainWindow, viewModel);
                     if (Program.AppearanceSmokeRequested)
                         await AppearanceSmoke.RunAsync(mainWindow, viewModel);
                     if (Program.AppearanceSamplesSmokeRequested)
