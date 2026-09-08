@@ -6,6 +6,8 @@ Simple Chinese update log, compared with target branch commit `c817e47`: [更新
 
 - Added dual-wield composition, attached and combined-weapon model modes, optional companion model export, and hand-follow with preserved grip offset.
 - Added clearer timing errors, Apple/neumorphic themes, consistent controls and icons, and resizable dual-wield panes.
+- Added an independent graphite/platinum Classic Apple theme with 34 monoline vector icons, safe icon margins and centered single-line control text; retained both existing themes and preferences.
+- Hardened both About links with browser-launch fallback and a copyable URL on failure.
 - Added Blender FBX conversion while retaining Maya support and the target repository's About-page link.
 - Integrated the final local UI branch and unified the application, engine and build scripts at preview.13. Earlier entries below retain the local development numbering as historical records.
 

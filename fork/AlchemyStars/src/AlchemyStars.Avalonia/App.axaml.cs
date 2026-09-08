@@ -18,7 +18,13 @@ public sealed partial class App : Application
         {
             var preferences = new ApplicationPreferencesStore();
             var mainWindow = new MainWindow();
-            var viewModel = mainWindow.InitializeWorkspace(new AnimationExportEngine(), new WorkspaceProjectStore(), preferences);
+            var viewModel = mainWindow.InitializeWorkspace(
+                new AnimationExportEngine(),
+                new WorkspaceProjectStore(),
+                preferences,
+                Program.ExternalLinkLogPath is { } linkLogPath
+                    ? uri => RecordExternalLinkAsync(linkLogPath, uri)
+                    : null);
             if (Program.StartupProjectPath is not null)
                 viewModel.LoadProject(Program.StartupProjectPath);
             if (Program.RenderSmokePage is { } smokePage)
@@ -79,5 +85,11 @@ public sealed partial class App : Application
         }
 
         base.OnFrameworkInitializationCompleted();
+    }
+
+    private static Task<bool> RecordExternalLinkAsync(string path, Uri uri)
+    {
+        File.AppendAllLines(path, [uri.AbsoluteUri]);
+        return Task.FromResult(true);
     }
 }

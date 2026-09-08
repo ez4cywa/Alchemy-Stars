@@ -46,9 +46,17 @@ public sealed partial class MainWindow : Window
         KeepEditorsWithinWindow();
     }
 
-    public MainWindowViewModel InitializeWorkspace(IAnimationExportEngine engine, WorkspaceProjectStore projectStore, ApplicationPreferencesStore preferences)
+    public MainWindowViewModel InitializeWorkspace(
+        IAnimationExportEngine engine,
+        WorkspaceProjectStore projectStore,
+        ApplicationPreferencesStore preferences,
+        Func<Uri, Task<bool>>? externalUriLaunch = null)
     {
-        var viewModel = new MainWindowViewModel(engine, projectStore, preferences, new AvaloniaFilePickerAdapter(this, preferences));
+        var viewModel = new MainWindowViewModel(
+            engine,
+            projectStore,
+            preferences,
+            new AvaloniaFilePickerAdapter(this, preferences, externalUriLaunch));
         DataContext = viewModel;
         Closed += (_, _) => viewModel.Dispose();
         viewModel.PropertyChanged += (_, eventArgs) =>
@@ -67,6 +75,19 @@ public sealed partial class MainWindow : Window
         if (buttons.Length != 4) throw new InvalidOperationException("The project toolbar must expose four commands.");
         foreach (var button in buttons)
         {
+            var themedIcon = button.GetVisualDescendants().OfType<ThemedIcon>().SingleOrDefault();
+            if (themedIcon is not null)
+            {
+                var iconOrigin = themedIcon.TranslatePoint(default, button)
+                    ?? throw new InvalidOperationException("Toolbar theme icon is not attached to its button.");
+                if (!themedIcon.HasLegacyBitmap || button.Bounds.Width < 44 || button.Bounds.Height < 44
+                    || themedIcon.Bounds.Width < themedIcon.Width || themedIcon.Bounds.Height < themedIcon.Height
+                    || iconOrigin.X < 2 || iconOrigin.Y < 2
+                    || iconOrigin.X + themedIcon.Bounds.Width > button.Bounds.Width - 2
+                    || iconOrigin.Y + themedIcon.Bounds.Height > button.Bounds.Height - 2)
+                    throw new InvalidOperationException("A toolbar theme icon or hit target is clipped.");
+                continue;
+            }
             var productIcon = button.GetVisualDescendants().OfType<Image>().SingleOrDefault();
             if (productIcon is not null)
             {

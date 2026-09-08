@@ -2,6 +2,7 @@
     x:Class="AlchemyStars.Avalonia.App"
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:AlchemyStars.Avalonia"
     RequestedThemeVariant="Light">
   <Application.Styles>
     <FluentTheme />
@@ -28,6 +29,7 @@
       <Setter Property="Background" Value="{DynamicResource AlchemySurfaceBrush}" />
       <Setter Property="BorderThickness" Value="0" />
       <Setter Property="BorderBrush" Value="Transparent" />
+      <Setter Property="VerticalContentAlignment" Value="Center" />
     </Style>
     <Style Selector="Button:pointerover /template/ ContentPresenter">
       <Setter Property="Background" Value="{DynamicResource AlchemyHoverBrush}" />
@@ -101,6 +103,7 @@
       <Setter Property="Background" Value="Transparent" />
       <Setter Property="BorderThickness" Value="1" />
       <Setter Property="BorderBrush" Value="Transparent" />
+      <Setter Property="VerticalContentAlignment" Value="Center" />
     </Style>
     <Style Selector="ToggleButton.preview-command:pointerover /template/ ContentPresenter">
       <Setter Property="Background" Value="{DynamicResource AlchemyHoverBrush}" />
@@ -134,6 +137,7 @@
       <Setter Property="Padding" Value="10" />
       <Setter Property="Margin" Value="0" />
       <Setter Property="HorizontalContentAlignment" Value="Center" />
+      <Setter Property="VerticalContentAlignment" Value="Center" />
       <Setter Property="Background" Value="Transparent" />
     </Style>
     <Style Selector="Button.activity.selected">
@@ -289,6 +293,7 @@
       <Setter Property="CornerRadius" Value="8" />
       <Setter Property="Margin" Value="0,2" />
       <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+      <Setter Property="VerticalContentAlignment" Value="Center" />
     </Style>
     <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter">
       <Setter Property="Background" Value="{DynamicResource AlchemyHoverBrush}" />
@@ -366,6 +371,7 @@
       <Setter Property="Background" Value="Transparent" />
       <Setter Property="BorderThickness" Value="0" />
       <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="VerticalContentAlignment" Value="Center" />
     </Style>
     <Style Selector="Border.canvas-footer">
       <Setter Property="Background" Value="{DynamicResource AlchemySurfaceBrush}" />
@@ -392,6 +398,7 @@
       <Setter Property="Padding" Value="10,5" />
       <Setter Property="Margin" Value="0,0,8,0" />
       <Setter Property="VerticalAlignment" Value="Center" />
+      <Setter Property="VerticalContentAlignment" Value="Center" />
       <Setter Property="CornerRadius" Value="1" />
       <Setter Property="BorderThickness" Value="3,0,0,0" />
     </Style>
@@ -444,6 +451,7 @@
       <Setter Property="VerticalAlignment" Value="Center" />
     </Style>
     <Style Selector="Button"><Setter Property="VerticalContentAlignment" Value="Center" /></Style>
+    <Style Selector="ToggleButton"><Setter Property="VerticalContentAlignment" Value="Center" /></Style>
     <Style Selector="TextBox"><Setter Property="VerticalContentAlignment" Value="Center" /></Style>
     <Style Selector="ComboBox"><Setter Property="VerticalContentAlignment" Value="Center" /></Style>
     <!-- Multiline editors must be free to grow rather than clipping their content. -->
@@ -454,6 +462,14 @@
     <Style Selector="CheckBox">
       <Setter Property="MinHeight" Value="44" />
       <Setter Property="Foreground" Value="{DynamicResource AlchemyTextBrush}" />
+      <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="ComboBoxItem">
+      <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="ComboBoxItem /template/ ContentPresenter, ListBoxItem /template/ ContentPresenter, MenuItem /template/ ContentPresenter">
+      <Setter Property="VerticalAlignment" Value="Center" />
+      <Setter Property="VerticalContentAlignment" Value="Center" />
     </Style>
     <Style Selector="Button.icon">
       <Setter Property="Height" Value="44" />
@@ -521,7 +537,7 @@
     </Style>
     <!-- Apple utility grammar; preserve the existing workspace geometry. -->
     <Style Selector="Button, MenuItem, ToolTip, TextBox, ComboBox, CheckBox">
-      <Setter Property="FontSize" Value="14" />
+      <Setter Property="FontSize" Value="{DynamicResource AppearanceControlFontSize}" />
     </Style>
     <Style Selector="Button">
       <Setter Property="CornerRadius" Value="8" />
@@ -535,8 +551,8 @@
     </Style>
     <Style Selector="Button.primary, Button.secondary">
       <Setter Property="CornerRadius" Value="9999" />
-      <Setter Property="FontWeight" Value="Normal" />
-      <Setter Property="FontSize" Value="17" />
+      <Setter Property="FontWeight" Value="{DynamicResource AppearanceActionFontWeight}" />
+      <Setter Property="FontSize" Value="{DynamicResource AppearanceActionFontSize}" />
       <Setter Property="Padding" Value="22,8" />
     </Style>
     <Style Selector="Button.secondary /template/ ContentPresenter">
@@ -558,7 +574,7 @@
     <Style Selector="Border.card, Border.subcard, Border.dialog-card">
       <Setter Property="BorderThickness" Value="1" />
       <Setter Property="BorderBrush" Value="{DynamicResource AlchemyBorderStrongBrush}" />
-      <Setter Property="Padding" Value="24" />
+      <Setter Property="Padding" Value="{DynamicResource AppearanceCardPadding}" />
     </Style>
     <Style Selector="Border.workspace-panel, Border.composition-canvas, Border.hero-card">
       <Setter Property="CornerRadius" Value="0" />
@@ -603,7 +619,16 @@
     </Style>
     <!-- Shared icon frames preserve the existing 44/40/32 px hit targets. -->
     <Style Selector="Image.product-icon">
-
+      <Setter Property="Width" Value="20" />
+      <Setter Property="Height" Value="20" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+      <Setter Property="HorizontalAlignment" Value="Center" />
+    </Style>
+    <Style Selector="local|ThemedIcon">
+      <Setter Property="UseClassicGlyph" Value="{DynamicResource AppearanceUseClassicIcons}" />
+      <Setter Property="IconBrush" Value="{DynamicResource AlchemyIconBrush}" />
+    </Style>
+    <Style Selector="local|ThemedIcon.product-icon">
       <Setter Property="Width" Value="20" />
       <Setter Property="Height" Value="20" />
       <Setter Property="VerticalAlignment" Value="Center" />
@@ -613,11 +638,29 @@
       <Setter Property="Width" Value="24" />
       <Setter Property="Height" Value="24" />
     </Style>
+    <Style Selector="Button.activity local|ThemedIcon.product-icon">
+      <Setter Property="Width" Value="24" />
+      <Setter Property="Height" Value="24" />
+      <Setter Property="IconBrush" Value="{DynamicResource AlchemyMutedTextBrush}" />
+    </Style>
+    <Style Selector="Button.activity.selected local|ThemedIcon.product-icon, Border.feature-icon local|ThemedIcon.product-icon">
+      <Setter Property="IconBrush" Value="{DynamicResource AlchemyAccentBrush}" />
+    </Style>
+    <Style Selector="Border.command-bar local|ThemedIcon.product-icon">
+      <Setter Property="IconBrush" Value="{DynamicResource AlchemyCommandTextBrush}" />
+    </Style>
+    <Style Selector="Button.primary local|ThemedIcon.product-icon">
+      <Setter Property="IconBrush" Value="White" />
+    </Style>
     <Style Selector="Border.feature-icon">
       <Setter Property="Padding" Value="4" />
       <Setter Property="BorderThickness" Value="0" />
     </Style>
     <Style Selector="Border.feature-icon Image.product-icon">
+      <Setter Property="Width" Value="32" />
+      <Setter Property="Height" Value="32" />
+    </Style>
+    <Style Selector="Border.feature-icon local|ThemedIcon.product-icon">
       <Setter Property="Width" Value="32" />
       <Setter Property="Height" Value="32" />
     </Style>
@@ -632,11 +675,17 @@
 
   <Application.Resources>
     <SolidColorBrush x:Key="AlchemyChipBrush" Color="#d2d2d7" />
+    <SolidColorBrush x:Key="AlchemyIconBrush" Color="#0066cc" />
     <SolidColorBrush x:Key="AlchemyOnDarkMutedBrush" Color="#cccccc" />
     <SolidColorBrush x:Key="AlchemyDarkTileBrush" Color="#272729" />
     <Color x:Key="SystemAccentColor">#0066cc</Color>
     <Color x:Key="SystemAccentColorDark1">#0066cc</Color>
     <Color x:Key="SystemAccentColorLight1">#0071e3</Color>
+    <x:Boolean x:Key="AppearanceUseClassicIcons">False</x:Boolean>
+    <x:Double x:Key="AppearanceControlFontSize">14</x:Double>
+    <x:Double x:Key="AppearanceActionFontSize">17</x:Double>
+    <FontWeight x:Key="AppearanceActionFontWeight">Normal</FontWeight>
+    <Thickness x:Key="AppearanceCardPadding">24</Thickness>
     <!-- DESIGN-apple.md: neutral surfaces and a single Action Blue accent. -->
     <Color x:Key="AlchemyBackground">#f5f5f7</Color>
     <Color x:Key="AlchemySidebar">#f5f5f7</Color>

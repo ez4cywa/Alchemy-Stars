@@ -3,7 +3,10 @@ using Avalonia.Platform.Storage;
 
 namespace AlchemyStars.Avalonia;
 
-public sealed class AvaloniaFilePickerAdapter(Window owner, ApplicationPreferencesStore preferences) : IWorkspaceFilePicker
+public sealed class AvaloniaFilePickerAdapter(
+    Window owner,
+    ApplicationPreferencesStore preferences,
+    Func<Uri, Task<bool>>? externalUriLaunch = null) : IWorkspaceFilePicker
 {
     private static readonly FilePickerFileType CastFileType = new("CAST") { Patterns = ["*.cast"] };
     private static readonly FilePickerFileType ProjectFileType = new("Alchemy Stars project") { Patterns = ["*.aprj"] };
@@ -55,7 +58,9 @@ public sealed class AvaloniaFilePickerAdapter(Window owner, ApplicationPreferenc
         return string.IsNullOrWhiteSpace(path) ? null : path;
     }
 
-    public Task OpenUriAsync(Uri uri) => owner.Launcher.LaunchUriAsync(uri);
+    public Task<bool> OpenUriAsync(Uri uri) => externalUriLaunch is not null
+        ? externalUriLaunch(uri)
+        : ExternalUriLauncher.OpenAsync(uri, owner.Launcher.LaunchUriAsync);
 
     private async Task<IStorageFolder?> ResolveStartLocationAsync(string scope, string? currentPath = null)
     {

@@ -16,7 +16,8 @@ Add-Type -AssemblyName UIAutomationTypes
 
 $repositoryRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
 $standardProject = Join-Path $repositoryRoot 'fork\AlchemyStars\Example\Hawk\HawkSprint.aprj'
-$arguments = '--accessibility-smoke --culture en-US --window-size 900x600 --page animations --dialog success "' + $standardProject + '"'
+$linkLog = Join-Path ([System.IO.Path]::GetTempPath()) ('AlchemyStars-about-links-' + [Guid]::NewGuid().ToString('N') + '.txt')
+$arguments = '--accessibility-smoke --culture en-US --window-size 900x600 --page animations --dialog success --external-link-log "' + $linkLog + '" "' + $standardProject + '"'
 $process = Start-Process -FilePath $executable -ArgumentList $arguments -WorkingDirectory $publishPath -WindowStyle Hidden -PassThru
 try {
     $processCondition = [System.Windows.Automation.PropertyCondition]::new(
@@ -113,31 +114,50 @@ try {
     ([System.Windows.Automation.InvokePattern]$elements['About'].GetCurrentPattern(
         [System.Windows.Automation.InvokePattern]::Pattern)).Invoke()
 
-    $repositoryName = 'Open the Alchemy Stars repository'
-    $repositoryButton = $null
-    do {
-        $repositoryCondition = [System.Windows.Automation.PropertyCondition]::new(
-            [System.Windows.Automation.AutomationElement]::NameProperty,
-            $repositoryName)
-        $repositoryButton = $window.FindFirst(
-            [System.Windows.Automation.TreeScope]::Descendants,
-            [System.Windows.Automation.AndCondition]::new($buttonCondition, $repositoryCondition))
-        if ($null -eq $repositoryButton) { Start-Sleep -Milliseconds 100 }
-    } while ($null -eq $repositoryButton -and [DateTime]::UtcNow -lt $deadline)
-    if ($null -eq $repositoryButton -or -not $repositoryButton.Current.IsKeyboardFocusable) {
-        throw 'The About project repository action is missing or not keyboard operable.'
-    }
-    $repositoryBounds = $repositoryButton.Current.BoundingRectangle
-    if ($repositoryBounds.Height -lt 43) {
-        throw "The About project repository target is smaller than 44 DIPs: $($repositoryBounds.Height)"
-    }
-    $repositoryButton.SetFocus()
-    Start-Sleep -Milliseconds 150
-    if (-not $repositoryButton.Current.HasKeyboardFocus) {
-        throw 'The About project repository action could not receive keyboard focus.'
+    $aboutActions = @(
+        @{ Name = 'Open the Alchemy Stars repository'; Url = 'https://github.com/ez4cywa/Alchemy-Stars' },
+        @{ Name = 'Open upstream project'; Url = 'https://github.com/Scobalula/Alchemist' }
+    )
+    foreach ($action in $aboutActions) {
+        $actionButton = $null
+        do {
+            $actionCondition = [System.Windows.Automation.PropertyCondition]::new(
+                [System.Windows.Automation.AutomationElement]::NameProperty,
+                $action.Name)
+            $actionButton = $window.FindFirst(
+                [System.Windows.Automation.TreeScope]::Descendants,
+                [System.Windows.Automation.AndCondition]::new($buttonCondition, $actionCondition))
+            if ($null -eq $actionButton) { Start-Sleep -Milliseconds 100 }
+        } while ($null -eq $actionButton -and [DateTime]::UtcNow -lt $deadline)
+        if ($null -eq $actionButton -or -not $actionButton.Current.IsKeyboardFocusable) {
+            throw "The About action is missing or not keyboard operable: $($action.Name)"
+        }
+        $actionBounds = $actionButton.Current.BoundingRectangle
+        if ($actionBounds.Height -lt 43) {
+            throw "The About target is smaller than 44 DIPs: $($action.Name), $($actionBounds.Height)"
+        }
+        $actionButton.SetFocus()
+        Start-Sleep -Milliseconds 100
+        if (-not $actionButton.Current.HasKeyboardFocus) {
+            throw "The About action could not receive keyboard focus: $($action.Name)"
+        }
+        if ($actionButton.Current.IsOffscreen) {
+            throw "The About action stayed offscreen after receiving keyboard focus: $($action.Name)"
+        }
+        ([System.Windows.Automation.InvokePattern]$actionButton.GetCurrentPattern(
+            [System.Windows.Automation.InvokePattern]::Pattern)).Invoke()
     }
 
-    Write-Output 'Windows UI Automation names, keyboard focus, 44x44 key targets, About repository action and duration-aware track geometry: PASS'
+    do {
+        Start-Sleep -Milliseconds 100
+        $openedLinks = if (Test-Path -LiteralPath $linkLog) { @(Get-Content -LiteralPath $linkLog) } else { @() }
+    } while ($openedLinks.Count -lt $aboutActions.Count -and [DateTime]::UtcNow -lt $deadline)
+    $expectedLinks = @($aboutActions | ForEach-Object Url)
+    if ($openedLinks.Count -ne $expectedLinks.Count -or (Compare-Object $expectedLinks $openedLinks)) {
+        throw "About actions did not route the expected external links: $($openedLinks -join ', ')"
+    }
+
+    Write-Output 'Windows UI Automation names, keyboard focus, 44x44 key targets, both About actions and duration-aware track geometry: PASS'
 }
 finally {
     $process.Refresh()
@@ -146,4 +166,7 @@ finally {
         $process.WaitForExit(5000) | Out-Null
     }
     $process.Dispose()
+    if (Test-Path -LiteralPath $linkLog) {
+        [System.IO.File]::Delete($linkLog)
+    }
 }

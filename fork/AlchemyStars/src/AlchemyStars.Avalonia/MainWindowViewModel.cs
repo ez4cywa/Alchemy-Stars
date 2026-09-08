@@ -49,7 +49,12 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
         this.preferences = preferences;
         this.picker = picker;
         var preferenceSnapshot = preferences.Snapshot();
-        themeStyleIndex = preferenceSnapshot.ThemeStyle == "neumorphic" ? 1 : 0;
+        themeStyleIndex = preferenceSnapshot.ThemeStyle switch
+        {
+            "classic-apple" => 1,
+            "neumorphic" => 2,
+            _ => 0,
+        };
         themeModeIndex = preferenceSnapshot.ThemeMode switch { "dark" => 1, "system" => 2, _ => 0 };
         ApplyAppearance(false);
         languageMode = NormalizeLanguageMode(preferenceSnapshot.Language);
@@ -561,9 +566,32 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
 
     public void CloseDialog() => IsDialogOpen = false;
 
-    public Task OpenUpstreamAsync() => picker.OpenUriAsync(new Uri("https://github.com/Scobalula/Alchemist"));
+    public Task OpenUpstreamAsync() => OpenExternalUriAsync(new Uri("https://github.com/Scobalula/Alchemist"));
 
-    public Task OpenProjectRepositoryAsync() => picker.OpenUriAsync(new Uri(ProjectRepositoryUrl));
+    public Task OpenProjectRepositoryAsync() => OpenExternalUriAsync(new Uri(ProjectRepositoryUrl));
+
+    private async Task OpenExternalUriAsync(Uri uri)
+    {
+        try
+        {
+            if (await picker.OpenUriAsync(uri))
+            {
+                FooterStatus = string.Format(CultureInfo.CurrentCulture, Text.ExternalLinkOpened, uri.Host);
+                return;
+            }
+        }
+        catch
+        {
+            // Convert launcher failures into an actionable in-app message instead of
+            // allowing an async click handler to fail without visible feedback.
+        }
+
+        FooterStatus = Text.ExternalLinkOpenFailed;
+        ShowDialog(
+            Text.ExternalLinkOpenFailed,
+            string.Format(CultureInfo.CurrentCulture, Text.ExternalLinkOpenFailedBody, uri.AbsoluteUri),
+            true);
+    }
 
     public void SetPathFromDrop(object target, string path, string role)
     {
@@ -909,6 +937,9 @@ public sealed partial class UiText
     public string UpstreamTitle => L("来源与致谢", "Origin and attribution");
     public string UpstreamHelp => L("炼金之星保留 Alchemist 与 RedFox 的转换基础，并在其上改进生产工作流。", "Alchemy Stars retains the Alchemist and RedFox conversion foundation and improves its production workflow.");
     public string Upstream => L("打开原项目", "Open upstream project");
+    public string ExternalLinkOpened => L("已交给默认浏览器打开：{0}", "Opened in the default browser: {0}");
+    public string ExternalLinkOpenFailed => L("无法打开网页", "Could not open webpage");
+    public string ExternalLinkOpenFailedBody => L("系统无法启动默认浏览器。请检查 Windows 的默认应用设置，或复制以下网址到浏览器：\n{0}", "Windows could not start the default browser. Check the default-app settings, or copy this address into a browser:\n{0}");
     public string License => L("主程序遵循 MIT 许可证；Alchemist、RedFox、CAST 与 Maya 组件保留各自版权和许可证。", "The application uses the MIT license; Alchemist, RedFox, CAST and Maya assets retain their respective copyrights and licenses.");
     public string Close => L("关闭", "Close");
     public string Notification => L("通知", "Notification");

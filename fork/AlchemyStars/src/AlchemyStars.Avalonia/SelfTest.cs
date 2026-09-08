@@ -93,6 +93,10 @@ internal static class SelfTest
                 var preferences = new ApplicationPreferencesStore(Path.Combine(testDirectory, "settings.json"));
                 Require(preferences.Snapshot().ThemeStyle == "apple" && preferences.Snapshot().ThemeMode == "light",
                     "Existing installations must retain the Apple light default.");
+                preferences.SaveAppearance("classic-apple", "system");
+                var classicAppearance = new ApplicationPreferencesStore(Path.Combine(testDirectory, "settings.json")).Snapshot();
+                Require(classicAppearance.ThemeStyle == "classic-apple" && classicAppearance.ThemeMode == "system",
+                    "Classic Apple appearance must persist across process reloads.");
                 preferences.SaveAppearance("neumorphic", "dark");
                 preferences.SaveLanguage("system");
                 preferences.SaveDefaults("system", preferences.CreateWorkspace());
@@ -120,6 +124,45 @@ internal static class SelfTest
                 viewModel.OpenProjectRepositoryAsync().GetAwaiter().GetResult();
                 Require(filePicker.LastOpenedUri?.AbsoluteUri == MainWindowViewModel.ProjectRepositoryUrl,
                     "About did not open the current project repository.");
+                viewModel.OpenUpstreamAsync().GetAwaiter().GetResult();
+                Require(filePicker.LastOpenedUri?.AbsoluteUri == "https://github.com/Scobalula/Alchemist",
+                    "About did not open the upstream repository.");
+                Require(viewModel.FooterStatus.Contains("github.com", StringComparison.Ordinal),
+                    "About did not report a successful external-link handoff.");
+                filePicker.OpenUriResult = false;
+                viewModel.OpenProjectRepositoryAsync().GetAwaiter().GetResult();
+                Require(viewModel.IsDialogOpen && viewModel.DialogMessage.Contains(MainWindowViewModel.ProjectRepositoryUrl, StringComparison.Ordinal),
+                    "About silently ignored an external-link launch failure.");
+                viewModel.CloseDialog();
+                filePicker.OpenUriException = new InvalidOperationException("simulated launcher failure");
+                viewModel.OpenUpstreamAsync().GetAwaiter().GetResult();
+                Require(viewModel.IsDialogOpen && viewModel.DialogMessage.Contains("https://github.com/Scobalula/Alchemist", StringComparison.Ordinal),
+                    "About silently ignored an external-link launch exception.");
+                viewModel.CloseDialog();
+                filePicker.OpenUriException = null;
+
+                var platformCalls = 0;
+                var shellCalls = 0;
+                var fallbackUri = new Uri(MainWindowViewModel.ProjectRepositoryUrl);
+                var fallbackResult = ExternalUriLauncher.OpenAsync(
+                    fallbackUri,
+                    _ => { platformCalls++; return Task.FromResult(false); },
+                    _ => { shellCalls++; return true; }).GetAwaiter().GetResult();
+                Require(fallbackResult && platformCalls == 1 && shellCalls == 1,
+                    "External-link launcher did not fall back to Windows ShellExecute.");
+                shellCalls = 0;
+                var primaryResult = ExternalUriLauncher.OpenAsync(
+                    fallbackUri,
+                    _ => Task.FromResult(true),
+                    _ => { shellCalls++; return true; }).GetAwaiter().GetResult();
+                Require(primaryResult && shellCalls == 0,
+                    "External-link launcher used the shell fallback after the platform launch succeeded.");
+                var exceptionFallbackResult = ExternalUriLauncher.OpenAsync(
+                    fallbackUri,
+                    _ => throw new InvalidOperationException("simulated platform failure"),
+                    _ => true).GetAwaiter().GetResult();
+                Require(exceptionFallbackResult,
+                    "External-link launcher did not recover from a platform-launch exception.");
                 viewModel.Preview.ToggleFirstPerson();
                 Require(viewModel.Preview.IsFirstPerson
                     && viewModel.Preview.CameraModeLabel == "Return to orbit view / 1"
@@ -308,15 +351,19 @@ internal static class SelfTest
     private sealed class SelfTestFilePicker : IWorkspaceFilePicker
     {
         public Uri? LastOpenedUri { get; private set; }
+        public bool OpenUriResult { get; set; } = true;
+        public Exception? OpenUriException { get; set; }
 
         public Task<IReadOnlyList<string>> PickFilesAsync(FilePickerPurpose purpose, bool allowMultiple) =>
             Task.FromResult<IReadOnlyList<string>>([]);
         public Task<string?> PickProjectDestinationAsync(string? currentPath) => Task.FromResult<string?>(null);
         public Task<string?> PickFolderAsync(string? currentPath) => Task.FromResult<string?>(null);
-        public Task OpenUriAsync(Uri uri)
+        public Task<bool> OpenUriAsync(Uri uri)
         {
             LastOpenedUri = uri;
-            return Task.CompletedTask;
+            if (OpenUriException is not null)
+                throw OpenUriException;
+            return Task.FromResult(OpenUriResult);
         }
     }
 }

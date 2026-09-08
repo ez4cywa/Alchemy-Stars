@@ -16,6 +16,7 @@ internal static class Program
     internal static string? PreviewSmokePath { get; private set; }
     internal static bool BuildPreviewSmoke { get; private set; }
     internal static bool FirstPersonPreviewRequested { get; private set; }
+    internal static string? ExternalLinkLogPath { get; private set; }
 
     [STAThread]
     public static int Main(string[] args)
@@ -60,6 +61,7 @@ internal static class Program
         BuildPreviewSmoke = args.Contains("--build-preview", StringComparer.OrdinalIgnoreCase);
         FirstPersonPreviewRequested = args.Contains("--first-person-preview", StringComparer.OrdinalIgnoreCase);
         AccessibilitySmokeRequested = args.Contains("--accessibility-smoke", StringComparer.OrdinalIgnoreCase);
+        ExternalLinkLogPath = GetOption(args, "--external-link-log");
         StartupProjectPath = args
             .Where(argument => !argument.StartsWith("--", StringComparison.Ordinal))
             .FirstOrDefault(argument => string.Equals(Path.GetExtension(argument), ".aprj", StringComparison.OrdinalIgnoreCase) && File.Exists(argument));
