@@ -39,7 +39,7 @@ try {
     $buttonCondition = [System.Windows.Automation.PropertyCondition]::new(
         [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
         [System.Windows.Automation.ControlType]::Button)
-    $requiredButtons = @('New', 'Open', 'Save', 'Save as', 'Export all', 'Animations', 'Model parts', 'Settings', 'About', 'Close')
+    $requiredButtons = @('New', 'Open', 'Save', 'Save as', 'Export all', 'Animation blend', 'Model parts', 'Dual merge', 'Settings', 'About', 'Close')
     $keyTargets = @('New', 'Open', 'Save', 'Save as', 'Export all', 'Close')
     $elements = @{}
     foreach ($name in $requiredButtons) {

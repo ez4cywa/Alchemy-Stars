@@ -22,6 +22,9 @@ internal static class CustomAppearanceSmoke
     internal static void VerifyThemeParser()
     {
         var parsed = CustomAppearance.ParseTheme(Encoding.UTF8.GetBytes(ValidTheme));
+        var legacy = CustomAppearance.ParseTheme(Encoding.UTF8.GetBytes(ValidTheme.Replace("\"baseStyle\":\"apple\"", "\"baseStyle\":\"neumorphic\"")));
+        Require(legacy.BaseStyle == "apple" && legacy.Light["Accent"][0] == "#285D3D",
+            "Legacy custom theme bases must migrate while retaining imported colors.");
         Require(parsed.Name == "Import smoke" && parsed.Light["Accent"][0] == "#285D3D" && parsed.Radii["Button"] == 4, "Theme parse lost fields.");
         foreach (var invalid in new[]
         {
@@ -59,7 +62,7 @@ internal static class CustomAppearanceSmoke
             vm.ThemeModeIndex = 0;
             await Task.Delay(100);
             var picker = window.FindControl<ComboBox>("ThemeStylePicker")!;
-            Require(picker.SelectedIndex == 4 && vm.ThemeStyleIndex == 4 && vm.ThemeStyles.Length == 5, "Imported theme was not selected in the real picker.");
+            Require(picker.SelectedIndex == 3 && vm.ThemeStyleIndex == 3 && vm.ThemeStyles.Length == 4, "Imported theme was not selected in the real picker.");
             Require(originalPreferences.Snapshot().ThemeStyle == "custom", "Custom style was not saved.");
             Require(Accent() == Color.Parse("#285D3D"), "Light imported palette was not applied.");
             var action = window.GetVisualDescendants().OfType<Button>().First(button => button.Classes.Contains("primary") && button.IsEffectivelyVisible);
@@ -113,17 +116,17 @@ internal static class CustomAppearanceSmoke
                 bitmap.Render(window);
                 bitmap.Save(Path.Combine(outputDirectory, $"custom-{(mode == 0 ? "light" : "dark")}-settings.png"), PngBitmapEncoderOptions.Default);
             }
-            picker.SelectedIndex = 3;
+            picker.SelectedIndex = 2;
             await Task.Delay(80);
             Require(Application.Current!.Resources["AppearanceUseWindowsXpIcons"] is true, "Built-in theme could not be selected after import.");
             Require(window.GetVisualDescendants().OfType<ThemedIcon>().Any(icon => icon.Glyph == "save" && icon.HasCustomIcon), "Independent icon pack was lost on theme switch.");
-            picker.SelectedIndex = 4;
+            picker.SelectedIndex = 3;
             await Task.Delay(80);
             Require(Accent() == Color.Parse("#A8D59F"), "Custom theme could not be reselected.");
             window.FindControl<Button>("ResetIconsButton")!.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
             window.FindControl<Button>("ResetThemeButton")!.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
             await Task.Delay(100);
-            Require(CustomAppearance.CurrentTheme is null && CustomAppearance.IconCount == 0 && vm.ThemeStyleIndex == 0 && picker.SelectedIndex == 0 && vm.ThemeStyles.Length == 4, "Restore buttons did not return to built-in appearance.");
+            Require(CustomAppearance.CurrentTheme is null && CustomAppearance.IconCount == 0 && vm.ThemeStyleIndex == 0 && picker.SelectedIndex == 0 && vm.ThemeStyles.Length == 3, "Restore buttons did not return to built-in appearance.");
             Require(window.GetVisualDescendants().OfType<ThemedIcon>().All(icon => !icon.HasCustomIcon), "Restore left stale custom images.");
             Require(!File.Exists(Path.Combine(library, "theme.json")) && !File.Exists(Path.Combine(library, "icons.zip")), "Restore did not remove saved imports.");
             File.WriteAllText(Path.Combine(library, "theme.json"), "broken");
@@ -151,7 +154,7 @@ internal static class CustomAppearanceSmoke
             Require(CustomAppearance.LoadError is not null, "Restoring icons hid an unresolved theme error.");
             vm.ResetCustomAppearance(false);
             Require(CustomAppearance.LoadError is null, "Removing corrupt theme did not clear its error.");
-            foreach (var basis in new[] { "apple", "classic-apple", "neumorphic", "windows-xp" })
+            foreach (var basis in new[] { "apple", "classic-apple", "windows-xp" })
             {
                 File.WriteAllText(themeSource, ValidTheme.Replace("\"baseStyle\":\"apple\"", $"\"baseStyle\":\"{basis}\""));
                 vm.ImportAppearance(themeSource, false);

@@ -53,9 +53,8 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
         themeStyleIndex = preferenceSnapshot.ThemeStyle switch
         {
             "classic-apple" => 1,
-            "neumorphic" => 2,
-            "windows-xp" => 3,
-            "custom" => CustomAppearance.CurrentTheme is not null ? 4 : 0,
+            "windows-xp" => 2,
+            "custom" => CustomAppearance.CurrentTheme is not null ? 3 : 0,
             _ => 0,
         };
         themeModeIndex = preferenceSnapshot.ThemeMode switch { "dark" => 1, "system" => 2, _ => 0 };
@@ -110,7 +109,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
         WorkspacePage.Settings => Text.Settings,
         WorkspacePage.About => Text.About,
         WorkspacePage.DualAnimations => Text.DualAnimations,
-        _ => Text.Animations,
+        _ => Text.AnimationBlend,
     };
     public string WindowTitle => $"{Text.ProductName} | {CurrentProjectLabel} | {Version}";
     public string LanguageButtonLabel => IsChinese ? "EN" : "中文";

@@ -64,6 +64,8 @@ public sealed partial class App : Application
                     if (Program.FirstPersonPreviewRequested && viewModel.Preview.HasScene)
                         viewModel.Preview.ToggleFirstPerson();
                     await Task.Delay(500);
+                    if (Program.DesktopSmokeRequested)
+                        await DesktopSmoke.RunAsync(mainWindow, viewModel);
                     if (Program.AppearanceSmokeRequested)
                         await AppearanceSmoke.RunAsync(mainWindow, viewModel);
                     if (Program.AppearanceSamplesSmokeRequested)

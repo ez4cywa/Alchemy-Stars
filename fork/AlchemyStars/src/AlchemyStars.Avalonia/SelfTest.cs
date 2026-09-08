@@ -106,8 +106,17 @@ internal static class SelfTest
                 preferences.SaveLanguage("system");
                 preferences.SaveDefaults("system", preferences.CreateWorkspace());
                 var reloadedAppearance = new ApplicationPreferencesStore(Path.Combine(testDirectory, "settings.json")).Snapshot();
-                Require(reloadedAppearance.ThemeStyle == "neumorphic" && reloadedAppearance.ThemeMode == "dark",
+                Require(reloadedAppearance.ThemeStyle == "apple" && reloadedAppearance.ThemeMode == "dark",
                     "Appearance must persist without being overwritten by other preference saves.");
+                var legacyPath = Path.Combine(testDirectory, "legacy-appearance.json");
+                File.WriteAllText(legacyPath, """{"ThemeStyle":"neumorphic","ThemeMode":"system","Language":"en-US"}""");
+                var legacyStore = new ApplicationPreferencesStore(legacyPath);
+                var legacyAppearance = legacyStore.Snapshot();
+                Require(legacyAppearance.ThemeStyle == "apple" && legacyAppearance.ThemeMode == "system" && legacyAppearance.Language == "en-US",
+                    "Legacy relief preferences must migrate without resetting mode or language.");
+                legacyStore.SaveLanguage("en-US");
+                Require(!File.ReadAllText(legacyPath).Contains("neumorphic", StringComparison.Ordinal),
+                    "The next preference save must persist the migrated theme key.");
                 preferences.SaveAppearance("unknown", "unknown");
                 Require(preferences.Snapshot().ThemeStyle == "apple" && preferences.Snapshot().ThemeMode == "light",
                     "Unknown appearance values must fall back safely.");

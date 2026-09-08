@@ -13,6 +13,11 @@ public sealed partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        PropertyChanged += (_, e) =>
+        {
+            if (e.Property == WindowStateProperty)
+                WindowZoomIcon.Kind = WindowState == WindowState.Maximized ? "window-restore" : "window-maximize";
+        };
         SizeChanged += (_, _) => KeepEditorsWithinWindow();
     }
 
@@ -21,11 +26,17 @@ public sealed partial class MainWindow : Window
         // Fixed side panes need to give space back after a user narrows the window.
         // Keep the center usable without discarding the user's normal splitter positions.
         if (ClientSize.Width < MinWidth) return;
+        var navigationWidth = ClientSize.Width < 1180 ? 56 : 172;
+        ShellGrid.ColumnDefinitions[0].Width = new GridLength(navigationWidth);
+        Classes.Set("compact", navigationWidth == 56);
+        // Leave room for the page margins and vertical scrollbar at narrow widths.
+        SettingsContent.MaxWidth = Math.Min(1080, ClientSize.Width - navigationWidth - 44);
+        AboutContent.MaxWidth = Math.Min(900, ClientSize.Width - navigationWidth - 76);
         foreach (var editor in new[] { AnimationEditor, PartsEditor, DualWorkspace.EditorGrid })
         {
             var columns = editor.ColumnDefinitions;
             var overflow = columns[0].Width.Value + columns[4].Width.Value
-                - (ClientSize.Width - 48 - 8 - columns[2].MinWidth);
+                - (ClientSize.Width - navigationWidth - 8 - columns[2].MinWidth);
             if (overflow <= 0) continue;
             var libraryReduction = Math.Min(overflow, columns[0].Width.Value - columns[0].MinWidth);
             columns[0].Width = new GridLength(columns[0].Width.Value - libraryReduction);
@@ -163,6 +174,20 @@ public sealed partial class MainWindow : Window
     }
 
     private void NewProjectClick(object? sender, RoutedEventArgs e) => ViewModel.NewProject();
+    private void WindowCloseClick(object? sender, RoutedEventArgs e) => Close();
+    private void WindowMinimizeClick(object? sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
+    private void WindowZoomClick(object? sender, RoutedEventArgs e) => ToggleWindowZoom();
+    private void ToggleWindowZoom() => WindowState = WindowState == WindowState.Maximized
+        ? WindowState.Normal : WindowState.Maximized;
+
+    private void TitleBarPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed) return;
+        if (e.Source is Visual source && source.GetVisualAncestors().Prepend(source).Any(v => v is Button)) return;
+        if (e.ClickCount == 2) ToggleWindowZoom();
+        else BeginMoveDrag(e);
+        e.Handled = true;
+    }
     private async void OpenProjectClick(object? sender, RoutedEventArgs e) => await ViewModel.OpenProjectAsync();
     private async void SaveProjectClick(object? sender, RoutedEventArgs e) => await ViewModel.SaveProjectAsync(false);
     private async void SaveProjectAsClick(object? sender, RoutedEventArgs e) => await ViewModel.SaveProjectAsync(true);

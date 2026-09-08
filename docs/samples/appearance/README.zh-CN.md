@@ -33,8 +33,9 @@
 | --- | --- |
 | `apple` | 原版 · 简洁 |
 | `classic-apple` | 经典 Apple：独立铂金浅色／石墨深色控件及 34 个重绘图标 |
-| `neumorphic` | 拟物化 · 柔和浮雕 |
 | `windows-xp` | Windows XP · 经典蓝 |
+
+旧文件中的 `neumorphic` 和 `modern-desktop` 自动映射为 `apple`，已定义的自定义颜色和圆角继续保留。
 
 配色使用 `"#RRGGBB"` 或 `"#AARRGGBB"`；八位格式的透明度在最前面，不是 `#RRGGBBAA`。不支持颜色名称、`rgb()` 或三位十六进制。下面列出全部 50 个 token；名称不带 `Alchemy` 或 `Brush` 前后缀：
 

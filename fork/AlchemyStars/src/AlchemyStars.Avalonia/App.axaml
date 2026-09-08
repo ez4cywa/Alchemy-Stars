@@ -625,6 +625,7 @@
       <Setter Property="HorizontalAlignment" Value="Center" />
     </Style>
     <Style Selector="local|ThemedIcon">
+      <Setter Property="UseDesktopGlyph" Value="{DynamicResource AppearanceUseDesktopIcons}" />
       <Setter Property="UseWindowsXpGlyph" Value="{DynamicResource AppearanceUseWindowsXpIcons}" />
       <Setter Property="CustomIconRevision" Value="{DynamicResource CustomIconRevision}" />
       <Setter Property="UseClassicGlyph" Value="{DynamicResource AppearanceUseClassicIcons}" />
@@ -673,6 +674,7 @@
       <Setter Property="Stroke" Value="White" />
     </Style>
     <StyleInclude Source="avares://AlchemyStars.Avalonia/Themes/Appearance.axaml" />
+    <StyleInclude Source="avares://AlchemyStars.Avalonia/Themes/DesktopShell.axaml" />
   </Application.Styles>
 
   <Application.Resources>
@@ -683,6 +685,7 @@
     <Color x:Key="SystemAccentColor">#0066cc</Color>
     <Color x:Key="SystemAccentColorDark1">#0066cc</Color>
     <Color x:Key="SystemAccentColorLight1">#0071e3</Color>
+    <x:Boolean x:Key="AppearanceUseDesktopIcons">False</x:Boolean>
     <x:Boolean x:Key="AppearanceUseClassicIcons">False</x:Boolean>
     <x:Boolean x:Key="AppearanceUseWindowsXpIcons">False</x:Boolean>
     <x:Double x:Key="AppearanceControlFontSize">14</x:Double>

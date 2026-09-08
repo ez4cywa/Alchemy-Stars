@@ -18,16 +18,16 @@
 
 预览播放栏改为自动高度，滑轨预留 36px，取消负边距，容纳 XP 的 20px 滑块与刻度。外观检查遍历四套主题、两种模式、五个页面，并验证滑块在起点、中点、终点的完整边界。
 
-在“设置 → 外观”选择界面风格和明暗模式，即时生效，自动保存。当前提供原版（平面、胶囊主按钮与既有图标）、经典 Apple（铂金/石墨层次、单色线性图标）、拟物化（柔和阴影、凹陷输入框）和 Windows XP（经典蓝 Luna 控件与彩色图标）四种风格，每种支持浅色、深色、跟随系统。
+在“设置 → 外观”选择界面风格和明暗模式，即时生效，自动保存。当前提供原版（现代桌面外观搭配原版 Apple Blue 图标）、经典 Apple（铂金/石墨层次、单色线性图标）和 Windows XP（经典蓝 Luna 控件与彩色图标）三种风格，每种支持浅色、深色、跟随系统。
 
-首次启动及旧配置继续保持原版浅色，已有 `apple` 与 `neumorphic` 偏好不迁移、不改写。偏好保存在现有用户 settings.json 的 `ThemeStyle`（apple/classic-apple/neumorphic/windows-xp/custom）与 `ThemeMode`（light/dark/system）字段中，不写进 .aprj 项目文件；未知值回退至默认值。与原偏好机制一致，配置目录不可写时仍可在当前进程切换内置风格，但无法跨重启保存；自定义导入必须成功保存副本后才生效。
+首次启动继续保持原版浅色，已有 `apple` 偏好不变；旧 `neumorphic` 和 `modern-desktop` 偏好自动映射到 `apple`，保留明暗模式。偏好保存在现有用户 settings.json 的 `ThemeStyle`（apple/classic-apple/windows-xp/custom）与 `ThemeMode`（light/dark/system）字段中，不写进 .aprj 项目文件；未知值回退至默认值。与原偏好机制一致，配置目录不可写时仍可在当前进程切换内置风格，但无法跨重启保存；自定义导入必须成功保存副本后才生效。
 
 实现位于 `src/AlchemyStars.Avalonia/AppearanceTheme.cs`（调色板和形状资源）、`Themes/Appearance.axaml`（动态样式）、`ThemedIcon.cs`（主题图标切换），以及 `MainWindowViewModel.Appearance.cs`（设置绑定与文案）。颜色、形状、字号和图标模式通过动态资源更新，明暗模式同步 Avalonia FluentTheme；系统模式监听 ActualThemeVariantChanged，不重建窗口或工作区。
 
-原版与拟物化主题保留现有功能布局、视觉参数和 Apple Blue 图标，旧主题截图可作像素回归基线。经典 Apple 主题使用独立设计的浅/暗色铂金与石墨调色板，主操作、选中态、焦点环、链接和图标都不使用蓝色；单色矢量图标按 24×24 坐标系、圆角端点和一致线宽绘制。应用标志仍作为品牌资产保留原色。
+控件名称和公共窗口布局对齐本地 macOS 预览版：172px 展开侧栏（窄窗口下为 56px）、56px 标题栏、右上角 Windows 风格窗口按钮及细分隔线。工作区名称统一为“动画混合、模型部件、双持合并”；双持页的模型处理模式标题不带图标。原版采用可卸载的现代控件皮肤、8px 面板圆角和 7px 按钮圆角，并保留原版 Apple Blue 图标；独立的现代桌面主题已移除。经典 Apple、Windows XP 和自定义主题继续控制各自的颜色、材质和控件模板；预览滑块保留兼容这些模板的尺寸。应用标志仍作为品牌资产保留原色。
 
 所有常规控件维持 44px 命中区域，预览运输控件保留 32/40px 紧凑尺寸。Button、ToggleButton、TextBox、ComboBox、CheckBox、ListBoxItem、ComboBoxItem、MenuItem 模板以及时间轴内容统一垂直居中；多行 TextBox 明确保留顶部对齐，避免长文本编辑器被错误居中。
 
-验证：`--self-test` 覆盖默认值、四种风格持久化、偏好保存互不覆盖和未知值回退。`--render-smoke <path> --appearance-smoke --window-size 900x600` 通过真实下拉框切换全部风格与明暗组合，遍历五个页面，检查即时效果、控件文字垂直居中、经典 Apple 无蓝色令牌、图标族、磁盘读取、语言刷新和系统模式事件。运行此检查须设置 `ALCHEMY_STARS_SETTINGS_PATH` 指向临时文件，避免改动日常偏好。
+验证：`--self-test` 覆盖默认值、三种风格持久化、偏好保存互不覆盖和未知值回退。`--render-smoke <path> --appearance-smoke --window-size 900x600` 通过真实下拉框切换全部风格与明暗组合，遍历五个页面，检查即时效果、控件文字垂直居中、经典 Apple 无蓝色令牌、图标族、磁盘读取、语言刷新和系统模式事件。运行此检查须设置 `ALCHEMY_STARS_SETTINGS_PATH` 指向临时文件，避免改动日常偏好。
 
-视觉验收应在 900×600 与 1366×768 两种窗口尺寸下检查四种风格、亮/暗模式和动画、部件、双持、设置、关于五个页面。系统通知路径通过应用实际主题变化事件验证，不修改本机 Windows 个性化设置。
+视觉验收应在 900×600 与 1366×768 两种窗口尺寸下检查三种风格、亮/暗模式和动画、部件、双持、设置、关于五个页面。系统通知路径通过应用实际主题变化事件验证，不修改本机 Windows 个性化设置。

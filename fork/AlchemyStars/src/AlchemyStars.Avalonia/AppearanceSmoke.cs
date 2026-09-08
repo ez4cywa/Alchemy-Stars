@@ -15,8 +15,7 @@ internal static class AppearanceSmoke
     [
         (0, "apple"),
         (1, "classic-apple"),
-        (2, "neumorphic"),
-        (3, "windows-xp"),
+        (2, "windows-xp"),
     ];
 
     private static readonly (WorkspacePage Page, string Key)[] Pages =
@@ -60,7 +59,7 @@ internal static class AppearanceSmoke
                 Require(snapshot.ThemeStyle == styleKey
                     && snapshot.ThemeMode == (mode == 1 ? "dark" : "light"), "Appearance selection did not survive a disk reload.");
                 VerifyVerticalContentAlignment(window);
-                VerifyThemedIcons(window, style == 1, style == 3);
+                VerifyThemedIcons(window, style == 1, style == 2, false);
                 await VerifyQuickToggleAsync(window, vm, style, mode);
                 if (style == 1) VerifyClassicAppleHasNoBlue(app);
                 window.VerifyToolbarLayout();
@@ -72,12 +71,20 @@ internal static class AppearanceSmoke
                     window.VerifyToolbarLayout();
                     VerifyVerticalContentAlignment(window);
                     VerifyScrubberBounds(window);
-                    VerifyThemedIcons(window, style == 1, style == 3);
-                    if (page == WorkspacePage.Settings) VerifyCheckBoxSkin(window, style);
+                    VerifyThemedIcons(window, style == 1, style == 2, false);
+                    if (page == WorkspacePage.Settings)
+                    {
+                        VerifyCheckBoxSkin(window, style);
+                        foreach (var card in window.GetVisualDescendants().OfType<Border>().Where(border => border.Classes.Contains("card") && border.IsEffectivelyVisible))
+                        {
+                            var right = card.TranslatePoint(new Point(card.Bounds.Width, 0), window)!.Value.X;
+                            Require(right <= window.ClientSize.Width, $"Settings card is clipped horizontally: {right} > {window.ClientSize.Width}.");
+                        }
+                    }
                     if (page == WorkspacePage.DualAnimations)
                     {
                         var toggle = window.GetVisualDescendants().OfType<ToggleButton>().Single(t => t.Name == "ExportModelsSwitch");
-                        Require(toggle.GetVisualDescendants().OfType<Border>().Any(b => b.Name == "XpSwitchTrack") == (style == 3), "Dual switch retained the wrong theme template.");
+                        Require(toggle.GetVisualDescendants().OfType<Border>().Any(b => b.Name == "XpSwitchTrack") == (style == 2), "Dual switch retained the wrong theme template.");
                         Require(toggle.GetVisualDescendants().OfType<Border>().Any(b => b.Name == "AppleSwitchTrack") == (style == 1), "Dual switch retained the wrong Apple template.");
                     }
                     using var bitmap = new RenderTargetBitmap(new PixelSize((int)window.ClientSize.Width, (int)window.ClientSize.Height));
@@ -109,15 +116,16 @@ internal static class AppearanceSmoke
             vm.ToggleLanguage();
             await Task.Delay(80);
             Require(vm.ThemeModeIndex == 2 && vm.ThemeStyleIndex == 1, "Language refresh reset appearance selection.");
+            Require(modePicker.SelectedIndex == 2 && stylePicker.SelectedIndex == 1, "Language refresh cleared an appearance picker.");
             vm.ToggleLanguage();
             await CustomAppearanceSmoke.RunAsync(window, vm, directory);
-            Console.WriteLine("Appearance smoke passed: four live styles, custom imports, two palettes, all pages, XP icon catalog, quick light/dark toggle, centered text, persistence, system delegation and language refresh.");
+            Console.WriteLine("Appearance smoke passed: three live styles, custom imports, two palettes, all pages, XP icon catalog, quick light/dark toggle, centered text, persistence, system delegation and language refresh.");
         }
         finally
         {
             vm.ThemeStyleIndex = originalStyle;
             vm.ThemeModeIndex = originalMode;
-            AppearanceTheme.Apply(originalStyle switch { 1 => "classic-apple", 2 => "neumorphic", 3 => "windows-xp", _ => "apple" }, originalMode switch { 1 => "dark", 2 => "system", _ => "light" });
+            AppearanceTheme.Apply(originalStyle switch { 1 => "classic-apple", 2 => "windows-xp", _ => "apple" }, originalMode switch { 1 => "dark", 2 => "system", _ => "light" });
         }
     }
 
@@ -138,7 +146,11 @@ internal static class AppearanceSmoke
                 window.UpdateLayout();
                 var mark = check.GetVisualDescendants().OfType<global::Avalonia.Controls.Shapes.Path>()
                     .FirstOrDefault(path => path.Name is "AppleCheckMark" or "XpCheckMark");
-                Require((mark is not null) == (style is 1 or 3), "Checkbox retained the wrong control skin.");
+                var desktopMark = check.GetVisualDescendants().OfType<global::Avalonia.Controls.Shapes.Path>().FirstOrDefault(path => path.Name == "CheckMark");
+                Require((desktopMark is not null) == (style == 0), "Desktop checkbox template leaked across themes.");
+                if (desktopMark is not null)
+                    Require(desktopMark.Opacity == (state ? 1 : 0), "Desktop checkbox mark did not follow its checked state.");
+                Require((mark is not null) == (style is 1 or 2), "Checkbox retained the wrong control skin.");
                 if (mark is not null)
                     Require(mark.Name == (style == 1 ? "AppleCheckMark" : "XpCheckMark") && mark.IsVisible == state,
                         "Checkbox mark did not follow its checked state.");
@@ -196,10 +208,12 @@ internal static class AppearanceSmoke
                 "List item text is not vertically centered.");
     }
 
-    private static void VerifyThemedIcons(MainWindow window, bool classic, bool xp)
+    private static void VerifyThemedIcons(MainWindow window, bool classic, bool xp, bool desktop)
     {
         // Styles are applied lazily to hidden pages; visit every page and inspect its visible controls.
         var icons = window.GetVisualDescendants().OfType<ThemedIcon>().Where(icon => icon.IsEffectivelyVisible).ToArray();
+        Require(icons.All(icon => icon.HasOriginalIcon == (!classic && !xp && !desktop)), "Original theme did not retain its bitmap icons.");
+        Require(icons.All(icon => icon.UseDesktopGlyph == desktop && icon.HasDesktopIcon == desktop), "Desktop icons did not follow the selected theme.");
         Require(icons.Length >= 5, "The visible icon system was not instantiated.");
         Require(icons.All(icon => icon.UseClassicGlyph == classic), "A screen retained the wrong theme icon family.");
         Require(icons.All(icon => icon.UseWindowsXpGlyph == xp), "A screen retained the wrong XP icon mode.");

@@ -23,7 +23,7 @@
     </Grid>
    </Grid>
   </Border>
-  <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" ResizeDirection="Columns" ResizeBehavior="PreviousAndNext" Focusable="True" KeyboardIncrement="16" Background="{DynamicResource AlchemyBorderBrush}" AutomationProperties.Name="{Binding Text.ResizePanels}" ToolTip.Tip="{Binding Text.ResizePanels}" />
+  <GridSplitter Classes="column-divider" Grid.Column="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" ResizeDirection="Columns" ResizeBehavior="PreviousAndNext" Focusable="True" KeyboardIncrement="16" Background="Transparent" AutomationProperties.Name="{Binding Text.ResizePanels}" ToolTip.Tip="{Binding Text.ResizePanels}" />
   <Border Grid.Column="2" Classes="composition-canvas">
    <Grid RowDefinitions="44,*,Auto">
     <Border Classes="dock-header"><Grid ColumnDefinitions="*,Auto"><StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center"><local:ThemedIcon Classes="product-icon" IsHitTestVisible="False" Glyph="cast-preview" /><TextBlock Text="{Binding Text.Composition}" Classes="dock-title" /></StackPanel><StackPanel Grid.Column="1" Orientation="Horizontal"><Button Classes="panel-command" Click="PreviewClick" ToolTip.Tip="{Binding Text.BuildPreview}" AutomationProperties.Name="{Binding Text.BuildPreview}" IsEnabled="{Binding HasSelectedDual}"><local:ThemedIcon Classes="product-icon" IsHitTestVisible="False" Glyph="cast-preview" /></Button><Button Classes="panel-command" Click="ExportClick" ToolTip.Tip="{Binding CurrentExportLabel}" AutomationProperties.Name="{Binding CurrentExportLabel}" IsEnabled="{Binding HasSelectedDual}"><local:ThemedIcon Classes="product-icon" IsHitTestVisible="False" Glyph="export-animation" /></Button></StackPanel></Grid></Border>
@@ -34,7 +34,7 @@
     </StackPanel>
    </Grid>
   </Border>
-  <GridSplitter Grid.Column="3" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" ResizeDirection="Columns" ResizeBehavior="PreviousAndNext" Focusable="True" KeyboardIncrement="16" Background="{DynamicResource AlchemyBorderBrush}" AutomationProperties.Name="{Binding Text.ResizePanels}" ToolTip.Tip="{Binding Text.ResizePanels}" />
+  <GridSplitter Classes="column-divider" Grid.Column="3" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" ResizeDirection="Columns" ResizeBehavior="PreviousAndNext" Focusable="True" KeyboardIncrement="16" Background="Transparent" AutomationProperties.Name="{Binding Text.ResizePanels}" ToolTip.Tip="{Binding Text.ResizePanels}" />
   <Border Grid.Column="4" Classes="workspace-panel">
    <Grid RowDefinitions="44,*">
     <Border Classes="dock-header"><StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center"><local:ThemedIcon Classes="product-icon" IsHitTestVisible="False" Glyph="output-settings" /><TextBlock Text="{Binding Text.Inspector}" Classes="dock-title" /></StackPanel></Border>
@@ -54,7 +54,7 @@
         <StackPanel><TextBlock Text="{Binding Text.OutputFolder}" Classes="field-label" /><Grid ColumnDefinitions="*,8,44"><TextBox Text="{Binding SelectedDual.OutputFolder}" AutomationProperties.Name="{Binding Text.OutputFolder}" /><Button Grid.Column="2" Classes="icon secondary" Click="FolderClick" ToolTip.Tip="{Binding Text.Browse}" AutomationProperties.Name="{Binding Text.Browse}"><local:ThemedIcon Classes="product-icon" IsHitTestVisible="False" Glyph="import-assets" /></Button></Grid></StackPanel>
        </StackPanel>
       </Expander>
-      <Expander Classes="property-group" IsExpanded="True"><Expander.Header><StackPanel Orientation="Horizontal" Spacing="8"><local:ThemedIcon Classes="product-icon" IsHitTestVisible="False" Glyph="weapon-processing-mode" /><TextBlock Text="{Binding Text.DualMode}" VerticalAlignment="Center" /></StackPanel></Expander.Header><StackPanel Spacing="16" IsEnabled="{Binding HasSelectedDual}">
+      <Expander x:Name="DualModeSection" Classes="property-group" Header="{Binding Text.DualMode}" IsExpanded="True"><StackPanel Spacing="16" IsEnabled="{Binding HasSelectedDual}">
        <ComboBox x:Name="DualModePicker" ItemsSource="{Binding Text.DualModes}" SelectedIndex="{Binding SelectedDual.ModeIndex, Mode=TwoWay}" AutomationProperties.Name="{Binding Text.DualMode}" />
        <StackPanel Spacing="16" IsVisible="{Binding SelectedDual.IsCombinedModel}">
         <TextBlock Text="{Binding Text.DualCombinedHelp}" Classes="muted" TextWrapping="Wrap" />

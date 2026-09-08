@@ -14,7 +14,7 @@ public sealed partial class UiText
     public string DualSources => L("动画来源", "Animation sources");
     public string DualMounts => L("武器挂点", "Weapon mounts");
     public string DualBatch => L("批量操作", "Batch actions");
-    public string DualAnimations => L("双持动画", "Dual wield");
+    public string DualAnimations => L("双持合并", "Dual merge");
     public string DualAdd => L("新建双持任务", "New dual task");
     public string DualPair => L("配对已有动画", "Pair source tasks");
     public string DualLeft => L("左侧动画任务", "Left animation task");

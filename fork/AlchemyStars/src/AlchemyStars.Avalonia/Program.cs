@@ -6,6 +6,7 @@ namespace AlchemyStars.Avalonia;
 internal static class Program
 {
     internal static bool StartupSmokeRequested { get; private set; }
+    internal static bool DesktopSmokeRequested { get; private set; }
     internal static bool AppearanceSmokeRequested { get; private set; }
     internal static bool AppearanceSamplesSmokeRequested { get; private set; }
     internal static string? RenderSmokePath { get; private set; }
@@ -50,6 +51,7 @@ internal static class Program
             return SelfTest.RunProject(args.Skip(projectArgumentIndex + 1).ToArray());
 
         var renderPath = GetOption(args, "--render-smoke");
+        DesktopSmokeRequested = args.Contains("--desktop-smoke", StringComparer.OrdinalIgnoreCase);
         AppearanceSmokeRequested = args.Contains("--appearance-smoke", StringComparer.OrdinalIgnoreCase);
         AppearanceSamplesSmokeRequested = args.Contains("--appearance-samples-smoke", StringComparer.OrdinalIgnoreCase);
         RenderSmokePath = renderPath is not null

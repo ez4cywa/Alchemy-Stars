@@ -73,10 +73,17 @@ public sealed class ThemedIcon : Grid
 
     private readonly Viewbox vectorHost = new() { Stretch = Stretch.Uniform, IsHitTestVisible = false };
     private readonly Viewbox xpHost = new() { Stretch = Stretch.Uniform, IsHitTestVisible = false };
+    private readonly AppIcon desktopIcon = new() { IsHitTestVisible = false };
+    public static readonly StyledProperty<bool> UseDesktopGlyphProperty =
+        AvaloniaProperty.Register<ThemedIcon, bool>(nameof(UseDesktopGlyph));
+    public bool UseDesktopGlyph { get => GetValue(UseDesktopGlyphProperty); set => SetValue(UseDesktopGlyphProperty, value); }
+    internal bool HasDesktopIcon => desktopIcon.IsVisible && desktopIcon.HasSymbol;
+
     private readonly Image custom = new() { Stretch = Stretch.Uniform, IsHitTestVisible = false };
 
     static ThemedIcon()
     {
+        UseDesktopGlyphProperty.Changed.AddClassHandler<ThemedIcon>((icon, _) => icon.UpdateMode());
         GlyphProperty.Changed.AddClassHandler<ThemedIcon>((icon, _) => icon.UpdateGlyph());
         UseClassicGlyphProperty.Changed.AddClassHandler<ThemedIcon>((icon, _) => icon.UpdateMode());
         UseWindowsXpGlyphProperty.Changed.AddClassHandler<ThemedIcon>((icon, _) => icon.UpdateMode());
@@ -90,6 +97,7 @@ public sealed class ThemedIcon : Grid
         Children.Add(bitmap);
         Children.Add(vectorHost);
         Children.Add(xpHost);
+        Children.Add(desktopIcon);
         Children.Add(custom);
         UpdateGlyph();
         UpdateMode();
@@ -116,6 +124,7 @@ public sealed class ThemedIcon : Grid
 
     internal bool HasClassicIcon => vectorHost.IsVisible && vectorHost.Child is not null;
     internal bool HasLegacyBitmap => bitmap.Source is not null;
+    internal bool HasOriginalIcon => bitmap.IsVisible && bitmap.Source is not null;
     internal bool HasCustomIcon => custom.IsVisible && custom.Source is not null;
     public int CustomIconRevision
     {
@@ -147,9 +156,12 @@ public sealed class ThemedIcon : Grid
 
     private void UpdateMode()
     {
+        desktopIcon.Kind = Glyph;
+        desktopIcon.Foreground = IconBrush;
         custom.Source = CustomAppearance.Icon(Glyph);
         custom.IsVisible = custom.Source is not null;
-        bitmap.IsVisible = !custom.IsVisible && !UseClassicGlyph && !UseWindowsXpGlyph;
+        desktopIcon.IsVisible = !custom.IsVisible && UseDesktopGlyph;
+        bitmap.IsVisible = !custom.IsVisible && !UseDesktopGlyph && !UseClassicGlyph && !UseWindowsXpGlyph;
         vectorHost.IsVisible = !custom.IsVisible && UseClassicGlyph && !UseWindowsXpGlyph;
         vectorHost.Child = UseClassicGlyph ? ClassicAppleIcons.Create(Glyph, IconBrush) : null;
         if (UseWindowsXpGlyph && xpHost.Child is null) xpHost.Child = WindowsXpIcons.Create(Glyph);
@@ -158,6 +170,7 @@ public sealed class ThemedIcon : Grid
 
     private void UpdateBrush()
     {
+        desktopIcon.Foreground = IconBrush;
         if (UseClassicGlyph) vectorHost.Child = ClassicAppleIcons.Create(Glyph, IconBrush);
     }
 }

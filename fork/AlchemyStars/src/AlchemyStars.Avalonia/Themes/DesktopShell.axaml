@@ -1,0 +1,64 @@
+<Styles xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="using:AlchemyStars.Avalonia">
+  <Style Selector="GridSplitter.column-divider">
+    <Setter Property="Template"><ControlTemplate><Grid Background="Transparent"><Border Name="Divider" Width="1" HorizontalAlignment="Center" Background="{DynamicResource AlchemyBorderBrush}" /></Grid></ControlTemplate></Setter>
+  </Style>
+  <Style Selector="GridSplitter.row-divider">
+    <Setter Property="Template"><ControlTemplate><Grid Background="Transparent"><Border Name="Divider" Height="1" VerticalAlignment="Center" Background="{DynamicResource AlchemyBorderBrush}" /></Grid></ControlTemplate></Setter>
+  </Style>
+  <Style Selector="GridSplitter:pointerover /template/ Border#Divider, GridSplitter:focus-visible /template/ Border#Divider">
+    <Setter Property="Background" Value="{DynamicResource AlchemyFocusBrush}" />
+  </Style>
+  <Style Selector="local|AppIcon">
+    <Setter Property="Width" Value="20" /><Setter Property="Height" Value="20" />
+    <Setter Property="VerticalAlignment" Value="Center" /><Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="Foreground" Value="{DynamicResource AlchemyMutedTextBrush}" />
+    <Setter Property="IsHitTestVisible" Value="False" />
+  </Style>
+  <Style Selector="TextBlock.navigation-label">
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="Margin" Value="10,0,0,0" />
+    <Setter Property="FontSize" Value="13" />
+    <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+  </Style>
+  <Style Selector="TextBlock.navigation-section">
+    <Setter Property="Foreground" Value="{DynamicResource AlchemyMutedTextBrush}" />
+    <Setter Property="FontWeight" Value="SemiBold" /><Setter Property="FontSize" Value="11" />
+    <Setter Property="Margin" Value="10,14,0,8" />
+  </Style>
+  <Style Selector="Window.compact TextBlock.navigation-label, Window.compact TextBlock.navigation-section">
+    <Setter Property="IsVisible" Value="False" />
+  </Style>
+  <Style Selector="Button.activity">
+    <Setter Property="Width" Value="NaN" /><Setter Property="HorizontalAlignment" Value="Stretch" />
+    <Setter Property="HorizontalContentAlignment" Value="Left" />
+    <Setter Property="Padding" Value="10,0" />
+
+  </Style>
+  <Style Selector="Button.window-control">
+    <Setter Property="Width" Value="46" /><Setter Property="MinWidth" Value="46" />
+    <Setter Property="Height" Value="44" /><Setter Property="Padding" Value="0" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="CornerRadius" Value="0" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+  </Style>
+  <Style Selector="Button.window-control /template/ ContentPresenter">
+    <Setter Property="Background" Value="Transparent" /><Setter Property="BoxShadow" Value="none" />
+  </Style>
+  <Style Selector="Button.window-control:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AlchemyHoverBrush}" />
+  </Style>
+  <Style Selector="Button.window-control:pressed /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AlchemyPressedBrush}" />
+  </Style>
+  <Style Selector="Button.window-close:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="#c42b1c" />
+  </Style>
+  <Style Selector="Button.window-close:pressed /template/ ContentPresenter">
+    <Setter Property="Background" Value="#a62418" />
+  </Style>
+  <Style Selector="Button.window-close:pointerover local|AppIcon, Button.window-close:pressed local|AppIcon">
+    <Setter Property="Foreground" Value="White" />
+  </Style>
+  <Style Selector="Button.activity local|ThemedIcon.product-icon"><Setter Property="Width" Value="20" /><Setter Property="Height" Value="20" /></Style>
+  <Style Selector="Button.window-control local|AppIcon"><Setter Property="Foreground" Value="{DynamicResource AlchemyCommandTextBrush}" /></Style>
+</Styles>
