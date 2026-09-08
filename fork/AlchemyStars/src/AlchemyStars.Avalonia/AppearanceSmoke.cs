@@ -223,7 +223,11 @@ internal static class AppearanceSmoke
             if (classic)
             {
                 var expected = (icon.IconBrush as ISolidColorBrush)?.Color;
-                foreach (var path in icon.GetVisualDescendants().OfType<global::Avalonia.Controls.Shapes.Path>())
+                // Other families can remain cached in hidden hosts after a round trip through XP.
+                var visiblePaths = icon.GetVisualDescendants().OfType<global::Avalonia.Controls.Shapes.Path>()
+                    .Where(path => path.IsEffectivelyVisible).ToArray();
+                Require(visiblePaths.Length > 0, $"Classic Apple icon has no visible paths: {icon.Glyph}.");
+                foreach (var path in visiblePaths)
                 {
                     var brush = path.Stroke ?? path.Fill;
                     Require(brush is ISolidColorBrush solid && solid.Color == expected,

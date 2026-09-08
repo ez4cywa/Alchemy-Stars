@@ -70,6 +70,10 @@ public sealed partial class MainWindow : Window
             preferences,
             new AvaloniaFilePickerAdapter(this, preferences, externalUriLaunch));
         DataContext = viewModel;
+        Closing += (_, eventArgs) =>
+        {
+            if (viewModel.IsUpdateHandoffInProgress) eventArgs.Cancel = true;
+        };
         EventHandler appearanceChanged = (_, _) => viewModel.RefreshAppearanceLabel();
         ActualThemeVariantChanged += appearanceChanged;
         Closed += (_, _) => ActualThemeVariantChanged -= appearanceChanged;
@@ -83,6 +87,13 @@ public sealed partial class MainWindow : Window
     }
 
     private MainWindowViewModel ViewModel => (MainWindowViewModel)DataContext!;
+    private async void ChooseSavedArmsClick(object? sender, RoutedEventArgs e) => await ViewModel.ChooseSavedArmsAsync();
+    private void ForgetSavedArmsClick(object? sender, RoutedEventArgs e) => ViewModel.ForgetSavedArms();
+    private async void CheckUpdateClick(object? sender, RoutedEventArgs e) => await ViewModel.CheckForUpdatesAsync(false);
+    private async void DownloadUpdateClick(object? sender, RoutedEventArgs e) => await ViewModel.DownloadUpdateAsync();
+    private async void InstallUpdateClick(object? sender, RoutedEventArgs e) => await ViewModel.InstallUpdateAsync();
+    private void SkipUpdateClick(object? sender, RoutedEventArgs e) => ViewModel.SkipUpdate();
+    private void CancelUpdateClick(object? sender, RoutedEventArgs e) => ViewModel.CancelUpdate();
     private void ToggleAppearanceClick(object? sender, RoutedEventArgs e) => ViewModel.ToggleAppearance();
     private async void ImportThemeClick(object? sender, RoutedEventArgs e) => await ImportAppearanceAsync(false);
     private async void ImportIconsClick(object? sender, RoutedEventArgs e) => await ImportAppearanceAsync(true);

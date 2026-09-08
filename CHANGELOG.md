@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.3.0-preview.16 — 2026-09-08 (utilities and updates)
+
+Chinese release notes: [更新日志](docs/releases/1.3.0-preview.16.zh-CN.md). Built on the latest merged GitHub changes, including desktop-shell consolidation at `90f5e08`.
+
+- Remember the first imported arms model by default and reuse its path at startup and in new projects, with disable, manual selection and forget controls; existing projects are unchanged.
+- Added opt-in GitHub update checks and verified downloads, restricted to the installed stable or preview channel. Installation requires saving the current project and confirming restart; users can decline an update.
+- Moved appearance settings below Utilities.
+- Older builds do not contain the updater: users must install preview.16 manually once before receiving future in-app updates.
+
 ## 1.3.0-preview.15 — 2026-09-08 (custom appearance)
 
 Chinese release notes, compared with published preview.13 (`b76e996`): [更新日志](docs/releases/1.3.0-preview.15.zh-CN.md). The local historical preview.14 notes below are retained unchanged.

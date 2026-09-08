@@ -19,10 +19,17 @@ internal static class Program
     internal static bool BuildPreviewSmoke { get; private set; }
     internal static bool FirstPersonPreviewRequested { get; private set; }
     internal static string? ExternalLinkLogPath { get; private set; }
+    internal static string? UpdateResultPath { get; private set; }
+    internal static bool UtilitiesSmokeRequested { get; private set; }
 
     [STAThread]
     public static int Main(string[] args)
     {
+        if (args.Length > 0 && args[0] == "--apply-update") return UpdateInstaller.Run(args);
+        if (args.Contains("--update-self-test", StringComparer.OrdinalIgnoreCase)) return UpdateSelfTest.Run();
+        if (args.Contains("--update-helper-self-test", StringComparer.OrdinalIgnoreCase)) return UpdateSelfTest.RunHelper();
+        if (args.Length > 0 && args[0] == "--update-launch-self-test") return UpdateSelfTest.RunLauncher(args);
+        if (args.Contains("--update-check-smoke", StringComparer.OrdinalIgnoreCase)) return UpdateSelfTest.RunLiveCheck();
         var cultureName = GetOption(args, "--culture");
         if (cultureName is not null)
         {
@@ -66,6 +73,8 @@ internal static class Program
         FirstPersonPreviewRequested = args.Contains("--first-person-preview", StringComparer.OrdinalIgnoreCase);
         AccessibilitySmokeRequested = args.Contains("--accessibility-smoke", StringComparer.OrdinalIgnoreCase);
         ExternalLinkLogPath = GetOption(args, "--external-link-log");
+        UpdateResultPath = GetOption(args, "--update-result");
+        UtilitiesSmokeRequested = args.Contains("--utilities-smoke", StringComparer.OrdinalIgnoreCase);
         StartupProjectPath = args
             .Where(argument => !argument.StartsWith("--", StringComparison.Ordinal))
             .FirstOrDefault(argument => string.Equals(Path.GetExtension(argument), ".aprj", StringComparison.OrdinalIgnoreCase) && File.Exists(argument));

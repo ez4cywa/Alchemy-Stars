@@ -37,17 +37,22 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
     private string dialogMessage = string.Empty;
     private bool dialogIsError;
     private string footerStatus;
+    private readonly Dictionary<WorkspacePart, long> partSourceRequests = [];
+    private long nextPartSourceRequest;
+    internal Func<string, Task<ModelPartClassification?>> PartClassifier { get; set; } = path => Task.Run(() => ClassifyPart(path));
 
     public MainWindowViewModel(
         IAnimationExportEngine engine,
         WorkspaceProjectStore projectStore,
         ApplicationPreferencesStore preferences,
-        IWorkspaceFilePicker picker)
+        IWorkspaceFilePicker picker,
+        GitHubUpdateService? updateService = null)
     {
         this.engine = engine;
         this.projectStore = projectStore;
         this.preferences = preferences;
         this.picker = picker;
+        this.updateService = updateService ?? new GitHubUpdateService();
         var preferenceSnapshot = preferences.Snapshot();
         CustomAppearance.Initialize(preferences.AppearanceDirectory);
         themeStyleIndex = preferenceSnapshot.ThemeStyle switch
@@ -79,6 +84,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
         private set
         {
             UnwatchDualSources();
+            partSourceRequests.Clear();
             workspace = value;
             selectedDual = null;
             WatchDualSources();
@@ -197,7 +203,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
         Workspace = preferences.CreateWorkspace();
         CurrentProjectPath = null;
         SelectedAnimation = null;
-        SelectedPart = null;
+        SelectedPart = Parts.FirstOrDefault();
         FooterStatus = Text.NewProjectCreated;
         SelectPage(WorkspacePage.Animations);
     }
@@ -273,8 +279,10 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
     {
         var normalized = NormalizeCastPaths(paths).ToArray();
         if (normalized.Length == 0) return 0;
+        var importingWorkspace = Workspace;
         FooterStatus = Text.DetectingPartTypes;
-        var attempts = await Task.WhenAll(normalized.Select(path => Task.Run(() => ClassifyPart(path))));
+        var attempts = await Task.WhenAll(normalized.Select(PartClassifier));
+        if (!ReferenceEquals(importingWorkspace, Workspace)) return 0;
         return AddPartPathsCore(normalized.Zip(attempts));
     }
 
@@ -302,6 +310,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
             };
             Parts.Add(part);
             SelectedPart = part;
+            if (classification?.Kind == ModelPartKind.ViewHands) RememberImportedArms(part);
             if (classification is not null)
             {
                 detected++;
@@ -514,6 +523,8 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
 
     public void Dispose()
     {
+        CancelUpdate();
+        DiscardDownloadedUpdate();
         UnwatchDualSources();
         if (selectedPart is not null)
             selectedPart.PropertyChanged -= SelectedPartChanged;
@@ -611,13 +622,19 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
     private async Task ApplyPartSourceAsync(WorkspacePart part, string path)
     {
         var normalized = PathInput.Normalize(path);
+        var request = ++nextPartSourceRequest;
+        partSourceRequests[part] = request;
         part.FilePath = normalized;
-        var classification = await Task.Run(() => ClassifyPart(normalized));
+        var classification = await PartClassifier(normalized);
+        if (!partSourceRequests.TryGetValue(part, out var latest) || latest != request) return;
+        partSourceRequests.Remove(part);
+        if (!Parts.Contains(part) || !string.Equals(part.FilePath, normalized, StringComparison.OrdinalIgnoreCase)) return;
         if (classification is not null)
         {
             part.Type = classification.Kind;
             part.ParentBoneTag = classification.RecommendedParentBone;
             part.AutoClassification = classification;
+            RememberImportedArms(part);
             FooterStatus = string.Format(CultureInfo.CurrentCulture, Text.PartDetected,
                 Text.PartTypes[(int)classification.Kind]);
         }
@@ -640,6 +657,8 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
 
     private void SelectedPartChanged(object? sender, PropertyChangedEventArgs e)
     {
+        if (e.PropertyName == nameof(WorkspacePart.Type) && sender is WorkspacePart part)
+            RememberImportedArms(part);
         if (e.PropertyName is nameof(WorkspacePart.Type) or nameof(WorkspacePart.AutoClassification))
             RaisePartClassificationState();
     }
@@ -659,6 +678,8 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
         OnPropertyChanged(nameof(LanguageButtonLabel));
         OnPropertyChanged(nameof(LanguageButtonAccessibleName));
         RefreshAppearanceLabel();
+        RefreshUtilitySettings();
+        RaiseUpdateState();
         OnPropertyChanged(nameof(CurrentProjectLabel));
         OnPropertyChanged(nameof(WindowTitle));
         RaisePartClassificationState();

@@ -1,5 +1,5 @@
 param(
-    [string]$PublishDirectory = (Join-Path $PSScriptRoot '..\output\avalonia-aot-preview15')
+    [string]$PublishDirectory = (Join-Path $PSScriptRoot '..\output\avalonia-aot-preview16')
 )
 
 $ErrorActionPreference = 'Stop'
