@@ -76,6 +76,14 @@ public sealed partial class MainWindow : Window
         Closed += (_, _) => viewModel.Dispose();
         viewModel.PropertyChanged += (_, eventArgs) =>
         {
+            if (eventArgs.PropertyName == nameof(MainWindowViewModel.SelectedLayer) && viewModel.SelectedLayer is { } selectedLayer)
+                Dispatcher.UIThread.Post(() =>
+                {
+                    if (!ReferenceEquals(viewModel.SelectedLayer, selectedLayer)) return;
+                    SelectedLayerSection.IsExpanded = true;
+                    SelectedLayerSection.UpdateLayout();
+                    SelectedLayerSection.BringIntoView();
+                }, DispatcherPriority.Loaded);
             if (eventArgs.PropertyName == nameof(MainWindowViewModel.IsDialogOpen) && viewModel.IsDialogOpen)
                 Dispatcher.UIThread.Post(() => DialogCloseButton.Focus());
         };
