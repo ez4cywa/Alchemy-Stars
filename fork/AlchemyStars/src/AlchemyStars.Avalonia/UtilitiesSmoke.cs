@@ -14,6 +14,9 @@ internal static class UtilitiesSmoke
         var originalPage = vm.SelectedPage;
         var remember = vm.RememberArms;
         var automatic = vm.AutoUpdateEnabled;
+        // Materialize the settings template before inspecting visual ancestors.
+        vm.SelectPage(WorkspacePage.Settings);
+        await Task.Delay(80);
         var content = window.FindControl<StackPanel>("SettingsContent")!;
         var scroller = content.GetVisualAncestors().OfType<ScrollViewer>().First();
         var utilities = window.FindControl<Border>("UtilitiesCard")!;
