@@ -7,6 +7,7 @@ Chinese release notes: [更新日志](docs/releases/1.3.0-preview.19.zh-CN.md).
 - Merge the latest preview.18 updates, retaining shortcuts, updater, output defaults and stable inspector selections.
 - Expand and reveal selected layer properties after the inspector has been scrolled.
 - Preserve filename suffixes with middle ellipsis in asset lists.
+- Keep default output names synchronized with the first animation layer across renaming, replacement, reordering and project reloads, preserving custom names.
 - Bind the About badge to the current version and give inspector headers localized accessible names.
 
 
