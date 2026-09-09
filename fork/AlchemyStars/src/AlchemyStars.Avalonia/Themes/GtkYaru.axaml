@@ -1,0 +1,285 @@
+<Styles xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" x:Class="AlchemyStars.Avalonia.GtkYaruStyles">
+  <!-- Ubuntu Yaru-inspired Avalonia control skin. Independent templates; no GTK runtime dependency. -->
+  <Style Selector="Window, MenuItem, ToolTip">
+    <Setter Property="FontFamily" Value="Ubuntu, Noto Sans, Segoe UI, Microsoft YaHei UI, sans-serif" />
+  </Style>
+  <Style Selector="TextBlock.display-title">
+    <Setter Property="FontFamily" Value="Ubuntu, Noto Sans, Segoe UI, Microsoft YaHei UI, sans-serif" />
+  </Style>
+  <Style Selector="Border.command-bar"><Setter Property="Background" Value="{DynamicResource GtkChromeBrush}" /></Style>
+  <Style Selector="TextBlock.card-title, TextBlock.dock-title">
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Foreground" Value="{DynamicResource AlchemyTextBrush}" />
+    <Setter Property="LetterSpacing" Value="0" />
+  </Style>
+  <Style Selector="Border.workspace-panel, Border.composition-canvas, Border.card, Border.subcard, Border.hero-card, Border.dialog-card">
+    <Setter Property="CornerRadius" Value="{DynamicResource AppearancePanelRadius}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AlchemyBorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+  </Style>
+  <Style Selector="Border.card, Border.subcard, Border.hero-card, Border.dialog-card">
+    <Setter Property="CornerRadius" Value="{DynamicResource AppearanceCardRadius}" />
+  </Style>
+  <Style Selector="Border.dock-header, Border.track-heading, Border.canvas-footer">
+    <Setter Property="Background" Value="{DynamicResource GtkHeaderBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AlchemyBorderBrush}" />
+  </Style>
+  <Style Selector="Border.feature-icon, Border.preview-badge, Border.count-badge">
+    <Setter Property="CornerRadius" Value="6" />
+    <Setter Property="Background" Value="{DynamicResource GtkHeaderBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AlchemyBorderBrush}" />
+  </Style>
+
+  <Style Selector="Button, Button.icon, Button.toolbar, Button.panel-command, Button.activity, Button.activity.selected, Button.subtle, Button.primary, Button.secondary, ToggleButton.preview-command">
+    <Setter Property="CornerRadius" Value="{DynamicResource AppearanceButtonRadius}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="BorderBrush" Value="{DynamicResource GtkEdgeBrush}" />
+    <Setter Property="Background" Value="{DynamicResource GtkButtonBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource AlchemyTextBrush}" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+  </Style>
+  <Style Selector="Button:not(.window-control)">
+    <Setter Property="Template">
+      <ControlTemplate>
+        <ContentPresenter Name="PART_ContentPresenter" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="{TemplateBinding CornerRadius}" Padding="{TemplateBinding Padding}" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" RecognizesAccessKey="True" />
+      </ControlTemplate>
+    </Setter>
+  </Style>
+  <Style Selector="Button:pressed, ToggleButton.preview-command:pressed"><Setter Property="RenderTransform" Value="none" /></Style>
+  <Style Selector="Button /template/ ContentPresenter, Button.icon /template/ ContentPresenter, Button.secondary /template/ ContentPresenter, Button.toolbar /template/ ContentPresenter, Button.panel-command /template/ ContentPresenter, Button.activity /template/ ContentPresenter, Button.subtle /template/ ContentPresenter, ToggleButton.preview-command /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource GtkButtonBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource AlchemyTextBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource GtkEdgeBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{DynamicResource AppearanceButtonRadius}" />
+    <Setter Property="BoxShadow" Value="{DynamicResource AppearanceRaisedShadow}" />
+  </Style>
+  <!-- Toolbar items stay quiet until selected; visible bezels are reserved for actions. -->
+  <Style Selector="Button.toolbar /template/ ContentPresenter, Button.panel-command /template/ ContentPresenter, Button.activity /template/ ContentPresenter, Button.subtle /template/ ContentPresenter">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="Transparent" />
+    <Setter Property="BoxShadow" Value="none" />
+  </Style>
+  <Style Selector="Button.activity.selected /template/ ContentPresenter, ToggleButton.preview-command:checked /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource GtkButtonPressedBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource GtkEdgeBrush}" />
+    <Setter Property="BoxShadow" Value="{DynamicResource AppearanceInsetShadow}" />
+  </Style>
+  <Style Selector="Button:pointerover /template/ ContentPresenter, ToggleButton.preview-command:pointerover /template/ ContentPresenter, Border.command-bar Button.toolbar:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource GtkButtonHoverBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource GtkHoverEdgeBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource AlchemyTextBrush}" />
+  </Style>
+  <Style Selector="Button:pressed /template/ ContentPresenter, ToggleButton.preview-command:pressed /template/ ContentPresenter, Border.command-bar Button.toolbar:pressed /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource GtkButtonPressedBrush}" />
+    <Setter Property="BoxShadow" Value="{DynamicResource AppearanceInsetShadow}" />
+  </Style>
+  <Style Selector="Button:focus-visible /template/ ContentPresenter, ToggleButton.preview-command:focus-visible /template/ ContentPresenter">
+    <Setter Property="BorderBrush" Value="{DynamicResource AlchemyFocusBrush}" />
+    <Setter Property="BoxShadow" Value="{DynamicResource GtkFocusShadow}" />
+  </Style>
+  <Style Selector="Button.primary">
+    <Setter Property="CornerRadius" Value="{DynamicResource AppearanceActionRadius}" />
+    <Setter Property="Background" Value="{DynamicResource GtkActionBrush}" />
+    <Setter Property="Foreground" Value="White" />
+  </Style>
+  <Style Selector="Button.primary /template/ ContentPresenter">
+    <Setter Property="CornerRadius" Value="{DynamicResource AppearanceActionRadius}" />
+    <Setter Property="Background" Value="{DynamicResource GtkActionBrush}" />
+    <Setter Property="Foreground" Value="White" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AlchemyActionBrush}" />
+  </Style>
+  <Style Selector="Button.primary:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource GtkActionHoverBrush}" />
+    <Setter Property="Foreground" Value="White" />
+  </Style>
+  <Style Selector="Button.primary:pressed /template/ ContentPresenter"><Setter Property="Background" Value="{DynamicResource GtkActionPressedBrush}" /></Style>
+  <Style Selector="Button:disabled /template/ ContentPresenter, ToggleButton.preview-command:disabled /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AlchemySurfaceBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource AlchemyMutedTextBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AlchemyBorderBrush}" />
+    <Setter Property="BoxShadow" Value="none" />
+  </Style>
+
+  <Style Selector="TextBox, ComboBox">
+    <Setter Property="Background" Value="{DynamicResource GtkEntryBrush}" />
+    <Setter Property="CornerRadius" Value="6" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="BorderBrush" Value="{DynamicResource GtkEdgeBrush}" />
+  </Style>
+  <Style Selector="TextBox /template/ Border#PART_BorderElement, ComboBox /template/ Border#Background">
+    <Setter Property="Background" Value="{DynamicResource GtkEntryBrush}" />
+    <Setter Property="CornerRadius" Value="6" />
+    <Setter Property="BorderBrush" Value="{DynamicResource GtkEdgeBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="BoxShadow" Value="{DynamicResource AppearanceInsetShadow}" />
+  </Style>
+  <Style Selector="TextBox:pointerover /template/ Border#PART_BorderElement, ComboBox:pointerover /template/ Border#Background">
+    <Setter Property="BorderBrush" Value="{DynamicResource GtkHoverEdgeBrush}" />
+  </Style>
+  <Style Selector="TextBox:focus-within /template/ Border#PART_BorderElement, ComboBox:focus-within /template/ Border#Background">
+    <Setter Property="BorderBrush" Value="{DynamicResource AlchemyFocusBrush}" />
+    <Setter Property="BoxShadow" Value="{DynamicResource GtkFocusShadow}" />
+  </Style>
+  <Style Selector="ComboBox:not(.native-template) /template/ Border#DropDownOverlay">
+    <Setter Property="IsVisible" Value="True" />
+    <Setter Property="Background" Value="{DynamicResource GtkButtonBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource GtkEdgeBrush}" />
+    <Setter Property="BorderThickness" Value="1,0,0,0" />
+    <Setter Property="CornerRadius" Value="0,5,5,0" />
+  </Style>
+  <Style Selector="ComboBox:not(.native-template) /template/ PathIcon#DropDownGlyph">
+    <Setter Property="Data" Value="M0,1 L4,5 L8,1 L7,0 L4,3 L1,0 Z" />
+    <Setter Property="Width" Value="8" /><Setter Property="Height" Value="5" />
+    <Setter Property="Margin" Value="0,0,12,0" />
+    <Setter Property="Foreground" Value="{DynamicResource AlchemyTextBrush}" />
+  </Style>
+  <Style Selector="ComboBox:not(.native-template) /template/ Border#PopupBorder">
+    <Setter Property="Background" Value="{DynamicResource AlchemySurfaceRaisedBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource GtkEdgeBrush}" />
+    <Setter Property="BorderThickness" Value="1" /><Setter Property="CornerRadius" Value="8" />
+    <Setter Property="BoxShadow" Value="{DynamicResource AppearancePanelShadow}" />
+  </Style>
+  <Style Selector="TextBox:disabled, ComboBox:disabled"><Setter Property="Opacity" Value="0.5" /></Style>
+
+  <Style Selector="CheckBox">
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Grid ColumnDefinitions="20,*" Background="Transparent">
+          <Border Name="GtkCheckBox" Width="18" Height="18" CornerRadius="3" VerticalAlignment="Center" Background="{DynamicResource GtkButtonBrush}" BorderBrush="{DynamicResource GtkEdgeBrush}" BorderThickness="1" BoxShadow="{DynamicResource AppearanceRaisedShadow}">
+            <Grid>
+              <Path Name="GtkCheckMark" IsVisible="False" Data="M2,6 L5,9 L11,2.5" Stroke="White" StrokeThickness="1.8" StrokeJoin="Round" StrokeLineCap="Round" Width="13" Height="12" HorizontalAlignment="Center" VerticalAlignment="Center" />
+              <Border Name="GtkIndeterminate" IsVisible="False" Height="2" Width="8" CornerRadius="1" Background="White" HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Grid>
+          </Border>
+          <ContentPresenter Name="PART_ContentPresenter" Grid.Column="1" Margin="6,0,0,0" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" VerticalAlignment="Center" VerticalContentAlignment="Center" RecognizesAccessKey="True" />
+        </Grid>
+      </ControlTemplate>
+    </Setter>
+  </Style>
+  <Style Selector="CheckBox:checked /template/ Border#GtkCheckBox, CheckBox:indeterminate /template/ Border#GtkCheckBox"><Setter Property="Background" Value="{DynamicResource GtkActionBrush}" /></Style>
+  <Style Selector="CheckBox:checked /template/ Path#GtkCheckMark"><Setter Property="IsVisible" Value="True" /></Style>
+  <Style Selector="CheckBox:indeterminate /template/ Border#GtkIndeterminate"><Setter Property="IsVisible" Value="True" /></Style>
+  <Style Selector="CheckBox:pointerover /template/ Border#GtkCheckBox"><Setter Property="BorderBrush" Value="{DynamicResource GtkHoverEdgeBrush}" /></Style>
+  <Style Selector="CheckBox:pressed /template/ Border#GtkCheckBox"><Setter Property="BoxShadow" Value="{DynamicResource AppearanceInsetShadow}" /></Style>
+  <Style Selector="CheckBox:focus-visible /template/ Border#GtkCheckBox"><Setter Property="BoxShadow" Value="{DynamicResource GtkFocusShadow}" /></Style>
+  <Style Selector="CheckBox:disabled"><Setter Property="Opacity" Value="0.48" /></Style>
+  <Style Selector="ToggleButton.dual-export-switch:not(.native-template)">
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Grid Background="Transparent">
+          <Border Name="GtkSwitchTrack" Width="42" Height="24" HorizontalAlignment="Center" VerticalAlignment="Center" Background="{DynamicResource GtkButtonPressedBrush}" BorderBrush="{DynamicResource GtkEdgeBrush}" BorderThickness="1" CornerRadius="12" BoxShadow="{DynamicResource AppearanceInsetShadow}">
+            <Border Name="GtkSwitchThumb" Width="20" Height="20" Margin="1,0" HorizontalAlignment="Left" VerticalAlignment="Center" Background="{DynamicResource GtkThumbBrush}" BorderBrush="{DynamicResource GtkEdgeBrush}" BorderThickness="0.5" CornerRadius="10" BoxShadow="{DynamicResource AppearanceRaisedShadow}" />
+          </Border>
+        </Grid>
+      </ControlTemplate>
+    </Setter>
+  </Style>
+  <Style Selector="ToggleButton.dual-export-switch:checked /template/ Border#GtkSwitchTrack"><Setter Property="Background" Value="{DynamicResource GtkActionBrush}" /></Style>
+  <Style Selector="ToggleButton.dual-export-switch:checked /template/ Border#GtkSwitchThumb"><Setter Property="HorizontalAlignment" Value="Right" /></Style>
+  <Style Selector="ToggleButton.dual-export-switch:focus-visible /template/ Border#GtkSwitchTrack"><Setter Property="BoxShadow" Value="{DynamicResource GtkFocusShadow}" /></Style>
+  <Style Selector="ToggleButton.dual-export-switch:pointerover /template/ Border#GtkSwitchTrack"><Setter Property="BorderBrush" Value="{DynamicResource GtkHoverEdgeBrush}" /></Style>
+  <Style Selector="ToggleButton.dual-export-switch:pressed /template/ Border#GtkSwitchThumb"><Setter Property="Background" Value="{DynamicResource GtkButtonHoverBrush}" /></Style>
+
+  <Style Selector="Expander.property-group /template/ ToggleButton">
+    <Setter Property="Background" Value="{DynamicResource GtkHeaderBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource AlchemyTextBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AlchemyBorderBrush}" />
+    <Setter Property="BorderThickness" Value="0,0,0,1" />
+    <Setter Property="CornerRadius" Value="6" />
+  </Style>
+  <Style Selector="Expander.property-group /template/ ToggleButton:pointerover"><Setter Property="Background" Value="{DynamicResource GtkButtonHoverBrush}" /></Style>
+  <Style Selector="ListBox.asset-list, ListBox.track-list"><Setter Property="Background" Value="{DynamicResource GtkEntryBrush}" /></Style>
+  <Style Selector="ListBoxItem, ListBox.asset-list ListBoxItem, ListBox.track-list ListBoxItem, ComboBoxItem, MenuItem"><Setter Property="CornerRadius" Value="5" /></Style>
+  <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter, ComboBoxItem:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AlchemyHoverBrush}" />
+    <Setter Property="CornerRadius" Value="5" />
+  </Style>
+  <Style Selector="ListBoxItem:selected /template/ ContentPresenter, ComboBoxItem:selected /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AlchemySelectedBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource AlchemyTextBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource GtkEdgeBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="5" />
+    <Setter Property="BoxShadow" Value="{DynamicResource AppearanceInsetShadow}" />
+  </Style>
+  <Style Selector="MenuItem:selected /template/ Border"><Setter Property="Background" Value="{DynamicResource AlchemySelectedBrush}" /><Setter Property="CornerRadius" Value="5" /></Style>
+  <Style Selector="ContextMenu, ToolTip">
+    <Setter Property="Background" Value="{DynamicResource AlchemySurfaceRaisedBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource AlchemyTextBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource GtkEdgeBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="8" />
+  </Style>
+
+  <!-- The thumb fits inside the existing 20px playback slot; no oversized focus ornament. -->
+  <Style Selector="Slider.preview-scrubber /template/ Thumb">
+    <Setter Property="Width" Value="16" /><Setter Property="Height" Value="16" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border Name="GtkScrubThumb" Background="{DynamicResource GtkThumbBrush}" BorderBrush="{DynamicResource GtkEdgeBrush}" BorderThickness="1" CornerRadius="8" />
+      </ControlTemplate>
+    </Setter>
+  </Style>
+  <Style Selector="Slider.preview-scrubber:pointerover /template/ Thumb"><Setter Property="Opacity" Value="0.9" /></Style>
+  <Style Selector="Slider.preview-scrubber:focus-visible /template/ Thumb"><Setter Property="Width" Value="18" /><Setter Property="Height" Value="18" /></Style>
+  <Style Selector="ScrollBar"><Setter Property="Background" Value="Transparent" /></Style>
+  <Style Selector="ScrollBar /template/ Thumb">
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border Margin="2" Name="GtkScrollThumb" Background="{DynamicResource GtkScrollThumbBrush}" CornerRadius="6" />
+      </ControlTemplate>
+    </Setter>
+  </Style>
+  <Style Selector="ScrollBar:pointerover /template/ Thumb"><Setter Property="Opacity" Value="0.85" /></Style>
+  <Style Selector="ProgressBar"><Setter Property="Foreground" Value="{DynamicResource GtkActionBrush}" /><Setter Property="Background" Value="{DynamicResource AlchemyPressedBrush}" /></Style>
+  <Style Selector="ProgressBar /template/ Border"><Setter Property="CornerRadius" Value="4" /></Style>
+  <Style Selector="ContentControl.clip"><Setter Property="CornerRadius" Value="5" /><Setter Property="BorderThickness" Value="1" /></Style>
+  <Style Selector="Border.command-bar Button.toolbar">
+    <Setter Property="Foreground" Value="{DynamicResource AlchemyCommandTextBrush}" />
+  </Style>
+  <Style Selector="Border.command-bar Button.toolbar /template/ ContentPresenter">
+    <Setter Property="Foreground" Value="{DynamicResource AlchemyCommandTextBrush}" />
+  </Style>
+  <Style Selector="Border.command-bar Button.toolbar:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AlchemyDarkTileBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource AlchemyCommandTextBrush}" />
+  </Style>
+  <Style Selector="Border.command-bar Button.toolbar:pressed /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AlchemyDarkTileBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource AlchemyCommandTextBrush}" />
+  </Style>
+  <Style Selector="Button.activity.selected /template/ ContentPresenter, ToggleButton.preview-command:checked /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AlchemySelectedBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AlchemyAccentBorderBrush}" />
+    <Setter Property="BoxShadow" Value="none" />
+  </Style>
+  <Style Selector="TextBox, ComboBox">
+    <Setter Property="CornerRadius" Value="{DynamicResource AppearanceButtonRadius}" />
+  </Style>
+  <Style Selector="TextBox /template/ Border#PART_BorderElement, ComboBox /template/ Border#Background">
+    <Setter Property="CornerRadius" Value="{DynamicResource AppearanceButtonRadius}" />
+  </Style>
+  <Style Selector="ToggleButton.dual-export-switch:disabled"><Setter Property="Opacity" Value="0.48" /></Style>
+  <Style Selector="ScrollBar /template/ Thumb:pointerover /template/ Border#GtkScrollThumb"><Setter Property="Background" Value="{DynamicResource AlchemyAccentBrush}" /></Style>
+  <Style Selector="Button.window-control">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="CornerRadius" Value="5" />
+  </Style>
+  <Style Selector="Button.window-control /template/ ContentPresenter">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="CornerRadius" Value="5" />
+    <Setter Property="Foreground" Value="{DynamicResource AlchemyCommandTextBrush}" />
+    <Setter Property="BoxShadow" Value="none" />
+  </Style>
+  <Style Selector="Button.window-control:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AlchemyDarkTileBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource AlchemyCommandTextBrush}" />
+  </Style>
+  <Style Selector="Button.window-close:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource GtkActionBrush}" />
+    <Setter Property="Foreground" Value="White" />
+  </Style>
+</Styles>

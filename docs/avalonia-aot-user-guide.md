@@ -2,7 +2,7 @@
 
 # Alchemy Stars Avalonia preview quick guide
 
-This guide applies to `1.3.0-preview.21`. WPF v1.1.9 remains the supported release until .NET 11 GA.
+This guide applies to `1.3.0-preview.22`. WPF v1.1.9 remains the supported release until .NET 11 GA.
 
 The sidebar switches between Animation blend, Model parts, Dual merge, Settings and About. It shows icons and labels at normal widths and collapses to icons in narrow windows. The base-animation library sits on the left, a real CAST preview in the center, composition layers across the bottom, and collapsible properties on the right. Drag the dividers or focus them and use arrow keys to resize panels. Icon commands have localized tooltips and UI Automation names; the titlebar displays the current page, with window controls at the upper right.
 
@@ -33,6 +33,8 @@ If a layer is selected, each file replaces that slot and retains its offset and 
 ## Windows 2000 classic desktop theme
 
 Choose **Windows 2000 · Classic desktop** in Settings → Interface style for gray beveled controls, navy title and selection states, and 34 matching pixel-grid icons. Light, dark and system modes are supported and persisted across restarts, without modifying projects. Custom theme JSON can also use `windows-2000` as its `baseStyle`.
+
+For Ubuntu GTK/Yaru controls, import `Samples/Ubuntu-Yaru/theme.json` and `Samples/Ubuntu-Yaru/icons.zip` separately. This enables independent GTK/Yaru-inspired Avalonia templates and 34 icons in light/dark modes. Theme JSON selects `baseStyle: "ubuntu-yaru"` and supports `Gtk` material tokens. Requires preview.22 or later; no GTK runtime or external GTK CSS/XML is loaded.
 
 ## GitHub updates
 

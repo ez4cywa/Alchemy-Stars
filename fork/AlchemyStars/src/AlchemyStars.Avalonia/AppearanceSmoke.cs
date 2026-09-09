@@ -122,6 +122,7 @@ internal static class AppearanceSmoke
             Require(modePicker.SelectedIndex == 2 && stylePicker.SelectedIndex == 1, "Language refresh cleared an appearance picker.");
             vm.ToggleLanguage();
             await CustomAppearanceSmoke.RunAsync(window, vm, directory);
+            await UbuntuThemeSmoke.RunAsync(window, vm, directory);
             Console.WriteLine("Appearance smoke passed: four live styles, custom imports, two palettes, all pages, icon catalogs, quick light/dark toggle, centered text, persistence, system delegation and language refresh.");
         }
         finally

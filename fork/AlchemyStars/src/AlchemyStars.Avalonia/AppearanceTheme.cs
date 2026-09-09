@@ -52,6 +52,18 @@ internal static class AppearanceTheme
     {
         var dark = app.ActualThemeVariant == ThemeVariant.Dark;
         var style = currentStyle == "custom" ? CustomAppearance.CurrentTheme?.BaseStyle ?? "apple" : currentStyle;
+        if (style == "ubuntu-yaru")
+        {
+            ClassicAppleAppearance.Remove(app);
+            WindowsXpAppearance.Remove(app);
+            Windows2000Appearance.Remove(app);
+            ModernDesktopAppearance.Remove(app);
+            app.Resources["AppearanceUseWindows2000Icons"] = false;
+            GtkYaruAppearance.Apply(app, dark);
+            if (currentStyle == "custom") CustomAppearance.Apply(app, dark);
+            return;
+        }
+        GtkYaruAppearance.Remove(app);
         if (style == "windows-2000")
         {
             ClassicAppleAppearance.Remove(app);

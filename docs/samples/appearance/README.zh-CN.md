@@ -1,4 +1,4 @@
-# 自定义主题和图标（preview.15）
+# 自定义主题和图标（preview.22）
 
 在“设置 → 外观”使用“导入主题 JSON”和“导入图标 ZIP”。本目录的 `theme.json` 是森林配色主题，`icons-template.zip` 包含 34 个可替换的 PNG 图标。主题与图标独立导入、独立移除；无需修改程序文件。
 
@@ -35,10 +35,11 @@
 | `classic-apple` | 经典 Apple：独立铂金浅色／石墨深色控件及 34 个重绘图标 |
 | `windows-xp` | Windows XP · 经典蓝 |
 | `windows-2000` | Windows 2000 · 经典桌面：方形凹凸控件及 34 个彩色像素图标 |
+| `ubuntu-yaru` | Ubuntu GTK/Yaru 风格：独立按钮、输入框、下拉框、复选框、开关、菜单和滚动控件模板；需要 preview.22+ |
 
 旧文件中的 `neumorphic` 和 `modern-desktop` 自动映射为 `apple`，已定义的自定义颜色和圆角继续保留。
 
-配色使用 `"#RRGGBB"` 或 `"#AARRGGBB"`；八位格式的透明度在最前面，不是 `#RRGGBBAA`。不支持颜色名称、`rgb()` 或三位十六进制。下面列出全部 50 个 token；名称不带 `Alchemy` 或 `Brush` 前后缀：
+配色使用 `"#RRGGBB"` 或 `"#AARRGGBB"`；八位格式的透明度在最前面，不是 `#RRGGBBAA`。不支持颜色名称、`rgb()` 或三位十六进制。下面列出全部 63 个 token；名称不带 `Alchemy` 或 `Brush` 前后缀：
 
 | 类别 | 可用 token |
 | --- | --- |
@@ -52,6 +53,9 @@
 | 动画轨道 | `BaseClip`、`BaseEdge`、`LayerClip`、`LayerEdge` |
 | XP 控件 | `XpHeader`、`XpButton`、`XpButtonHover`、`XpButtonPressed`、`XpAction`、`XpActionHover`、`XpActionPressed`、`XpHoverBorder` |
 | 经典 Apple 控件 | `AppleChrome`、`AppleHeader`、`AppleButton`、`AppleButtonHover`、`AppleButtonPressed`、`AppleAction`、`AppleActionHover`、`AppleActionPressed`、`AppleThumb`、`AppleEdge`、`AppleHoverEdge` |
+| GTK/Yaru 控件 | `GtkChrome`、`GtkHeader`、`GtkButton`、`GtkButtonHover`、`GtkButtonPressed`、`GtkAction`、`GtkActionHover`、`GtkActionPressed`、`GtkThumb`、`GtkEdge`、`GtkHoverEdge`、`GtkEntry`、`GtkScrollThumb` |
+
+`Gtk` 开头的 token 同样支持单色或 2–5 色渐变，分别控制命令区、标题、普通/主按钮及状态、滑块、边框、输入区和滚动条滑块。使用 `baseStyle: "ubuntu-yaru"` 启用模板，其他字段仍为 version 1 格式；旧主题无需修改。可直接导入相邻 `../ubuntu-yaru` 示例的 JSON 和图标 ZIP。GTK/Yaru 模板在程序内由 Avalonia 实现，不支持任意 GTK CSS/XML、脚本或原生 GTK 库。
 
 `Xp` 和 `Apple` 开头的 token 还可使用 2–5 个颜色组成的数组，生成从上到下、等间距的渐变，例如 `"XpButton": ["#FFFFFF", "#E5E8EE"]` 或 `"AppleAction": ["#39734D", "#285D3D"]`。它们分别用于 XP 和经典 Apple 基础风格的控件材质。其他 token 只接受单色（单元素颜色数组也可读取）。调整 `Accent` 不会自动替你改写 `Action`、`Selected` 或独立材质 token，应按需分别设置。
 

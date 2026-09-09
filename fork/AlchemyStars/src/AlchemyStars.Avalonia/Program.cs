@@ -10,6 +10,7 @@ internal static class Program
     internal static bool AppearanceSmokeRequested { get; private set; }
     internal static bool AppearanceSamplesSmokeRequested { get; private set; }
     internal static string? RenderSmokePath { get; private set; }
+    internal static bool UbuntuThemeSmokeRequested { get; private set; }
     internal static PixelSize? RenderSmokeSize { get; private set; }
     internal static WorkspacePage? RenderSmokePage { get; private set; }
     internal static string? RenderDialogKind { get; private set; }
@@ -65,6 +66,7 @@ internal static class Program
             return SelfTest.RunProject(args.Skip(projectArgumentIndex + 1).ToArray());
 
         var renderPath = GetOption(args, "--render-smoke");
+        UbuntuThemeSmokeRequested = args.Contains("--ubuntu-theme-smoke", StringComparer.OrdinalIgnoreCase);
         DesktopSmokeRequested = args.Contains("--desktop-smoke", StringComparer.OrdinalIgnoreCase);
         AppearanceSmokeRequested = args.Contains("--appearance-smoke", StringComparer.OrdinalIgnoreCase);
         AppearanceSamplesSmokeRequested = args.Contains("--appearance-samples-smoke", StringComparer.OrdinalIgnoreCase);

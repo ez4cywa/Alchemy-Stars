@@ -2,7 +2,7 @@
 
 # Alchemy Stars Avalonia 预览版快速指南
 
-本指南适用于 `1.3.0-preview.21`。在 .NET 11 GA 前，WPF v1.1.9 仍是受支持的稳定版。
+本指南适用于 `1.3.0-preview.22`。在 .NET 11 GA 前，WPF v1.1.9 仍是受支持的稳定版。
 
 侧栏用于切换“动画混合、模型部件、双持合并、设置、关于”，正常宽度下显示图标和名称，窄窗口下折叠为图标栏。左侧为资源库，中央显示真实 CAST，底部横跨资源库和预览区显示合成图层，右侧为可折叠属性。分隔条支持拖动，也可获得焦点后用方向键调整。图标提供双语工具提示和 UI Automation 名称，标题栏显示当前页面，窗口按钮位于右上角。
 
@@ -37,6 +37,8 @@
 ## Windows 2000 经典桌面主题
 
 在“设置 → 界面风格”选择“Windows 2000 · 经典桌面”。主题包含灰色凹凸控件、深蓝标题与选中态、34 个配套彩色像素图标，并支持浅色、深色和跟随系统。它只改变外观，不改变项目数据；选择会在重启后保留。自定义主题 JSON 也可使用 `windows-2000` 作为 `baseStyle`。
+
+Ubuntu GTK/Yaru 主题：分别导入 `Samples/Ubuntu-Yaru/theme.json` 和 `Samples/Ubuntu-Yaru/icons.zip`，即可启用独立的 GTK/Yaru 风格控件与 34 个图标，支持浅色和深色。主题 JSON 使用 `baseStyle: "ubuntu-yaru"` 和 `Gtk` 材质字段，最低需要 preview.22；这套模板由 Avalonia 实现，不需要安装 GTK，也不加载 GTK CSS/XML。
 
 ## GitHub 更新
 

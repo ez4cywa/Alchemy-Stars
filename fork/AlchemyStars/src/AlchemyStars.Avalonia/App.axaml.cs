@@ -82,6 +82,8 @@ public sealed partial class App : Application
                         await AppearanceSmoke.RunAsync(mainWindow, viewModel);
                     if (Program.AppearanceSamplesSmokeRequested)
                         await CustomAppearanceSmoke.RunSamplesAsync(mainWindow, viewModel, Path.GetDirectoryName(Program.RenderSmokePath!)!);
+                    if (Program.UbuntuThemeSmokeRequested)
+                        await UbuntuThemeSmoke.RunAsync(mainWindow, viewModel, Path.GetDirectoryName(Program.RenderSmokePath!)!);
                     mainWindow.VerifyToolbarLayout();
                     if (viewModel.IsDualPage)
                         mainWindow.GetVisualDescendants().OfType<DualWieldView>().Single().VerifySourceSelection();

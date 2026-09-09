@@ -26,6 +26,11 @@ internal static class CustomAppearanceSmoke
         Require(legacy.BaseStyle == "apple" && legacy.Light["Accent"][0] == "#285D3D",
             "Legacy custom theme bases must migrate while retaining imported colors.");
         Require(parsed.Name == "Import smoke" && parsed.Light["Accent"][0] == "#285D3D" && parsed.Radii["Button"] == 4, "Theme parse lost fields.");
+        var gtk = CustomAppearance.ParseTheme(Encoding.UTF8.GetBytes(ValidTheme
+            .Replace("\"baseStyle\":\"apple\"", "\"baseStyle\":\"ubuntu-yaru\"")
+            .Replace("\"Icon\":\"#285D3D\"", "\"GtkButton\":[\"#FFFFFF\",\"#EEEEEE\"]")));
+        Require(gtk.BaseStyle == "ubuntu-yaru" && gtk.Light["GtkButton"].Length == 2,
+            "GTK template selection or material gradients were lost.");
         foreach (var invalid in new[]
         {
             "null", "[]", "{}", ValidTheme.Replace("\"version\":1", "\"version\":2"),
@@ -154,7 +159,7 @@ internal static class CustomAppearanceSmoke
             Require(CustomAppearance.LoadError is not null, "Restoring icons hid an unresolved theme error.");
             vm.ResetCustomAppearance(false);
             Require(CustomAppearance.LoadError is null, "Removing corrupt theme did not clear its error.");
-            foreach (var basis in new[] { "apple", "classic-apple", "windows-xp", "windows-2000" })
+            foreach (var basis in new[] { "apple", "classic-apple", "windows-xp", "windows-2000", "ubuntu-yaru" })
             {
                 File.WriteAllText(themeSource, ValidTheme.Replace("\"baseStyle\":\"apple\"", $"\"baseStyle\":\"{basis}\""));
                 vm.ImportAppearance(themeSource, false);

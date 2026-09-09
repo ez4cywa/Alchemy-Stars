@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.3.0-preview.22 — 2026-09-09 (Ubuntu GTK/Yaru control templates)
+
+Chinese release notes: [更新日志](docs/releases/1.3.0-preview.22.zh-CN.md).
+
+- Add independent Avalonia GTK/Yaru-inspired control templates via the `ubuntu-yaru` custom theme base.
+- Add 13 Gtk material tokens and bundle light/dark Ubuntu theme data with 34 original PNG icons.
+- Verify imported theme reload, button/checkbox/switch states, four pages and isolation from built-in skins.
+- Preserve existing theme format compatibility, attachment fixes and animation/IK behavior.
+
 ## 1.3.0-preview.21 — 2026-09-09 (attachment mount frames)
 
 Chinese release notes: [更新日志](docs/releases/1.3.0-preview.21.zh-CN.md).

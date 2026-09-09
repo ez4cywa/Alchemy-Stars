@@ -25,6 +25,8 @@ internal static class CustomAppearance
         "XpActionHover", "XpActionPressed", "XpHoverBorder",
         "AppleChrome", "AppleHeader", "AppleButton", "AppleButtonHover", "AppleButtonPressed",
         "AppleAction", "AppleActionHover", "AppleActionPressed", "AppleThumb", "AppleEdge", "AppleHoverEdge",
+        "GtkChrome", "GtkHeader", "GtkButton", "GtkButtonHover", "GtkButtonPressed",
+        "GtkAction", "GtkActionHover", "GtkActionPressed", "GtkThumb", "GtkEdge", "GtkHoverEdge", "GtkEntry", "GtkScrollThumb",
     };
     private static readonly HashSet<string> RadiusNames = new(StringComparer.Ordinal)
         { "Button", "Action", "Panel", "Header", "Card" };
@@ -137,7 +139,7 @@ internal static class CustomAppearance
         if (string.IsNullOrEmpty(name) || name.Length > 64) throw new InvalidDataException("Theme name must contain 1–64 characters.");
         var baseStyle = root.TryGetProperty("baseStyle", out var basis) ? basis.GetString() : "apple";
         if (baseStyle is "neumorphic" or "modern-desktop") baseStyle = "apple";
-        if (baseStyle is not ("apple" or "classic-apple" or "windows-xp" or "windows-2000"))
+        if (baseStyle is not ("apple" or "classic-apple" or "windows-xp" or "windows-2000" or "ubuntu-yaru"))
             throw new InvalidDataException("Unknown baseStyle.");
         var light = Palette(root, "light");
         var dark = Palette(root, "dark");
@@ -175,7 +177,7 @@ internal static class CustomAppearance
                 ? property.Value.EnumerateArray().Select(value => value.GetString() ?? "").ToArray()
                 : [property.Value.GetString() ?? ""];
             if (values.Length is < 1 or > 5 || values.Length > 1 && !IsMaterial(property.Name))
-                throw new InvalidDataException("Only Xp/Apple material tokens support gradients of 2–5 colors.");
+                throw new InvalidDataException("Only Xp/Apple/Gtk material tokens support gradients of 2–5 colors.");
             foreach (var value in values)
                 if (value.Length is not (7 or 9) || value[0] != '#' || value.AsSpan(1).ContainsAnyExcept("0123456789abcdefABCDEF"))
                     throw new InvalidDataException($"Invalid color: {property.Name}; use #RRGGBB or #AARRGGBB.");
@@ -233,6 +235,11 @@ internal static class CustomAppearance
     internal static void Apply(Application app, bool dark)
     {
         if (CurrentTheme is not { } theme) return;
+        Apply(app, dark, theme);
+    }
+
+    internal static void Apply(Application app, bool dark, Theme theme)
+    {
         foreach (var (name, colors) in dark ? theme.Dark : theme.Light)
         {
             var key = IsMaterial(name) ? name : "Alchemy" + name;
@@ -253,5 +260,5 @@ internal static class CustomAppearance
             app.Resources["Appearance" + name + "Radius"] = name == "Header" ? new CornerRadius(radius, radius, 0, 0) : new CornerRadius(radius);
     }
 
-    private static bool IsMaterial(string name) => name.StartsWith("Xp", StringComparison.Ordinal) || name.StartsWith("Apple", StringComparison.Ordinal);
+    private static bool IsMaterial(string name) => name.StartsWith("Xp", StringComparison.Ordinal) || name.StartsWith("Apple", StringComparison.Ordinal) || name.StartsWith("Gtk", StringComparison.Ordinal);
 }

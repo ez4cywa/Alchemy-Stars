@@ -1,0 +1,158 @@
+{
+  "version": 1,
+  "name": "Ubuntu · Yaru Studio",
+  "baseStyle": "ubuntu-yaru",
+  "light": {
+    "Background": "#F3F2F0",
+    "Sidebar": "#E8E6E3",
+    "Surface": "#FFFFFF",
+    "SubtleSurface": "#F7F6F4",
+    "SurfaceRaised": "#FFFFFF",
+    "Canvas": "#ECEAE7",
+    "CommandBar": "#353535",
+    "CommandText": "#FFFFFF",
+    "OnDarkMuted": "#D8D6D3",
+    "DarkTile": "#494745",
+    "Text": "#292725",
+    "MutedText": "#625E59",
+    "Icon": "#B13D12",
+    "Border": "#D2CECA",
+    "BorderStrong": "#9B948D",
+    "Accent": "#AF3C0F",
+    "Action": "#B94414",
+    "Focus": "#C34612",
+    "AccentHover": "#9D330B",
+    "AccentBorder": "#BC4B1D",
+    "Hover": "#E9E5E1",
+    "Pressed": "#D7D1CB",
+    "Selected": "#F5DDCF",
+    "Hero": "#EEE9E5",
+    "Success": "#326946",
+    "Error": "#B32D37",
+    "Chip": "#E8E3DF",
+    "BaseClip": "#F5DFCF",
+    "BaseEdge": "#AD471B",
+    "LayerClip": "#E8DDEC",
+    "LayerEdge": "#704575",
+    "GtkChrome": [
+      "#41403F",
+      "#353433"
+    ],
+    "GtkHeader": [
+      "#F3F2F0",
+      "#EAE7E3"
+    ],
+    "GtkButton": [
+      "#FEFDFC",
+      "#EBE8E4"
+    ],
+    "GtkButtonHover": [
+      "#FFFFFF",
+      "#F4EEE8"
+    ],
+    "GtkButtonPressed": [
+      "#D9D2CB",
+      "#E4DED7"
+    ],
+    "GtkAction": [
+      "#C24B1A",
+      "#AF3C0F"
+    ],
+    "GtkActionHover": [
+      "#B94313",
+      "#9D330B"
+    ],
+    "GtkActionPressed": [
+      "#91300B",
+      "#A63B10"
+    ],
+    "GtkThumb": [
+      "#FFFFFF",
+      "#E9E4DE"
+    ],
+    "GtkEdge": "#B7AFA7",
+    "GtkHoverEdge": "#C34612",
+    "GtkEntry": "#FFFFFF",
+    "GtkScrollThumb": "#928B84"
+  },
+  "dark": {
+    "Background": "#262626",
+    "Sidebar": "#2D2D2D",
+    "Surface": "#363636",
+    "SubtleSurface": "#3B3938",
+    "SurfaceRaised": "#42403E",
+    "Canvas": "#222222",
+    "CommandBar": "#242424",
+    "CommandText": "#FAF9F8",
+    "OnDarkMuted": "#C4BEB8",
+    "DarkTile": "#41403E",
+    "Text": "#F4F1ED",
+    "MutedText": "#C3BBB4",
+    "Icon": "#FFA573",
+    "Border": "#504B47",
+    "BorderStrong": "#82766C",
+    "Accent": "#FFA573",
+    "Action": "#B94414",
+    "Focus": "#FFAE80",
+    "AccentHover": "#D05B28",
+    "AccentBorder": "#F27E43",
+    "Hover": "#49433E",
+    "Pressed": "#27211D",
+    "Selected": "#61432F",
+    "Hero": "#38322F",
+    "Success": "#9AC99E",
+    "Error": "#FF9BA0",
+    "Chip": "#48403B",
+    "BaseClip": "#63452F",
+    "BaseEdge": "#EE9C65",
+    "LayerClip": "#504056",
+    "LayerEdge": "#CAA4D1",
+    "GtkChrome": [
+      "#2D2C2B",
+      "#242424"
+    ],
+    "GtkHeader": [
+      "#41403F",
+      "#363534"
+    ],
+    "GtkButton": [
+      "#4C4946",
+      "#423F3C"
+    ],
+    "GtkButtonHover": [
+      "#59524C",
+      "#4D4640"
+    ],
+    "GtkButtonPressed": [
+      "#2C2825",
+      "#37312C"
+    ],
+    "GtkAction": [
+      "#C24B1A",
+      "#AF3C0F"
+    ],
+    "GtkActionHover": [
+      "#C64D1B",
+      "#B84315"
+    ],
+    "GtkActionPressed": [
+      "#91300B",
+      "#A63B10"
+    ],
+    "GtkThumb": [
+      "#F1E9E2",
+      "#CFC2B7"
+    ],
+    "GtkEdge": "#71665D",
+    "GtkHoverEdge": "#EF945F",
+    "GtkEntry": "#303030",
+    "GtkScrollThumb": "#A29990"
+  },
+  "radii": {
+    "Button": 5,
+    "Action": 5,
+    "Panel": 7,
+    "Header": 6,
+    "Card": 7
+  }
+}
