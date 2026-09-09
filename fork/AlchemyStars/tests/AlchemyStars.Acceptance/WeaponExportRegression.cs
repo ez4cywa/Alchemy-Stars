@@ -55,6 +55,78 @@ internal static class WeaponExportRegression
         vm.Parts[1].ParentBoneTag = "j_wrist_ri";
         var explicitParent = AnimationConverter.LoadSkeletonFromParts(vm.Parts.Take(2), false);
         Check(explicitParent.FindBone("j_gun__weapon")?.Parent?.Name == "j_wrist_ri", "Explicit parent was overridden.");
+        TestAttachmentFrames(Path.Combine(directory, "attachment-frames"));
+    }
+
+    private static void TestAttachmentFrames(string directory)
+    {
+        Directory.CreateDirectory(directory);
+        var weapon = Path.Combine(directory, "weapon.cast");
+        var attachment = Path.Combine(directory, "attachment.cast");
+        var rotation = Quaternion.CreateFromAxisAngle(Vector3.UnitZ, MathF.PI / 2);
+        WriteModel(weapon, [("gun", -1, new(4, 6, 0), Quaternion.Identity),
+            ("tag_scope", 0, new(10, 0, 0), rotation)], null);
+        var vm = new MainViewModel(_ => { }, string.Empty);
+        vm.Parts.Add(new Part(vm, weapon) { Type = PartType.Weapon });
+        vm.Parts.Add(new Part(vm, attachment) { Type = PartType.Attachment });
+
+        // A root authored in the mount's parent frame must keep the old reuse path.
+        WriteModel(attachment, [("tag_scope", -1, new(10, 0, 0), Quaternion.Negate(rotation))], null);
+        var reused = AnimationConverter.LoadSkeletonFromParts(vm.Parts, false);
+        Check(reused.Bones.Count == 2, "Equivalent attachment root (including q/-q) was not reused.");
+
+        WriteModel(attachment, [("tag_scope", -1, new(10, 0, 0), Quaternion.Identity)], null);
+        var rotated = AnimationConverter.LoadSkeletonFromParts(vm.Parts, false);
+        Check(rotated.FindBone("tag_scope__attachment")?.Parent?.Name == "tag_scope",
+            "A rotation-only bind mismatch must not reuse the mount's parent frame.");
+        WriteModel(attachment, [("tag_scope", -1, new(10, 0, 0), rotation)], null);
+        var scaledFile = CastReader.Load(attachment);
+        scaledFile.RootNodes.Single().Children.OfType<ModelNode>().Single().Skeleton!.Bones[0]
+            .AddValue("s", new Vector3(2));
+        CastWriter.Save(attachment, scaledFile);
+        var scaled = AnimationConverter.LoadSkeletonFromParts(vm.Parts, false);
+        Check(scaled.FindBone("tag_scope__attachment")?.Parent?.Name == "tag_scope",
+            "A scale-only bind mismatch must not reuse the mount's parent frame.");
+
+        // An origin-authored root instead inherits the complete mount transform.
+        WriteModel(attachment, [("tag_scope", -1, Vector3.Zero, Quaternion.Identity)], Vector3.UnitX);
+        var attached = AnimationConverter.LoadSkeletonFromParts(vm.Parts, false);
+        Check(attached.FindBone("tag_scope__attachment")?.Parent?.Name == "tag_scope",
+            "Origin-authored attachment must parent to its matching mount, not the mount's parent.");
+        var animationPath = Path.Combine(directory, "idle.cast");
+        var root = new CastNode(CastNodeIdentifier.Root);
+        new AnimationNode { Parent = root }.AddValue("fr", 30f);
+        CastWriter.Save(animationPath, new Cast.NET.Cast([root]));
+        var engine = new AlchemyStars.Engine.AnimationExportEngine();
+        var request = new AlchemyStars.Engine.AnimationExportRequest(
+            [new(weapon, AlchemyStars.Engine.ModelPartKind.Weapon),
+             new(attachment, AlchemyStars.Engine.ModelPartKind.Attachment)],
+            [new(animationPath, "mounted", directory, EnableLeftHandIk: false, EnableRightHandIk: false)],
+            new(new("", "", "", ""), new("", "", "", "")));
+        var output = engine.Export(request).OutputFiles.Single();
+        var model = CastReader.Load(output).RootNodes.Single().Children.OfType<ModelNode>().Single();
+        Check(Vector3.Distance(model.Meshes.Single().VertexPositionBuffer.Values[0], new(14, 7, 0)) < 1e-5f,
+            "Engine export did not move/rotate attachment geometry into the mount frame.");
+
+        // Even a non-origin mismatch must retain its local offset under the mount.
+        WriteModel(attachment, [("tag_scope", -1, new(2, 0, 0), Quaternion.Identity)], null);
+        var offset = AnimationConverter.LoadSkeletonFromParts(vm.Parts, false);
+        Check(offset.FindBone("tag_scope__attachment")?.Parent?.Name == "tag_scope",
+            "Nonmatching attachment frame was attached to the wrong parent.");
+        vm.Parts[1].ParentBoneTag = "gun";
+        var explicitParent = AnimationConverter.LoadSkeletonFromParts(vm.Parts, false);
+        Check(explicitParent.FindBone("tag_scope__attachment")?.Parent?.Name == "gun",
+            "Attachment auto-parenting overrode an explicit parent.");
+        vm.Parts[1].ParentBoneTag = "";
+        WriteModel(attachment, [("missing_mount", -1, Vector3.Zero, Quaternion.Identity)], null);
+        try { AnimationConverter.LoadSkeletonFromParts(vm.Parts, false); throw new Exception("Missing attachment mount was accepted."); }
+        catch (InvalidDataException) { }
+        WriteModel(weapon, [("gun", -1, Vector3.Zero, Quaternion.Identity),
+            ("tag_scope", 0, new(1, 0, 0), Quaternion.Identity),
+            ("tag_scope", 0, new(2, 0, 0), Quaternion.Identity)], null);
+        WriteModel(attachment, [("tag_scope", -1, Vector3.Zero, Quaternion.Identity)], null);
+        try { AnimationConverter.LoadSkeletonFromParts(vm.Parts, false); throw new Exception("Ambiguous attachment mount was accepted."); }
+        catch (InvalidDataException) { }
     }
 
     private static void WriteModel(string path, (string Name, int Parent, Vector3 Position, Quaternion Rotation)[] definitions, Vector3? vertex)

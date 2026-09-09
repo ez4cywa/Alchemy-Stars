@@ -160,8 +160,15 @@ internal sealed class SkeletonMergePlan
                 && i.OriginalName.Equals(root.Name, StringComparison.OrdinalIgnoreCase)).ToArray();
             if (anchors.Length != 1)
                 throw new InvalidDataException(LocalizationManager.Get("MergeNeedsParent"));
-            // Reuse the matching attachment root only if its bind transform also matches.
-            return anchors[0].Bone.Parent;
+            var anchor = anchors[0].Bone;
+            // Some parts author the attachment root in the matching weapon tag's parent
+            // frame, carrying the tag's own bind transform so the bone can be reused verbatim.
+            // Others author the root at the origin and expect to hang directly off the tag;
+            // parenting those to the tag's parent places the part at the wrong origin.
+            var reusableFrame = Vector3.DistanceSquared(anchor.BaseLocalTranslation, root.LocalPosition) < 1e-10f
+                && 1 - MathF.Abs(Quaternion.Dot(Quaternion.Normalize(anchor.BaseLocalRotation), Quaternion.Normalize(root.LocalRotation))) < 1e-6f
+                && Vector3.DistanceSquared(anchor.BaseScale, root.Scale) < 1e-10f;
+            return reusableFrame ? anchor.Parent : anchor;
         }
         return null;
     }

@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.3.0-preview.21 — 2026-09-09 (attachment mount frames)
+
+Chinese release notes: [更新日志](docs/releases/1.3.0-preview.21.zh-CN.md).
+
+- Fix automatic attachment parenting: reuse an equivalent bind frame, otherwise attach below the matching weapon mount.
+- Preserve explicit parent selection, existing bone reuse and missing/ambiguous mount validation.
+- Add regression coverage for transform differences, equivalent quaternions and exported attachment geometry.
+
 ## 1.3.0-preview.20 — 2026-09-09 (classic desktop theme and shared-base batches)
 
 Chinese release notes: [更新日志](docs/releases/1.3.0-preview.20.zh-CN.md).
