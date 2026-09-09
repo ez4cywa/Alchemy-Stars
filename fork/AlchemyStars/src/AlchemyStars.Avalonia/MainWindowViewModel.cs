@@ -349,9 +349,6 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
         foreach (var path in NormalizeCastPaths(paths))
         {
             var layer = new WorkspaceLayer { Name = path, Type = AnimationLayerKind.Additive };
-            if (SelectedAnimation.Layers.Count == 0 && (string.IsNullOrWhiteSpace(SelectedAnimation.OutputName)
-                || string.Equals(SelectedAnimation.OutputName, Path.GetFileNameWithoutExtension(SelectedAnimation.Name), StringComparison.OrdinalIgnoreCase)))
-                SelectedAnimation.OutputName = Path.GetFileNameWithoutExtension(path);
             SelectedAnimation.Layers.Add(layer);
             SelectedLayer = layer;
             added++;

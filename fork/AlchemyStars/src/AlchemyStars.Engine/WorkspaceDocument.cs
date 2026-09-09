@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Text.Json.Serialization;
@@ -108,6 +109,12 @@ public sealed class WorkspacePart : ObservableModel
 
 public sealed class WorkspaceAnimation : ObservableModel
 {
+    private ObservableCollection<WorkspaceLayer> layers = [];
+    private WorkspaceLayer? firstLayer;
+    private string automaticOutputName = string.Empty;
+
+    public WorkspaceAnimation() => layers.CollectionChanged += LayersChanged;
+
     private int weaponFollowMode;
     public int WeaponFollowMode { get => weaponFollowMode; set { if (value >= 0) SetProperty(ref weaponFollowMode, value); } }
     public string Id { get; set; } = Guid.NewGuid().ToString("N");
@@ -130,11 +137,9 @@ public sealed class WorkspaceAnimation : ObservableModel
         set
         {
             var normalized = PathInput.Normalize(value);
-            var previousStem = Path.GetFileNameWithoutExtension(name);
             if (!SetProperty(ref name, normalized))
                 return;
-            if (Layers.Count == 0 && (string.IsNullOrWhiteSpace(OutputName) || string.Equals(OutputName, previousStem, StringComparison.OrdinalIgnoreCase)))
-                OutputName = Path.GetFileNameWithoutExtension(normalized);
+            RefreshOutputName();
             RaisePropertyChanged(nameof(DisplayName));
         }
     }
@@ -148,7 +153,46 @@ public sealed class WorkspaceAnimation : ObservableModel
     public string RightHandPoseFile { get => rightHandPoseFile; set => SetProperty(ref rightHandPoseFile, PathInput.Normalize(value)); }
     public string LeftIKTargetBoneName { get => leftIkTargetBoneName; set => SetProperty(ref leftIkTargetBoneName, value ?? string.Empty); }
     public string RightIKTargetBoneName { get => rightIkTargetBoneName; set => SetProperty(ref rightIkTargetBoneName, value ?? string.Empty); }
-    public ObservableCollection<WorkspaceLayer> Layers { get; set; } = [];
+    public ObservableCollection<WorkspaceLayer> Layers
+    {
+        get => layers;
+        set
+        {
+            if (ReferenceEquals(layers, value)) return;
+            layers.CollectionChanged -= LayersChanged;
+            layers = value ?? [];
+            layers.CollectionChanged += LayersChanged;
+            RefreshFirstLayer();
+            RaisePropertyChanged();
+        }
+    }
+
+    private void LayersChanged(object? sender, NotifyCollectionChangedEventArgs e) => RefreshFirstLayer();
+
+    private void RefreshFirstLayer()
+    {
+        var next = layers.FirstOrDefault();
+        if (!ReferenceEquals(firstLayer, next))
+        {
+            if (firstLayer is not null) firstLayer.PropertyChanged -= FirstLayerChanged;
+            firstLayer = next;
+            if (firstLayer is not null) firstLayer.PropertyChanged += FirstLayerChanged;
+        }
+        RefreshOutputName();
+    }
+
+    private void FirstLayerChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(WorkspaceLayer.Name)) RefreshOutputName();
+    }
+
+    private void RefreshOutputName()
+    {
+        var followsDefault = string.IsNullOrWhiteSpace(OutputName)
+            || string.Equals(OutputName, automaticOutputName, StringComparison.OrdinalIgnoreCase);
+        automaticOutputName = Path.GetFileNameWithoutExtension(firstLayer?.Name ?? Name);
+        if (followsDefault) OutputName = automaticOutputName;
+    }
 
     [JsonIgnore]
     public string DisplayName => string.IsNullOrWhiteSpace(OutputName)

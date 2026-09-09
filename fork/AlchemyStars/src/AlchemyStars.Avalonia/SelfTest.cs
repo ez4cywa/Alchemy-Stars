@@ -239,10 +239,45 @@ internal static class SelfTest
                     Require(naming.SelectedAnimation!.OutputName == "first", "Later layers replaced the first layer name.");
                     naming.SelectedAnimation.Name = Path.Combine(testDirectory, "other-base.cast");
                     Require(naming.SelectedAnimation.OutputName == "first", "Changing the base overwrote the first layer name.");
+                    var tracked = naming.SelectedAnimation;
+                    tracked.Layers[0].Name = Path.Combine(testDirectory, "renamed.cast");
+                    Require(tracked.OutputName == "renamed", "First-layer rename did not update the output name.");
+                    tracked.Layers.Move(1, 0);
+                    Require(tracked.OutputName == "second", "Reordering layers did not update the output name.");
+                    tracked.Layers[1].Name = "not-first.cast";
+                    Require(tracked.OutputName == "second", "A non-first layer changed the output name.");
+                    var removed = tracked.Layers[0];
+                    tracked.Layers[0] = new WorkspaceLayer { Name = "replacement.cast" };
+                    Require(tracked.OutputName == "replacement", "Replacing the first layer did not update the output name.");
+                    removed.Name = "detached.cast";
+                    Require(tracked.OutputName == "replacement", "A detached layer changed the output name.");
+                    tracked.Layers.RemoveAt(0);
+                    Require(tracked.OutputName == "not-first", "Removing the first layer did not select the next name.");
+                    var previousLayers = tracked.Layers;
+                    tracked.Layers = [new WorkspaceLayer { Name = "collection.cast" }];
+                    Require(tracked.OutputName == "collection", "Replacing the layer collection did not update the name.");
+                    previousLayers.Clear();
+                    Require(tracked.OutputName == "collection", "A detached collection changed the output name.");
+                    var namingPath = Path.Combine(testDirectory, "naming.aprj");
+                    projectStore.Save(naming.Workspace, namingPath);
+                    var loadedNaming = projectStore.Load(namingPath).Animations[0];
+                    loadedNaming.Layers[0].Name = "loaded.cast";
+                    Require(loadedNaming.OutputName == "loaded", "Project reload lost first-layer name tracking.");
+                    var snapshotNaming = WorkspaceProjectStore.Snapshot(naming.Workspace).Animations[0];
+                    snapshotNaming.Layers[0].Name = "snapshot.cast";
+                    Require(snapshotNaming.OutputName == "snapshot", "Project snapshot lost first-layer name tracking.");
+                    tracked.Layers.Clear();
+                    Require(tracked.OutputName == "other-base", "Clearing layers did not restore the base name.");
                     naming.AddAnimationPaths([Path.Combine(testDirectory, "base.cast")]);
                     naming.SelectedAnimation!.OutputName = "my-custom-output";
                     naming.AddLayerPaths([Path.Combine(testDirectory, "first.cast")]);
                     Require(naming.SelectedAnimation.OutputName == "my-custom-output", "Layer import overwrote a manual output name.");
+                    naming.SelectedAnimation.Layers[0].Name = "custom-layer.cast";
+                    Require(naming.SelectedAnimation.OutputName == "my-custom-output", "Layer rename overwrote a manual output name.");
+                    projectStore.Save(naming.Workspace, namingPath);
+                    var loadedCustom = projectStore.Load(namingPath).Animations.Last();
+                    loadedCustom.Layers.Clear();
+                    Require(loadedCustom.OutputName == "my-custom-output", "Project reload lost a manual output name.");
                 }
 
                 var placements = AnimationTimelineLayout.Calculate([

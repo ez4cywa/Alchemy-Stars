@@ -59,7 +59,7 @@ Choose **Build preview** in the composition workspace header to merge the select
 
 Keyboard commands:
 
-New in preview.17: the product name is centered at the top of the window. Importing the first animation layer supplies its filename stem as the default output name; later imports preserve it and custom names remain unchanged. Text-field Cut/Copy/Paste menus follow the selected language. Settings → Utilities → Unified output folder persists a shared destination for animation and dual-wield exports without changing project paths or preview caches; clearing it restores per-item destinations.
+The product name is centered at the top of the window. The default output name follows the first animation layer's filename stem, including replacement, renaming, and reordering; removing all layers restores the base animation's name. Changes to other layers do not affect the output name, and custom names remain unchanged. Text-field Cut/Copy/Paste menus follow the selected language. Settings → Utilities → Unified output folder persists a shared destination for animation and dual-wield exports without changing project paths or preview caches; clearing it restores per-item destinations.
 
 | Command | Shortcut |
 | --- | --- |
