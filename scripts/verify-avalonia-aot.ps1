@@ -7,7 +7,7 @@ $ErrorActionPreference = 'Stop'
 $repositoryRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
 $project = Join-Path $repositoryRoot 'fork\AlchemyStars\src\AlchemyStars.Avalonia\AlchemyStars.Avalonia.csproj'
 $outputRoot = [System.IO.Path]::GetFullPath((Join-Path $repositoryRoot 'output'))
-$publishDirectory = [System.IO.Path]::GetFullPath((Join-Path $outputRoot 'avalonia-aot-preview19'))
+$publishDirectory = [System.IO.Path]::GetFullPath((Join-Path $outputRoot 'avalonia-aot-preview20'))
 function Assert-OutputChild([string]$Path) {
     if (-not $Path.StartsWith($outputRoot + [System.IO.Path]::DirectorySeparatorChar, [System.StringComparison]::OrdinalIgnoreCase)) {
         throw "Refusing to clean a path outside the repository output directory: $Path"
@@ -54,7 +54,7 @@ foreach ($updateTest in @('--update-self-test', '--update-helper-self-test')) {
 & (Join-Path $PSScriptRoot 'test-avalonia-aot-startup.ps1') -PublishDirectory $publishDirectory
 & (Join-Path $PSScriptRoot 'test-avalonia-accessibility.ps1') -PublishDirectory $publishDirectory
 
-foreach ($interactionTest in @('--shortcuts-smoke', '--textmenu-smoke', '--inspector-smoke')) {
+foreach ($interactionTest in @('--shortcuts-smoke', '--textmenu-smoke', '--inspector-smoke', '--window-chrome-smoke', '--shared-base-batch-smoke')) {
     $interactionProcess = Start-Process -FilePath $executable -ArgumentList ('--startup-smoke ' + $interactionTest) -WorkingDirectory $publishDirectory -WindowStyle Hidden -Wait -PassThru
     if ($interactionProcess.ExitCode -ne 0) { throw "Native AOT interaction test $interactionTest failed: $($interactionProcess.ExitCode)" }
     Write-Output "Native AOT interaction ${interactionTest}: PASS"

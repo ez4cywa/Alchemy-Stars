@@ -137,7 +137,7 @@ internal static class CustomAppearance
         if (string.IsNullOrEmpty(name) || name.Length > 64) throw new InvalidDataException("Theme name must contain 1–64 characters.");
         var baseStyle = root.TryGetProperty("baseStyle", out var basis) ? basis.GetString() : "apple";
         if (baseStyle is "neumorphic" or "modern-desktop") baseStyle = "apple";
-        if (baseStyle is not ("apple" or "classic-apple" or "windows-xp"))
+        if (baseStyle is not ("apple" or "classic-apple" or "windows-xp" or "windows-2000"))
             throw new InvalidDataException("Unknown baseStyle.");
         var light = Palette(root, "light");
         var dark = Palette(root, "dark");

@@ -52,6 +52,17 @@ internal static class AppearanceTheme
     {
         var dark = app.ActualThemeVariant == ThemeVariant.Dark;
         var style = currentStyle == "custom" ? CustomAppearance.CurrentTheme?.BaseStyle ?? "apple" : currentStyle;
+        if (style == "windows-2000")
+        {
+            ClassicAppleAppearance.Remove(app);
+            WindowsXpAppearance.Remove(app);
+            ModernDesktopAppearance.Remove(app);
+            Windows2000Appearance.Apply(app, dark);
+            if (currentStyle == "custom") CustomAppearance.Apply(app, dark);
+            return;
+        }
+        Windows2000Appearance.Remove(app);
+        app.Resources["AppearanceUseWindows2000Icons"] = false;
         if (style is "apple" or "modern-desktop" or "neumorphic")
         {
             ClassicAppleAppearance.Remove(app);

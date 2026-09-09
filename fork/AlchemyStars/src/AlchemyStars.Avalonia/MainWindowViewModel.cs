@@ -59,7 +59,8 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
         {
             "classic-apple" => 1,
             "windows-xp" => 2,
-            "custom" => CustomAppearance.CurrentTheme is not null ? 3 : 0,
+            "windows-2000" => 3,
+            "custom" => CustomAppearance.CurrentTheme is not null ? 4 : 0,
             _ => 0,
         };
         themeModeIndex = preferenceSnapshot.ThemeMode switch { "dark" => 1, "system" => 2, _ => 0 };

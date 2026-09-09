@@ -19,6 +19,8 @@ public sealed class ThemedIcon : Grid
         AvaloniaProperty.Register<ThemedIcon, bool>(nameof(UseClassicGlyph));
     public static readonly StyledProperty<bool> UseWindowsXpGlyphProperty =
         AvaloniaProperty.Register<ThemedIcon, bool>(nameof(UseWindowsXpGlyph));
+    public static readonly StyledProperty<bool> UseWindows2000GlyphProperty =
+        AvaloniaProperty.Register<ThemedIcon, bool>(nameof(UseWindows2000Glyph));
     public static readonly StyledProperty<int> CustomIconRevisionProperty =
         AvaloniaProperty.Register<ThemedIcon, int>(nameof(CustomIconRevision));
 
@@ -73,6 +75,7 @@ public sealed class ThemedIcon : Grid
 
     private readonly Viewbox vectorHost = new() { Stretch = Stretch.Uniform, IsHitTestVisible = false };
     private readonly Viewbox xpHost = new() { Stretch = Stretch.Uniform, IsHitTestVisible = false };
+    private readonly Viewbox win2000Host = new() { Stretch = Stretch.Uniform, IsHitTestVisible = false };
     private readonly AppIcon desktopIcon = new() { IsHitTestVisible = false };
     public static readonly StyledProperty<bool> UseDesktopGlyphProperty =
         AvaloniaProperty.Register<ThemedIcon, bool>(nameof(UseDesktopGlyph));
@@ -87,6 +90,7 @@ public sealed class ThemedIcon : Grid
         GlyphProperty.Changed.AddClassHandler<ThemedIcon>((icon, _) => icon.UpdateGlyph());
         UseClassicGlyphProperty.Changed.AddClassHandler<ThemedIcon>((icon, _) => icon.UpdateMode());
         UseWindowsXpGlyphProperty.Changed.AddClassHandler<ThemedIcon>((icon, _) => icon.UpdateMode());
+        UseWindows2000GlyphProperty.Changed.AddClassHandler<ThemedIcon>((icon, _) => icon.UpdateMode());
         IconBrushProperty.Changed.AddClassHandler<ThemedIcon>((icon, _) => icon.UpdateBrush());
         CustomIconRevisionProperty.Changed.AddClassHandler<ThemedIcon>((icon, _) => icon.UpdateMode());
     }
@@ -97,6 +101,7 @@ public sealed class ThemedIcon : Grid
         Children.Add(bitmap);
         Children.Add(vectorHost);
         Children.Add(xpHost);
+        Children.Add(win2000Host);
         Children.Add(desktopIcon);
         Children.Add(custom);
         UpdateGlyph();
@@ -136,6 +141,12 @@ public sealed class ThemedIcon : Grid
         get => GetValue(UseWindowsXpGlyphProperty);
         set => SetValue(UseWindowsXpGlyphProperty, value);
     }
+    public bool UseWindows2000Glyph
+    {
+        get => GetValue(UseWindows2000GlyphProperty);
+        set => SetValue(UseWindows2000GlyphProperty, value);
+    }
+    internal bool HasWindows2000Icon => win2000Host.IsVisible && win2000Host.Child is not null;
 
     internal static IEnumerable<string> GlyphNames => Names;
 
@@ -143,6 +154,7 @@ public sealed class ThemedIcon : Grid
     {
         vectorHost.Child = UseClassicGlyph ? ClassicAppleIcons.Create(Glyph, IconBrush) : null;
         xpHost.Child = UseWindowsXpGlyph ? WindowsXpIcons.Create(Glyph) : null;
+        win2000Host.Child = UseWindows2000Glyph ? Windows2000Icons.Create(Glyph) : null;
 
         if (!BitmapCache.TryGetValue(Glyph, out var image))
         {
@@ -160,12 +172,14 @@ public sealed class ThemedIcon : Grid
         desktopIcon.Foreground = IconBrush;
         custom.Source = CustomAppearance.Icon(Glyph);
         custom.IsVisible = custom.Source is not null;
-        desktopIcon.IsVisible = !custom.IsVisible && UseDesktopGlyph;
-        bitmap.IsVisible = !custom.IsVisible && !UseDesktopGlyph && !UseClassicGlyph && !UseWindowsXpGlyph;
-        vectorHost.IsVisible = !custom.IsVisible && UseClassicGlyph && !UseWindowsXpGlyph;
+        desktopIcon.IsVisible = !custom.IsVisible && UseDesktopGlyph && !UseWindows2000Glyph;
+        bitmap.IsVisible = !custom.IsVisible && !UseDesktopGlyph && !UseClassicGlyph && !UseWindowsXpGlyph && !UseWindows2000Glyph;
+        vectorHost.IsVisible = !custom.IsVisible && UseClassicGlyph && !UseWindowsXpGlyph && !UseWindows2000Glyph;
         vectorHost.Child = UseClassicGlyph ? ClassicAppleIcons.Create(Glyph, IconBrush) : null;
         if (UseWindowsXpGlyph && xpHost.Child is null) xpHost.Child = WindowsXpIcons.Create(Glyph);
-        xpHost.IsVisible = !custom.IsVisible && UseWindowsXpGlyph;
+        xpHost.IsVisible = !custom.IsVisible && UseWindowsXpGlyph && !UseWindows2000Glyph;
+        if (UseWindows2000Glyph && win2000Host.Child is null) win2000Host.Child = Windows2000Icons.Create(Glyph);
+        win2000Host.IsVisible = !custom.IsVisible && UseWindows2000Glyph;
     }
 
     private void UpdateBrush()

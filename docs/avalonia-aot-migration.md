@@ -2,7 +2,7 @@
 
 Status: complete test implementation on `codex/avalonia-aot`; do not merge into `main` or publish as a stable release before .NET 11 GA.
 
-Version: `1.3.0-preview.19` (Native AOT preview)
+Version: `1.3.0-preview.20` (Native AOT preview)
 Runtime: .NET 11 Preview 7
 UI framework: Avalonia 12.1.2
 Production baseline: WPF v1.1.9 on `main`
@@ -75,7 +75,7 @@ Run the complete native verification with the pinned preview SDK:
 The standard-project path can also be exercised directly:
 
 ```powershell
-./output/avalonia-aot-preview19/AlchemyStars.Avalonia.exe --project-smoke ./fork/AlchemyStars/Example/Hawk/HawkSprint.aprj <output-folder>
+./output/avalonia-aot-preview20/AlchemyStars.Avalonia.exe --project-smoke ./fork/AlchemyStars/Example/Hawk/HawkSprint.aprj <output-folder>
 ```
 
 ## Native AOT notes

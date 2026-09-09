@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.3.0-preview.20 — 2026-09-09 (classic desktop theme and shared-base batches)
+
+Chinese release notes: [更新日志](docs/releases/1.3.0-preview.20.zh-CN.md).
+
+- Fix caption buttons overflowing into the command toolbar without reducing their hit targets.
+- Add a Windows 2000 classic desktop theme with 34 pixel-grid icons, beveled controls and light/dark support.
+- Create independent overlay tasks sharing one base animation, preserving settings and avoiding duplicate output names.
+- Retain the sprint batch action in the new batch menu.
+
 ## 1.3.0-preview.19 — 2026-09-09 (inspector visibility and UI details)
 
 Chinese release notes: [更新日志](docs/releases/1.3.0-preview.19.zh-CN.md).

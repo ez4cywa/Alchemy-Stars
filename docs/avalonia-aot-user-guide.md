@@ -2,7 +2,7 @@
 
 # Alchemy Stars Avalonia preview quick guide
 
-This guide applies to `1.3.0-preview.19`. WPF v1.1.9 remains the supported release until .NET 11 GA.
+This guide applies to `1.3.0-preview.20`. WPF v1.1.9 remains the supported release until .NET 11 GA.
 
 The sidebar switches between Animation blend, Model parts, Dual merge, Settings and About. It shows icons and labels at normal widths and collapses to icons in narrow windows. The base-animation library sits on the left, a real CAST preview in the center, composition layers across the bottom, and collapsible properties on the right. Drag the dividers or focus them and use arrow keys to resize panels. Icon commands have localized tooltips and UI Automation names; the titlebar displays the current page, with window controls at the upper right.
 
@@ -23,6 +23,16 @@ For the canonical Hawk recipe, open `fork/AlchemyStars/Example/Hawk/HawkSprint.a
 Reuse the first imported arms model is enabled by default under Settings → Utilities. The app remembers the first imported arms path and adds it at startup or when creating a new project. Opening an existing `.aprj` does not insert or replace models. Only the path is remembered; the source asset is not copied.
 
 Turning the option off stops reuse without removing the saved path or current models. Choose arms model lets you specify another file. Forget arms clears only the saved path, not the source file or project models; while reuse is enabled, a later first import can be remembered again. Missing saved files are skipped with a visible status message.
+
+## Batch overlays with one shared base
+
+Select a task with a base animation, open the batch icon in the Animation layers toolbar, and choose **Batch overlays with shared base…**. Select multiple CAST files to create one independent task per overlay, reusing the base, output folder, frame rate, IK and weapon-follow settings.
+
+If a layer is selected, each file replaces that slot and retains its offset and type; otherwise it is appended. The template and other common layers remain unchanged. Output names use each selected filename, adding a numeric suffix on collisions. Review the new tasks in the library, then use **Export all**. The original sprint batch command remains in the same menu.
+
+## Windows 2000 classic desktop theme
+
+Choose **Windows 2000 · Classic desktop** in Settings → Interface style for gray beveled controls, navy title and selection states, and 34 matching pixel-grid icons. Light, dark and system modes are supported and persisted across restarts, without modifying projects. Custom theme JSON can also use `windows-2000` as its `baseStyle`.
 
 ## GitHub updates
 

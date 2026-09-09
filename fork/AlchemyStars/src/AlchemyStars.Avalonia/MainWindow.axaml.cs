@@ -227,6 +227,11 @@ public sealed partial class MainWindow : Window
     private async void AddLayerClick(object? sender, RoutedEventArgs e) => await ViewModel.AddLayersAsync();
     private void RemoveAnimationClick(object? sender, RoutedEventArgs e) => ViewModel.RemoveSelectedAnimation();
     private void GenerateSprintBatchClick(object? sender, RoutedEventArgs e) => ViewModel.GenerateSprintBatch();
+    private async void SharedBaseBatchClick(object? sender, RoutedEventArgs e)
+    {
+        try { await ViewModel.AddSharedBaseBatchAsync(); }
+        catch (Exception error) { ViewModel.ReportSharedBaseBatchError(error); }
+    }
     private void RemovePartClick(object? sender, RoutedEventArgs e) => ViewModel.RemoveSelectedPart();
     private void RemoveLayerClick(object? sender, RoutedEventArgs e) => ViewModel.RemoveSelectedLayer();
     private void MovePartUpClick(object? sender, RoutedEventArgs e) => ViewModel.MoveSelectedPart(-1);

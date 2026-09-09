@@ -2,10 +2,10 @@
 
 # Alchemy Stars
 
-> **Avalonia AOT preview branch:** this test line targets .NET 11 Preview 7, Avalonia 12.1.2 and version `1.3.0-preview.19`. The complete desktop workflow now runs as a self-contained Native AOT application. Production remains v1.1.9 on `main`; the existing WPF application is still the stable baseline until .NET 11 GA. Do not distribute this build as a stable release.
+> **Avalonia AOT preview branch:** this test line targets .NET 11 Preview 7, Avalonia 12.1.2 and version `1.3.0-preview.20`. The complete desktop workflow now runs as a self-contained Native AOT application. Production remains v1.1.9 on `main`; the existing WPF application is still the stable baseline until .NET 11 GA. Do not distribute this build as a stable release.
 
 
-Latest changes: [preview.19 update notes (Chinese)](docs/releases/1.3.0-preview.19.zh-CN.md): reveal selected layer properties, retain filename suffixes, and correct version and accessibility labels. Includes all preview.18 updates.
+Latest changes: [preview.20 update notes (Chinese)](docs/releases/1.3.0-preview.20.zh-CN.md): Windows 2000 classic desktop theme, shared-base overlay batches and a corrected window caption layout. Includes all preview.19 updates.
 See the [Avalonia preview quick guide](docs/avalonia-aot-user-guide.md), [migration report](docs/avalonia-aot-migration.md) and [.NET 11 preview compatibility report](docs/dotnet11-preview.md).
 
 This preview adds attached dual-wield composition and Blender 4.3 FBX conversion. See the [dual-wield workflow and current limits (Chinese)](docs/dual-wield.zh-CN.md).
@@ -112,7 +112,7 @@ This preview branch requires .NET SDK `11.0.100-preview.7.26381.103` to build. `
 
 `run-tests.ps1` builds the stable WPF baseline and runs the Maya-backed conversion regressions. `verify-avalonia-aot.ps1` publishes the trimmed native application, runs its AOT contract/project export checks, starts a real Win32 window, validates Windows UI Automation names/focus/target bounds, and renders all four pages plus a centered dialog at the 900 × 600 minimum size.
 
-Every functional preview change increments the prerelease revision; this test version is `1.3.0-preview.19`. The stable release remains `1.1.9`.
+Every functional preview change increments the prerelease revision; this test version is `1.3.0-preview.20`. The stable release remains `1.1.9`.
 
 The 1.1.9 UI audit fixes the clipped About icon, toolbar overflow, cramped layer paths, and low-contrast controls. See the [UI audit and validation notes](design-system/alchemy-stars/pages/ui-audit-1.1.9.md) for coverage and limitations.
 

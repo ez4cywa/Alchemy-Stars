@@ -16,6 +16,7 @@ internal static class AppearanceSmoke
         (0, "apple"),
         (1, "classic-apple"),
         (2, "windows-xp"),
+        (3, "windows-2000"),
     ];
 
     private static readonly (WorkspacePage Page, string Key)[] Pages =
@@ -59,7 +60,7 @@ internal static class AppearanceSmoke
                 Require(snapshot.ThemeStyle == styleKey
                     && snapshot.ThemeMode == (mode == 1 ? "dark" : "light"), "Appearance selection did not survive a disk reload.");
                 VerifyVerticalContentAlignment(window);
-                VerifyThemedIcons(window, style == 1, style == 2, false);
+                VerifyThemedIcons(window, style == 1, style == 2, false, style == 3);
                 await VerifyQuickToggleAsync(window, vm, style, mode);
                 if (style == 1) VerifyClassicAppleHasNoBlue(app);
                 window.VerifyToolbarLayout();
@@ -71,7 +72,7 @@ internal static class AppearanceSmoke
                     window.VerifyToolbarLayout();
                     VerifyVerticalContentAlignment(window);
                     VerifyScrubberBounds(window);
-                    VerifyThemedIcons(window, style == 1, style == 2, false);
+                    VerifyThemedIcons(window, style == 1, style == 2, false, style == 3);
                     if (page == WorkspacePage.Settings)
                     {
                         VerifyCheckBoxSkin(window, style);
@@ -86,6 +87,7 @@ internal static class AppearanceSmoke
                         var toggle = window.GetVisualDescendants().OfType<ToggleButton>().Single(t => t.Name == "ExportModelsSwitch");
                         Require(toggle.GetVisualDescendants().OfType<Border>().Any(b => b.Name == "XpSwitchTrack") == (style == 2), "Dual switch retained the wrong theme template.");
                         Require(toggle.GetVisualDescendants().OfType<Border>().Any(b => b.Name == "AppleSwitchTrack") == (style == 1), "Dual switch retained the wrong Apple template.");
+                        Require(toggle.GetVisualDescendants().OfType<Border>().Any(b => b.Name == "Win2000SwitchTrack") == (style == 3), "Dual switch retained the wrong Windows 2000 template.");
                     }
                     using var bitmap = new RenderTargetBitmap(new PixelSize((int)window.ClientSize.Width, (int)window.ClientSize.Height));
                     bitmap.Render(window);
@@ -94,6 +96,7 @@ internal static class AppearanceSmoke
             }
             RenderXpIconCatalog(directory);
             RenderClassicIconCatalog(directory);
+            RenderWindows2000IconCatalog(directory);
             vm.ThemeStyleIndex = 0;
             modePicker.SelectedIndex = 2;
             await Task.Delay(160);
@@ -119,13 +122,13 @@ internal static class AppearanceSmoke
             Require(modePicker.SelectedIndex == 2 && stylePicker.SelectedIndex == 1, "Language refresh cleared an appearance picker.");
             vm.ToggleLanguage();
             await CustomAppearanceSmoke.RunAsync(window, vm, directory);
-            Console.WriteLine("Appearance smoke passed: three live styles, custom imports, two palettes, all pages, XP icon catalog, quick light/dark toggle, centered text, persistence, system delegation and language refresh.");
+            Console.WriteLine("Appearance smoke passed: four live styles, custom imports, two palettes, all pages, icon catalogs, quick light/dark toggle, centered text, persistence, system delegation and language refresh.");
         }
         finally
         {
             vm.ThemeStyleIndex = originalStyle;
             vm.ThemeModeIndex = originalMode;
-            AppearanceTheme.Apply(originalStyle switch { 1 => "classic-apple", 2 => "windows-xp", _ => "apple" }, originalMode switch { 1 => "dark", 2 => "system", _ => "light" });
+            AppearanceTheme.Apply(originalStyle switch { 1 => "classic-apple", 2 => "windows-xp", 3 => "windows-2000", 4 => "custom", _ => "apple" }, originalMode switch { 1 => "dark", 2 => "system", _ => "light" });
         }
     }
 
@@ -145,14 +148,14 @@ internal static class AppearanceSmoke
                 check.SetCurrentValue(ToggleButton.IsCheckedProperty, state);
                 window.UpdateLayout();
                 var mark = check.GetVisualDescendants().OfType<global::Avalonia.Controls.Shapes.Path>()
-                    .FirstOrDefault(path => path.Name is "AppleCheckMark" or "XpCheckMark");
+                    .FirstOrDefault(path => path.Name is "AppleCheckMark" or "XpCheckMark" or "Win2000CheckMark");
                 var desktopMark = check.GetVisualDescendants().OfType<global::Avalonia.Controls.Shapes.Path>().FirstOrDefault(path => path.Name == "CheckMark");
                 Require((desktopMark is not null) == (style == 0), "Desktop checkbox template leaked across themes.");
                 if (desktopMark is not null)
                     Require(desktopMark.Opacity == (state ? 1 : 0), "Desktop checkbox mark did not follow its checked state.");
-                Require((mark is not null) == (style is 1 or 2), "Checkbox retained the wrong control skin.");
+                Require((mark is not null) == (style is 1 or 2 or 3), "Checkbox retained the wrong control skin.");
                 if (mark is not null)
-                    Require(mark.Name == (style == 1 ? "AppleCheckMark" : "XpCheckMark") && mark.IsVisible == state,
+                    Require(mark.Name == (style switch { 1 => "AppleCheckMark", 2 => "XpCheckMark", _ => "Win2000CheckMark" }) && mark.IsVisible == state,
                         "Checkbox mark did not follow its checked state.");
             }
         }
@@ -208,11 +211,12 @@ internal static class AppearanceSmoke
                 "List item text is not vertically centered.");
     }
 
-    private static void VerifyThemedIcons(MainWindow window, bool classic, bool xp, bool desktop)
+    private static void VerifyThemedIcons(MainWindow window, bool classic, bool xp, bool desktop, bool win2000 = false)
     {
         // Styles are applied lazily to hidden pages; visit every page and inspect its visible controls.
         var icons = window.GetVisualDescendants().OfType<ThemedIcon>().Where(icon => icon.IsEffectivelyVisible).ToArray();
-        Require(icons.All(icon => icon.HasOriginalIcon == (!classic && !xp && !desktop)), "Original theme did not retain its bitmap icons.");
+        Require(icons.All(icon => icon.HasOriginalIcon == (!classic && !xp && !desktop && !win2000)), "Original theme did not retain its bitmap icons.");
+        Require(icons.All(icon => icon.UseWindows2000Glyph == win2000 && icon.HasWindows2000Icon == win2000), "Windows 2000 icon artwork did not follow its mode.");
         Require(icons.All(icon => icon.UseDesktopGlyph == desktop && icon.HasDesktopIcon == desktop), "Desktop icons did not follow the selected theme.");
         Require(icons.Length >= 5, "The visible icon system was not instantiated.");
         Require(icons.All(icon => icon.UseClassicGlyph == classic), "A screen retained the wrong theme icon family.");
@@ -288,6 +292,32 @@ internal static class AppearanceSmoke
         using var bitmap = new RenderTargetBitmap(new PixelSize(840, 550));
         bitmap.Render(panel);
         bitmap.Save(Path.Combine(directory, "windows-xp-icon-catalog.png"), PngBitmapEncoderOptions.Default);
+    }
+
+    private static void RenderWindows2000IconCatalog(string directory)
+    {
+        var panel = new Grid { Width = 840, Height = 550, Background = new SolidColorBrush(Color.Parse("#d4d0c8")) };
+        var index = 0;
+        foreach (var glyph in ThemedIcon.GlyphNames)
+        {
+            var canvas = Windows2000Icons.Create(glyph);
+            Require(canvas.Children.Count > 0, $"Windows 2000 icon is empty: {glyph}");
+            foreach (var block in canvas.Children)
+                Require(Canvas.GetLeft(block) >= 0 && Canvas.GetTop(block) >= 0
+                    && Canvas.GetLeft(block) + block.Width <= 24 && Canvas.GetTop(block) + block.Height <= 24,
+                    $"Windows 2000 icon clips its canvas: {glyph}");
+            var item = new StackPanel { Width = 140, Height = 90, HorizontalAlignment = global::Avalonia.Layout.HorizontalAlignment.Left,
+                VerticalAlignment = global::Avalonia.Layout.VerticalAlignment.Top, Margin = new Thickness(index % 6 * 140, index / 6 * 90, 0, 0), Spacing = 6 };
+            item.Children.Add(new Viewbox { Width = 48, Height = 48, Child = canvas, Margin = new Thickness(0, 8, 0, 0) });
+            item.Children.Add(new TextBlock { Text = glyph, FontSize = 10, Foreground = Brushes.Black, HorizontalAlignment = global::Avalonia.Layout.HorizontalAlignment.Center });
+            panel.Children.Add(item);
+            index++;
+        }
+        panel.Measure(new Size(840, 550));
+        panel.Arrange(new Rect(0, 0, 840, 550));
+        using var bitmap = new RenderTargetBitmap(new PixelSize(840, 550));
+        bitmap.Render(panel);
+        bitmap.Save(Path.Combine(directory, "windows-2000-icon-catalog.png"), PngBitmapEncoderOptions.Default);
     }
 
     private static void RenderClassicIconCatalog(string directory)

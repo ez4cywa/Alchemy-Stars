@@ -1,0 +1,173 @@
+<Styles xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="using:AlchemyStars.Avalonia" x:Class="AlchemyStars.Avalonia.Windows2000Styles">
+  <!-- Existing layout and native input semantics remain intact. Only materials and glyphs change. -->
+  <Style Selector="Window, MenuItem, ToolTip"><Setter Property="FontFamily" Value="Tahoma, Microsoft YaHei UI, sans-serif" /></Style>
+  <Style Selector="TextBlock.display-title, TextBlock.dock-title, TextBlock.card-title">
+    <Setter Property="FontFamily" Value="Tahoma, Microsoft YaHei UI, sans-serif" />
+    <Setter Property="LetterSpacing" Value="0" />
+  </Style>
+  <Style Selector="Border.workspace-panel, Border.composition-canvas, Border.card, Border.subcard, Border.hero-card, Border.dialog-card">
+    <Setter Property="CornerRadius" Value="{DynamicResource AppearancePanelRadius}" /><Setter Property="BorderThickness" Value="2" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Win2000EdgeBrush}" />
+  </Style>
+  <Style Selector="Border.card, Border.subcard, Border.hero-card, Border.dialog-card"><Setter Property="CornerRadius" Value="{DynamicResource AppearanceCardRadius}" /></Style>
+  <Style Selector="Border.dock-header, Border.track-heading, Border.canvas-footer">
+    <Setter Property="Background" Value="{DynamicResource AlchemySubtleSurfaceBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AlchemyBorderStrongBrush}" />
+    <Setter Property="CornerRadius" Value="{DynamicResource AppearanceHeaderRadius}" />
+  </Style>
+  <Style Selector="Border.feature-icon, Border.preview-badge, Border.count-badge">
+    <Setter Property="CornerRadius" Value="0" /><Setter Property="BorderThickness" Value="1" />
+  </Style>
+  <Style Selector="ContentControl.clip">
+    <Setter Property="CornerRadius" Value="0" /><Setter Property="BorderThickness" Value="1" />
+  </Style>
+  <Style Selector="Button:not(.window-control), ToggleButton.preview-command">
+    <Setter Property="CornerRadius" Value="{DynamicResource AppearanceButtonRadius}" /><Setter Property="BorderThickness" Value="2" />
+    <Setter Property="Background" Value="{DynamicResource AlchemySubtleSurfaceBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource AlchemyTextBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Win2000EdgeBrush}" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+  </Style>
+  <Style Selector="Button:not(.window-control) /template/ ContentPresenter, ToggleButton.preview-command /template/ ContentPresenter">
+    <Setter Property="CornerRadius" Value="{DynamicResource AppearanceButtonRadius}" /><Setter Property="BorderThickness" Value="2" />
+    <Setter Property="Background" Value="{DynamicResource AlchemySubtleSurfaceBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource AlchemyTextBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Win2000EdgeBrush}" />
+    <Setter Property="BoxShadow" Value="{DynamicResource AppearanceRaisedShadow}" />
+  </Style>
+  <Style Selector="Button:not(.window-control):pointerover /template/ ContentPresenter, ToggleButton.preview-command:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AlchemyHoverBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AlchemyAccentBrush}" />
+  </Style>
+  <Style Selector="Button:not(.window-control):pressed, ToggleButton.preview-command:pressed"><Setter Property="RenderTransform" Value="none" /></Style>
+  <Style Selector="Button:not(.window-control):pressed /template/ ContentPresenter, ToggleButton.preview-command:pressed /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AlchemyPressedBrush}" />
+    <Setter Property="BoxShadow" Value="{DynamicResource AppearanceInsetShadow}" />
+  </Style>
+  <Style Selector="Button.activity.selected /template/ ContentPresenter, ToggleButton.preview-command:checked /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AlchemySelectedBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource Win2000OnSelectedBrush}" />
+    <Setter Property="BoxShadow" Value="{DynamicResource AppearanceInsetShadow}" />
+  </Style>
+  <Style Selector="Button.primary">
+    <Setter Property="Background" Value="{DynamicResource AlchemyActionBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource Win2000OnActionBrush}" />
+    <Setter Property="CornerRadius" Value="{DynamicResource AppearanceActionRadius}" /><Setter Property="BorderThickness" Value="2" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Win2000EdgeBrush}" />
+  </Style>
+  <Style Selector="Button.primary /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AlchemyActionBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource Win2000OnActionBrush}" />
+    <Setter Property="CornerRadius" Value="{DynamicResource AppearanceActionRadius}" /><Setter Property="BorderThickness" Value="2" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Win2000EdgeBrush}" />
+  </Style>
+  <Style Selector="Button.primary:pointerover /template/ ContentPresenter"><Setter Property="Background" Value="{DynamicResource AlchemyAccentHoverBrush}" /></Style>
+  <Style Selector="Button.primary:pressed /template/ ContentPresenter"><Setter Property="Background" Value="{DynamicResource AlchemyActionBrush}" /><Setter Property="BoxShadow" Value="{DynamicResource AppearanceInsetShadow}" /></Style>
+  <Style Selector="Button:not(.window-control):focus-visible /template/ ContentPresenter, ToggleButton.preview-command:focus-visible /template/ ContentPresenter">
+    <Setter Property="BorderBrush" Value="{DynamicResource AlchemyFocusBrush}" />
+  </Style>
+  <Style Selector="Button:not(.window-control):disabled /template/ ContentPresenter, ToggleButton.preview-command:disabled /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AlchemySurfaceBrush}" /><Setter Property="Foreground" Value="{DynamicResource AlchemyMutedTextBrush}" /><Setter Property="BoxShadow" Value="none" />
+  </Style>
+  <Style Selector="TextBox, ComboBox, TabItem, ListBoxItem, ComboBoxItem, MenuItem, ContextMenu, ToolTip">
+    <Setter Property="CornerRadius" Value="0" />
+  </Style>
+  <Style Selector="TextBox, ComboBox"><Setter Property="Background" Value="{DynamicResource AlchemyCanvasBrush}" /></Style>
+  <Style Selector="MenuItem:selected /template/ ContentPresenter">
+    <Setter Property="Foreground" Value="{DynamicResource Win2000OnSelectedBrush}" />
+  </Style>
+  <Style Selector="MenuItem:selected /template/ TextBlock"><Setter Property="Foreground" Value="{DynamicResource Win2000OnSelectedBrush}" /></Style>
+  <Style Selector="TextBox /template/ Border#PART_BorderElement, ComboBox /template/ Border#Background">
+    <Setter Property="CornerRadius" Value="0" /><Setter Property="BorderThickness" Value="2" />
+    <Setter Property="Background" Value="{DynamicResource AlchemyCanvasBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AlchemyBorderStrongBrush}" />
+    <Setter Property="BoxShadow" Value="{DynamicResource AppearanceInsetShadow}" />
+  </Style>
+  <Style Selector="TextBox:focus-within /template/ Border#PART_BorderElement, ComboBox:focus-within /template/ Border#Background"><Setter Property="BorderBrush" Value="{DynamicResource AlchemyFocusBrush}" /></Style>
+  <Style Selector="ComboBox:not(.native-template) /template/ Border#DropDownOverlay">
+    <Setter Property="IsVisible" Value="True" /><Setter Property="CornerRadius" Value="0" />
+    <Setter Property="Background" Value="{DynamicResource AlchemySubtleSurfaceBrush}" /><Setter Property="BorderBrush" Value="{DynamicResource AlchemyBorderStrongBrush}" /><Setter Property="BorderThickness" Value="2" />
+  </Style>
+  <Style Selector="ComboBox:not(.native-template) /template/ PathIcon#DropDownGlyph">
+    <Setter Property="Data" Value="M0,0 L8,0 L8,2 L6,2 L6,4 L2,4 L2,2 L0,2 Z" /><Setter Property="Width" Value="8" /><Setter Property="Height" Value="4" /><Setter Property="Foreground" Value="{DynamicResource AlchemyTextBrush}" />
+  </Style>
+  <Style Selector="ComboBox:not(.native-template) /template/ Border#PopupBorder">
+    <Setter Property="Background" Value="{DynamicResource AlchemySurfaceRaisedBrush}" /><Setter Property="BorderBrush" Value="{DynamicResource AlchemyBorderStrongBrush}" /><Setter Property="BorderThickness" Value="2" /><Setter Property="CornerRadius" Value="0" />
+  </Style>
+  <Style Selector="ContextMenu, ToolTip">
+    <Setter Property="Background" Value="{DynamicResource AlchemySurfaceRaisedBrush}" /><Setter Property="BorderBrush" Value="{DynamicResource AlchemyBorderStrongBrush}" /><Setter Property="BorderThickness" Value="2" /><Setter Property="CornerRadius" Value="0" />
+  </Style>
+  <Style Selector="CheckBox">
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Grid ColumnDefinitions="18,*" Background="Transparent">
+          <Border Name="Win2000Check" Width="16" Height="16" VerticalAlignment="Center" Background="{DynamicResource AlchemyCanvasBrush}" BorderBrush="{DynamicResource AlchemyBorderStrongBrush}" BorderThickness="2" BoxShadow="{DynamicResource AppearanceInsetShadow}">
+            <Grid>
+              <Path Name="Win2000CheckMark" IsVisible="False" Data="M0,4 L2,4 L2,6 L4,6 L4,4 L6,4 L6,2 L8,2 L8,0 L10,0 L10,4 L8,4 L8,6 L6,6 L6,8 L2,8 L2,6 L0,6 Z" Fill="{DynamicResource AlchemyTextBrush}" Width="10" Height="8" HorizontalAlignment="Center" VerticalAlignment="Center" />
+              <Border Name="Win2000Indeterminate" IsVisible="False" Height="4" Width="8" Background="{DynamicResource AlchemyTextBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Grid>
+          </Border>
+          <ContentPresenter Name="PART_ContentPresenter" Grid.Column="1" Margin="7,0,0,0" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" VerticalAlignment="Center" RecognizesAccessKey="True" />
+        </Grid>
+      </ControlTemplate>
+    </Setter>
+  </Style>
+  <Style Selector="CheckBox:checked /template/ Path#Win2000CheckMark"><Setter Property="IsVisible" Value="True" /></Style>
+  <Style Selector="CheckBox:indeterminate /template/ Border#Win2000Indeterminate"><Setter Property="IsVisible" Value="True" /></Style>
+  <Style Selector="CheckBox:pointerover /template/ Border#Win2000Check"><Setter Property="Background" Value="{DynamicResource AlchemyHoverBrush}" /></Style>
+  <Style Selector="CheckBox:focus-visible /template/ Border#Win2000Check"><Setter Property="BorderBrush" Value="{DynamicResource AlchemyFocusBrush}" /></Style>
+  <Style Selector="CheckBox:disabled, RadioButton:disabled, ToggleButton.dual-export-switch:disabled"><Setter Property="Opacity" Value="0.48" /></Style>
+  <Style Selector="RadioButton /template/ Border"><Setter Property="BorderBrush" Value="{DynamicResource AlchemyBorderStrongBrush}" /></Style>
+  <Style Selector="RadioButton:checked /template/ Ellipse"><Setter Property="Fill" Value="{DynamicResource AlchemyAccentBrush}" /></Style>
+  <Style Selector="ToggleButton.dual-export-switch:not(.native-template)">
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Grid Background="Transparent">
+          <Border Name="Win2000SwitchTrack" Width="40" Height="22" Background="{DynamicResource AlchemyCanvasBrush}" BorderBrush="{DynamicResource AlchemyBorderStrongBrush}" BorderThickness="2" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <Border Name="Win2000SwitchThumb" Width="14" Margin="2" HorizontalAlignment="Left" Background="{DynamicResource AlchemySubtleSurfaceBrush}" BoxShadow="{DynamicResource AppearanceRaisedShadow}" />
+          </Border>
+        </Grid>
+      </ControlTemplate>
+    </Setter>
+  </Style>
+  <Style Selector="ToggleButton.dual-export-switch:checked /template/ Border#Win2000SwitchThumb"><Setter Property="HorizontalAlignment" Value="Right" /></Style>
+  <Style Selector="ToggleButton.dual-export-switch:checked /template/ Border#Win2000SwitchTrack"><Setter Property="Background" Value="{DynamicResource AlchemySelectedBrush}" /></Style>
+  <Style Selector="ToggleButton.dual-export-switch:pointerover /template/ Border#Win2000SwitchTrack, ToggleButton.dual-export-switch:focus-visible /template/ Border#Win2000SwitchTrack"><Setter Property="BorderBrush" Value="{DynamicResource AlchemyFocusBrush}" /></Style>
+  <Style Selector="Expander.property-group /template/ ToggleButton"><Setter Property="Background" Value="{DynamicResource AlchemySubtleSurfaceBrush}" /><Setter Property="CornerRadius" Value="{DynamicResource AppearanceButtonRadius}" /></Style>
+  <Style Selector="ListBox.asset-list, ListBox.track-list"><Setter Property="Background" Value="{DynamicResource AlchemyCanvasBrush}" /></Style>
+  <Style Selector="ListBoxItem:selected /template/ ContentPresenter, ComboBoxItem:selected /template/ ContentPresenter, TabItem:selected /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AlchemySelectedBrush}" /><Setter Property="Foreground" Value="{DynamicResource Win2000OnSelectedBrush}" /><Setter Property="CornerRadius" Value="0" />
+  </Style>
+  <Style Selector="ListBoxItem:selected, ComboBoxItem:selected, TabItem:selected, MenuItem:selected"><Setter Property="Foreground" Value="{DynamicResource Win2000OnSelectedBrush}" /></Style>
+  <Style Selector="MenuItem:selected /template/ Border"><Setter Property="Background" Value="{DynamicResource AlchemySelectedBrush}" /><Setter Property="CornerRadius" Value="0" /></Style>
+  <Style Selector="Slider /template/ Thumb, ScrollBar /template/ Thumb">
+    <Setter Property="Template"><ControlTemplate><Border Background="{DynamicResource AlchemySubtleSurfaceBrush}" BorderBrush="{DynamicResource Win2000EdgeBrush}" BorderThickness="2" CornerRadius="0" BoxShadow="{DynamicResource AppearanceRaisedShadow}" /></ControlTemplate></Setter>
+  </Style>
+  <Style Selector="Slider.preview-scrubber /template/ Thumb"><Setter Property="Width" Value="12" /><Setter Property="Height" Value="20" /></Style>
+  <Style Selector="ScrollBar"><Setter Property="Background" Value="{DynamicResource AlchemySubtleSurfaceBrush}" /></Style>
+  <Style Selector="ProgressBar"><Setter Property="Foreground" Value="{DynamicResource AlchemyAccentBrush}" /><Setter Property="Background" Value="{DynamicResource AlchemyCanvasBrush}" /></Style>
+  <Style Selector="MenuFlyoutPresenter"><Setter Property="CornerRadius" Value="0" /><Setter Property="Background" Value="{DynamicResource AlchemySurfaceBrush}" /><Setter Property="BorderBrush" Value="{DynamicResource Win2000EdgeBrush}" /><Setter Property="BorderThickness" Value="2" /></Style>
+  <Style Selector="MenuFlyoutPresenter /template/ Border"><Setter Property="CornerRadius" Value="0" /></Style>
+  <Style Selector="ProgressBar /template/ Border"><Setter Property="CornerRadius" Value="0" /></Style>
+  <Style Selector="Button.primary TextBlock.command-action-text"><Setter Property="Foreground" Value="{DynamicResource Win2000OnActionBrush}" /></Style>
+  <Style Selector="Button.activity.selected TextBlock.navigation-label"><Setter Property="Foreground" Value="{DynamicResource Win2000OnSelectedBrush}" /></Style>
+  <Style Selector="Border.command-toolbar-surface"><Setter Property="Background" Value="{DynamicResource AlchemySurfaceBrush}" /></Style>
+  <Style Selector="TextBlock.page-command-text"><Setter Property="Foreground" Value="{DynamicResource AlchemyTextBrush}" /></Style>
+  <Style Selector="Button.window-control">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Grid Background="Transparent">
+          <Border Name="Win2000CaptionBezel" Margin="4,8" Background="{DynamicResource AlchemySubtleSurfaceBrush}" BorderBrush="{DynamicResource Win2000EdgeBrush}" BorderThickness="1" BoxShadow="{DynamicResource AppearanceRaisedShadow}">
+            <ContentPresenter Name="PART_ContentPresenter" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Foreground="{DynamicResource AlchemyTextBrush}" />
+          </Border>
+        </Grid>
+      </ControlTemplate>
+    </Setter>
+  </Style>
+  <Style Selector="Button.window-control local|AppIcon"><Setter Property="Foreground" Value="{DynamicResource AlchemyTextBrush}" /></Style>
+  <Style Selector="Button.window-control:pointerover /template/ Border#Win2000CaptionBezel"><Setter Property="Background" Value="{DynamicResource AlchemyHoverBrush}" /></Style>
+  <Style Selector="Button.window-control:pressed /template/ Border#Win2000CaptionBezel"><Setter Property="Background" Value="{DynamicResource AlchemyPressedBrush}" /><Setter Property="BoxShadow" Value="{DynamicResource AppearanceInsetShadow}" /></Style>
+  <Style Selector="Button.window-control:focus-visible /template/ Border#Win2000CaptionBezel"><Setter Property="BorderBrush" Value="{DynamicResource AlchemyFocusBrush}" /></Style>
+</Styles>

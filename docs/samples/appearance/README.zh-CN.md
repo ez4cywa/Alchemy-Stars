@@ -34,6 +34,7 @@
 | `apple` | 原版 · 简洁 |
 | `classic-apple` | 经典 Apple：独立铂金浅色／石墨深色控件及 34 个重绘图标 |
 | `windows-xp` | Windows XP · 经典蓝 |
+| `windows-2000` | Windows 2000 · 经典桌面：方形凹凸控件及 34 个彩色像素图标 |
 
 旧文件中的 `neumorphic` 和 `modern-desktop` 自动映射为 `apple`，已定义的自定义颜色和圆角继续保留。
 

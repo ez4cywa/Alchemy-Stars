@@ -26,7 +26,7 @@ public sealed class ApplicationPreferencesStore
     internal static string NormalizeThemeStyle(string? style) => style switch
     {
         "neumorphic" or "modern-desktop" => "apple", // Removed styles inherit the current Original theme.
-        "classic-apple" or "windows-xp" or "custom" => style,
+        "classic-apple" or "windows-xp" or "windows-2000" or "custom" => style,
         _ => "apple",
     };
 

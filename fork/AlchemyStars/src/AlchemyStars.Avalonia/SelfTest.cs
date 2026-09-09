@@ -103,6 +103,10 @@ internal static class SelfTest
                 preferences.SaveAppearance("windows-xp", "light");
                 Require(new ApplicationPreferencesStore(Path.Combine(testDirectory, "settings.json")).Snapshot().ThemeStyle == "windows-xp",
                     "Windows XP appearance must persist across process reloads.");
+                preferences.SaveAppearance("windows-2000", "system");
+                var classicWindowsAppearance = new ApplicationPreferencesStore(Path.Combine(testDirectory, "settings.json")).Snapshot();
+                Require(classicWindowsAppearance.ThemeStyle == "windows-2000" && classicWindowsAppearance.ThemeMode == "system",
+                    "Windows 2000 appearance must persist across process reloads.");
                 preferences.SaveAppearance("neumorphic", "dark");
                 preferences.SaveLanguage("system");
                 preferences.SaveDefaults("system", preferences.CreateWorkspace());
@@ -222,6 +226,7 @@ internal static class SelfTest
                     "Attachment classification or parenting failed.");
                 Require(viewModel.Parts.All(part => part.AutoClassification is not null), "Automatic classification evidence was not retained for review.");
                 VerifyRememberedArms(engine, testDirectory, handsPath, weaponPath);
+                SharedBaseBatchSmoke.Run(testDirectory);
                 UpdateWorkflowSmoke.RunAsync(engine, testDirectory, handsPath, weaponPath).GetAwaiter().GetResult();
                 viewModel.Parts[1].Type = ModelPartKind.Attachment;
                 viewModel.SelectedPart = viewModel.Parts[1];

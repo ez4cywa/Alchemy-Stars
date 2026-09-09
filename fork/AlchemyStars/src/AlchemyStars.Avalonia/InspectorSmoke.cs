@@ -29,7 +29,7 @@ internal static class InspectorSmoke
         dual.ModeIndex = 1;
         var editor = window.FindControl<Grid>("AnimationEditor")!;
 
-        foreach (var style in new[] { 0, 1, 2 })
+        foreach (var style in new[] { 0, 1, 2, 3 })
         foreach (var chinese in new[] { true, false, true })
         {
             vm.ThemeStyleIndex = style;

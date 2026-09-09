@@ -25,8 +25,8 @@ public sealed partial class MainWindowViewModel
         get => themeStyleIndex;
         set
         {
-            if (value is < 0 or > 3 || value == themeStyleIndex) return;
-            if (value == 3 && CustomAppearance.CurrentTheme is null) return;
+            if (value is < 0 or > 4 || value == themeStyleIndex) return;
+            if (value == 4 && CustomAppearance.CurrentTheme is null) return;
             themeStyleIndex = value;
             OnPropertyChanged();
             ApplyAppearance(true);
@@ -101,7 +101,7 @@ public sealed partial class MainWindowViewModel
         {
             CustomAppearance.ImportTheme(path);
             RefreshAppearanceLabel(); // Populate the picker before selecting its new item.
-            themeStyleIndex = 3;
+            themeStyleIndex = 4;
             OnPropertyChanged(nameof(ThemeStyleIndex));
             ApplyAppearance(true);
         }
@@ -114,7 +114,7 @@ public sealed partial class MainWindowViewModel
         else
         {
             CustomAppearance.ClearTheme();
-            if (themeStyleIndex == 3) ThemeStyleIndex = 0;
+            if (themeStyleIndex == 4) ThemeStyleIndex = 0;
         }
         RefreshAppearanceLabel();
     }
@@ -129,7 +129,8 @@ public sealed partial class MainWindowViewModel
         {
             1 => "classic-apple",
             2 => "windows-xp",
-            3 => "custom",
+            3 => "windows-2000",
+            4 => "custom",
             _ => "apple",
         };
         var mode = themeModeIndex switch { 1 => "dark", 2 => "system", _ => "light" };
@@ -161,6 +162,7 @@ public sealed partial class UiText
         L("原版 · 简洁", "Original · Minimal"),
         L("经典 Apple", "Classic Apple"),
         L("Windows XP · 经典蓝", "Windows XP · Luna"),
+        L("Windows 2000 · 经典桌面", "Windows 2000 · Classic desktop"),
     ];
     public string LightMode => L("浅色", "Light");
     public string DarkMode => L("深色", "Dark");
