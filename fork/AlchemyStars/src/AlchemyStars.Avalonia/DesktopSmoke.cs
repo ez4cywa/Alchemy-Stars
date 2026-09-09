@@ -22,6 +22,56 @@ internal static class DesktopSmoke
         var pages = new[] { WorkspacePage.Animations, WorkspacePage.ModelParts, WorkspacePage.DualAnimations, WorkspacePage.Settings, WorkspacePage.About };
         try
         {
+            // Reproduce scrolling away from the inspector before selecting a real project layer.
+            var animationWithLayer = vm.Animations.FirstOrDefault(a => a.Layers.Count > 0);
+            if (animationWithLayer is not null)
+            {
+                var previousAnimation = vm.SelectedAnimation;
+                var previousLayer = vm.SelectedLayer;
+                vm.SelectPage(WorkspacePage.Animations);
+                vm.SelectedAnimation = animationWithLayer;
+                var section = window.FindControl<Expander>("SelectedLayerSection")!;
+                var scroll = section.GetVisualAncestors().OfType<ScrollViewer>().First();
+                var groups = scroll.GetVisualDescendants().OfType<Expander>().ToArray();
+                var expanded = groups.Select(g => g.IsExpanded).ToArray();
+                try
+                {
+                    foreach (var width in new[] { 900, 1460 })
+                    {
+                        window.Width = width;
+                        window.Height = width == 900 ? 600 : 900;
+                        vm.SelectedLayer = null;
+                        foreach (var group in groups) group.IsExpanded = true;
+                        await Task.Delay(100);
+                        scroll.Offset = new Vector(0, scroll.Extent.Height);
+                        await Task.Delay(60);
+                        vm.SelectedLayer = animationWithLayer.Layers[0];
+                        await Task.Delay(180);
+                        var top = section.TranslatePoint(default, scroll)!.Value.Y;
+                        Require(top >= -1 && top + section.Bounds.Height <= scroll.Bounds.Height + 1,
+                            "Selected layer properties remain outside the inspector viewport.");
+                        foreach (var group in groups.Where(g => g.Header is StackPanel))
+                        {
+                            Require(ControlAutomationPeer.CreatePeerForElement(group)!.GetName() is { Length: > 0 } label
+                                && !label.Contains("Avalonia.Controls"), "Inspector group has no semantic accessible name.");
+                            var header = group.GetVisualDescendants().OfType<global::Avalonia.Controls.Primitives.ToggleButton>()
+                                .First(b => b.Name == "ExpanderHeader");
+                            Require(ControlAutomationPeer.CreatePeerForElement(header)!.GetName()
+                                == ControlAutomationPeer.CreatePeerForElement(group)!.GetName(),
+                                "Inspector header button did not inherit its accessible name.");
+                        }
+                        using var bitmap = new global::Avalonia.Media.Imaging.RenderTargetBitmap(new PixelSize(width, (int)window.Height));
+                        bitmap.Render(window);
+                        bitmap.Save(Path.Combine(Path.GetDirectoryName(Program.RenderSmokePath!)!, $"layer-visible-{width}.png"), global::Avalonia.Media.Imaging.PngBitmapEncoderOptions.Default);
+                    }
+                }
+                finally
+                {
+                    for (var i = 0; i < groups.Length; i++) groups[i].IsExpanded = expanded[i];
+                    vm.SelectedAnimation = previousAnimation;
+                    vm.SelectedLayer = previousLayer;
+                }
+            }
             foreach (var width in new[] { 900, 1460 })
             {
                 window.Width = width;
