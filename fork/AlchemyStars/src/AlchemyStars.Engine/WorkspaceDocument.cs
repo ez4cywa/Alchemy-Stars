@@ -130,7 +130,13 @@ public sealed class WorkspaceAnimation : ObservableModel
     private string leftIkTargetBoneName = string.Empty;
     private string rightIkTargetBoneName = string.Empty;
 
-    public float OutputFramerate { get => outputFramerate; set => SetProperty(ref outputFramerate, value); }
+    // Alchemy Stars emits one canonical timeline. Keeping this fixed avoids relabeling
+    // a source clip while silently changing its duration.
+    public float OutputFramerate
+    {
+        get => WorkspacePaths.StandardAnimationFramerate;
+        set => SetProperty(ref outputFramerate, WorkspacePaths.StandardAnimationFramerate);
+    }
     public string Name
     {
         get => name;
@@ -141,11 +147,20 @@ public sealed class WorkspaceAnimation : ObservableModel
                 return;
             RefreshOutputName();
             RaisePropertyChanged(nameof(DisplayName));
+            RaisePropertyChanged(nameof(EffectiveOutputFolder));
         }
     }
 
     public string OutputName { get => outputName; set { if (SetProperty(ref outputName, value ?? string.Empty)) RaisePropertyChanged(nameof(DisplayName)); } }
-    public string OutputFolder { get => outputFolder; set => SetProperty(ref outputFolder, PathInput.Normalize(value)); }
+    public string OutputFolder
+    {
+        get => outputFolder;
+        set
+        {
+            if (SetProperty(ref outputFolder, PathInput.Normalize(value)))
+                RaisePropertyChanged(nameof(EffectiveOutputFolder));
+        }
+    }
     public bool EnableLeftHandIK { get => enableLeftHandIk; set => SetProperty(ref enableLeftHandIk, value); }
     public bool EnableRightHandIK { get => enableRightHandIk; set => SetProperty(ref enableRightHandIk, value); }
     public bool UseExperimentalFeatures { get => useExperimentalFeatures; set => SetProperty(ref useExperimentalFeatures, value); }
@@ -198,6 +213,16 @@ public sealed class WorkspaceAnimation : ObservableModel
     public string DisplayName => string.IsNullOrWhiteSpace(OutputName)
         ? Path.GetFileNameWithoutExtension(Name)
         : OutputName;
+
+    [JsonIgnore]
+    public string EffectiveOutputFolder
+    {
+        get
+        {
+            try { return WorkspacePaths.ResolveAnimationOutputFolder(Name, OutputFolder); }
+            catch { return OutputFolder; }
+        }
+    }
 }
 
 public sealed class WorkspaceLayer : ObservableModel

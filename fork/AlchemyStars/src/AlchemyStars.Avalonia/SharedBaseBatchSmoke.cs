@@ -33,7 +33,7 @@ internal static class SharedBaseBatchSmoke
         foreach (var task in tasks)
         {
             Require(task.Name == template.Name && task.OutputFolder == template.OutputFolder
-                && task.OutputFramerate == 60 && task.WeaponFollowMode == 2
+                && task.OutputFramerate == 30 && task.WeaponFollowMode == 2
                 && !task.EnableLeftHandIK && task.EnableRightHandIK && !task.UseExperimentalFeatures
                 && task.LeftHandPoseFile == "left.cast" && task.RightHandPoseFile == "right.cast"
                 && task.LeftIKTargetBoneName == "left_target" && task.RightIKTargetBoneName == "right_target",
@@ -133,27 +133,53 @@ internal static class SharedBaseBatchSmoke
         }).ToArray();
         Require(MathF.Abs(values[0] - 2) < 0.001f && MathF.Abs(values[1] - 7) < 0.001f,
             $"Real exports did not retain the distinct overlays: {values[0]}, {values[1]}.");
+
+        var sixty = Path.Combine(fixture, "sixty.cast");
+        WriteAnimation(sixty, 60, 60, 60);
+        var timed = request with { Animations = [request.Animations[0] with { SourceFile = sixty, OutputName = "resampled", Layers = [] }] };
+        var timedOutput = new AnimationExportEngine().Export(timed).OutputFiles.Single();
+        var timedScene = CastPreviewScene.Load(timedOutput, request.Parts);
+        Require(timedScene.Framerate == 30 && timedScene.FrameCount == 31, "60 FPS source duration was not preserved at 30 FPS.");
+        timedScene.Sample(15);
+        Require(MathF.Abs(timedScene.Skeletons.Single().Bones.Single(b => b.Name == "j_test").LocalTranslation.X - 30) < .001f,
+            "Resampling changed the half-second pose.");
+        Require(AnimationClipMetadataReader.Read(sixty).FrameCount == 31, "Timeline did not use output-frame units.");
+        void Reject(AnimationExportRequest invalid)
+        {
+            try { new AnimationExportEngine().Export(invalid); }
+            catch (InvalidDataException) { return; }
+            catch (ExportValidationException) { return; }
+            throw new InvalidOperationException("Invalid batch was accepted.");
+        }
+        Reject(timed with { Animations = [timed.Animations[0], timed.Animations[0]] });
+        var originalBytes = File.ReadAllBytes(sixty);
+        Reject(timed with { Animations = [request.Animations[0] with { OutputFolder = fixture, OutputName = "sixty" }, timed.Animations[0]] });
+        Require(File.ReadAllBytes(sixty).SequenceEqual(originalBytes), "Cross-task input was overwritten.");
+        var unsupported = Path.Combine(fixture, "input.seanim");
+        File.Copy(sixty, unsupported);
+        Reject(timed with { Animations = [timed.Animations[0] with { SourceFile = unsupported }] });
+        Console.WriteLine("Real CAST: 60-to-30 FPS duration/pose/timeline, output collisions and CAST-only validation PASS");
     }
 
-    private static void WriteAnimation(string path, float translation)
+    private static void WriteAnimation(string path, float translation, float fps = 30, byte lastFrame = 1)
     {
         var root = new CastNode(CastNodeIdentifier.Root) { Hash = 1 };
         var animation = new AnimationNode { Parent = root, Hash = 2 };
-        animation.AddValue("fr", 30f);
+        animation.AddValue("fr", fps);
         ulong hash = 3;
         foreach (var property in new[] { "tx", "ty", "tz" })
         {
             _ = new CurveNode
             {
                 Parent = animation, Hash = hash++, NodeName = "j_test", KeyPropertyName = property, Mode = "absolute",
-                KeyFrameBuffer = new CastArrayProperty<byte>([0, 1]),
+                KeyFrameBuffer = new CastArrayProperty<byte>([0, lastFrame]),
                 KeyValueBuffer = new CastArrayProperty<float>([0, property == "tx" ? translation : 0]),
             };
         }
         _ = new CurveNode
         {
             Parent = animation, Hash = hash, NodeName = "j_test", KeyPropertyName = "rq", Mode = "absolute",
-            KeyFrameBuffer = new CastArrayProperty<byte>([0, 1]),
+            KeyFrameBuffer = new CastArrayProperty<byte>([0, lastFrame]),
             KeyValueBuffer = new CastArrayProperty<Vector4>([new(0, 0, 0, 1), new(0, 0, 0, 1)]),
         };
         CastWriter.Save(path, new Cast.NET.Cast([root]));

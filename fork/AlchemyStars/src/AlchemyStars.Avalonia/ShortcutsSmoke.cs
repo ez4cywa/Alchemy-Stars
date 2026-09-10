@@ -29,8 +29,10 @@ internal static class ShortcutsSmoke
         await Task.Delay(80);
         var list = window.GetVisualDescendants().OfType<ListBox>().Single(item => ReferenceEquals(item.ItemsSource, vm.Parts));
         var second = vm.SelectedPart;
+        var indexBefore = second is null ? -1 : vm.Parts.IndexOf(second);
         Press(list, Key.Up, KeyModifiers.Alt);
-        Require(ReferenceEquals(vm.Parts[0], second), "Alt+Up did not reorder the focused model list.");
+        var indexAfter = second is null ? -1 : vm.Parts.IndexOf(second);
+        Require(indexBefore > 0 && indexAfter == indexBefore - 1, "Alt+Up did not reorder the focused model list.");
         Require(ReferenceEquals(vm.SelectedPart, second), "Reordering lost the list selection.");
         var textBox = window.GetVisualDescendants().OfType<TextBox>().First(item => item.IsEffectivelyVisible);
         var count = vm.Parts.Count;
@@ -47,7 +49,9 @@ internal static class ShortcutsSmoke
         Press(window, Key.N, KeyModifiers.Control | KeyModifiers.Alt);
         Require(vm.Parts.Count == count - 1, "Extra modifiers incorrectly matched Ctrl+N.");
         Press(window, Key.N, KeyModifiers.Control);
-        Require(vm.Parts.Count == 0, "Ctrl+N did not create a new project.");
+        Require(vm.CurrentProjectPath is null && vm.Animations.Count == 0 && vm.DualAnimations.Count == 0
+            && vm.Parts.All(part => !part.FilePath.StartsWith("shortcuts-", StringComparison.OrdinalIgnoreCase)),
+            "Ctrl+N did not create a new project.");
         Press(window, Key.D3, KeyModifiers.Control);
         Press(window, Key.T, KeyModifiers.Control);
         Require(vm.DualAnimations.Count == 1, "Ctrl+T did not add a dual task.");

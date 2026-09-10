@@ -46,6 +46,12 @@ public sealed partial class MainWindow
         if (list is null || !list.IsEffectivelyVisible) return false;
         var parts = ReferenceEquals(list.ItemsSource, ViewModel.Parts);
         var layers = ReferenceEquals(list.ItemsSource, ViewModel.Timeline.LayerTracks);
+        // Synthetic and keyboard focus can arrive before the binding has pushed
+        // SelectedItem back to the VM; use the focused list's authoritative item.
+        if (parts && list.SelectedItem is WorkspacePart selectedPart) ViewModel.SelectedPart = selectedPart;
+        else if (layers && list.SelectedItem is AnimationTrackItem selectedTrack) ViewModel.SelectedLayer = selectedTrack.Layer;
+        else if (ReferenceEquals(list.ItemsSource, ViewModel.Animations) && list.SelectedItem is WorkspaceAnimation selectedAnimation)
+            ViewModel.SelectedAnimation = selectedAnimation;
         if (key == Key.Delete && modifiers == KeyModifiers.None)
         {
             if (parts) ViewModel.RemoveSelectedPart();

@@ -3,7 +3,9 @@ using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Controls.Presenters;
 using Avalonia.Controls.Primitives;
+using Avalonia.Input;
 using Avalonia.Layout;
+using Avalonia.Media;
 using Avalonia.VisualTree;
 
 namespace AlchemyStars.Avalonia;
@@ -78,8 +80,52 @@ internal static class InspectorSmoke
         }
         editor.ColumnDefinitions[4].Width = new GridLength(320);
         await Task.Delay(80);
+        await VerifyPathFieldsAsync(window, vm);
+
         Console.WriteLine("Inspector: three themes, Chinese/English, four mode selectors, unchanged project values, layer switching, UI/model synchronization and 280–460 DIP panels PASS");
     }
+
+    private static async Task VerifyPathFieldsAsync(MainWindow window, MainWindowViewModel vm)
+    {
+        var fields = window.GetVisualDescendants().OfType<Panel>().Where(panel => panel.Classes.Contains("path-field")).ToArray();
+        Require(fields.Length == 6, $"Expected six inspector path fields, found {fields.Length}.");
+        var checkedFocus = 0;
+        foreach (var field in fields)
+        {
+            var box = field.GetVisualDescendants().OfType<TextBox>().Single();
+            var display = field.GetVisualDescendants().OfType<TextBlock>().Single(text => text.Classes.Contains("path-display"));
+            var presenter = box.GetVisualDescendants().OfType<TextPresenter>().Single();
+            var label = AutomationProperties.GetName(box);
+            Require(display.TextTrimming == TextTrimming.PrefixCharacterEllipsis, $"Path field {label} does not keep the trailing file name visible.");
+            Require(!display.IsHitTestVisible, $"Path field {label} overlay would swallow editing input.");
+            var source = display.Text;
+            // The output folder field previews the effective directory (unified override or source-folder default)
+            // while it is unfocused, so compare against that computed value instead of the raw field text.
+            var isOutput = label == vm.Text.OutputFolder;
+            var expectedText = isOutput ? vm.SelectedOutputDirectory : box.Text;
+            Require(source == expectedText, $"Path field {label} overlay drifted from the field value.");
+            if (!field.IsEffectivelyVisible) continue;
+            Require(display.IsEffectivelyVisible && Math.Abs(presenter.Opacity) < 0.01,
+                $"Path field {label} must show the overlay instead of the presenter until it is focused.");
+            var layout = display.TextLayout ?? throw new InvalidOperationException($"Path field {label} was never laid out.");
+            var visible = string.Concat(layout.TextLines.SelectMany(line => line.TextRuns).Select(run => run.Text));
+            var tail = visible.Split('\u2026').Last();
+            Require((expectedText ?? string.Empty).EndsWith(tail, StringComparison.Ordinal),
+                $"Path field {label} trimmed away the file name: '{visible}'.");
+            box.Focus();
+            await Task.Delay(60);
+            Require(box.IsFocused && !display.IsEffectivelyVisible && Math.Abs(presenter.Opacity - 1) < 0.01,
+                $"Path field {label} must reveal the editable text once focused.");
+            TopLevel.GetTopLevel(box)?.FocusManager?.Focus(null, NavigationMethod.Unspecified, KeyModifiers.None);
+            await Task.Delay(60);
+            Require(!box.IsFocused && display.IsEffectivelyVisible && Math.Abs(presenter.Opacity) < 0.01,
+                $"Path field {label} must restore the trimmed overlay once focus leaves.");
+            checkedFocus++;
+        }
+        Require(checkedFocus >= 5, $"Only {checkedFocus} inspector path fields were reachable for the focus round-trip.");
+        Console.WriteLine($"Inspector path fields: {fields.Length} middle-trimmed overlays, {checkedFocus} focus round-trips, editable text and drag/drop targets preserved PASS");
+    }
+
 
     private static ComboBox FindChoice(MainWindow window, string name) => window.GetVisualDescendants().OfType<ComboBox>().Single(control => AutomationProperties.GetName(control) == name);
 

@@ -11,7 +11,7 @@ namespace AlchemyStars.Engine;
 
 public sealed class AnimationExportEngine : IAnimationExportEngine
 {
-    public const string EngineVersion = "1.3.0-preview.22";
+    public const string EngineVersion = "1.3.0-preview.23";
 
     /// <summary>Creates an independent bind skeleton for previewing animation-only CAST data.</summary>
     public static RedFox.Graphics3D.Skeletal.Skeleton CreatePreviewSkeleton(IReadOnlyList<ModelPartSpec> parts, bool legacy) =>
@@ -27,6 +27,18 @@ public sealed class AnimationExportEngine : IAnimationExportEngine
     public AnimationExportResult Export(AnimationExportRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
+        if (request.Parts is null || request.Parts.Count == 0)
+            throw new ExportValidationException(ExportErrorCode.NoModelParts, "At least one model part is required.");
+        if (request.Animations is null || request.Animations.Count == 0)
+            throw new ExportValidationException(ExportErrorCode.NoAnimations, "At least one animation is required.");
+        request = request with
+        {
+            Animations = request.Animations.Select(job => job with
+            {
+                OutputFolder = WorkspacePaths.ResolveAnimationOutputFolder(job.SourceFile, job.OutputFolder),
+                Framerate = WorkspacePaths.StandardAnimationFramerate,
+            }).ToArray(),
+        };
         Validate(request);
 
         var parts = request.Parts.Select(ToCompatibilityPart).ToArray();
@@ -63,9 +75,19 @@ public sealed class AnimationExportEngine : IAnimationExportEngine
         foreach (var part in request.Parts)
             RequireFile(part.FilePath, "Model part");
 
+        var allInputs = request.Parts.Select(part => part.FilePath).Concat(request.Animations.SelectMany(job =>
+            new[] { job.SourceFile, job.LeftHandPoseFile, job.RightHandPoseFile }
+                .Concat((job.Layers ?? []).Select(layer => layer.FilePath))))
+            .Where(path => !string.IsNullOrWhiteSpace(path)).Select(Path.GetFullPath)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var outputPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
         foreach (var job in request.Animations)
         {
             RequireFile(job.SourceFile, "Animation");
+            foreach (var path in new[] { job.SourceFile, job.LeftHandPoseFile, job.RightHandPoseFile }
+                .Concat((job.Layers ?? []).Select(layer => layer.FilePath)).Where(path => !string.IsNullOrWhiteSpace(path)))
+                WorkspacePaths.RequireCastAnimation(path);
             RequireOptionalFile(job.LeftHandPoseFile, "Left-hand pose");
             RequireOptionalFile(job.RightHandPoseFile, "Right-hand pose");
             foreach (var layer in job.Layers ?? [])
@@ -75,12 +97,17 @@ public sealed class AnimationExportEngine : IAnimationExportEngine
                 throw new ExportValidationException(ExportErrorCode.MissingOutputFolder, "An output folder is required.", nameof(job.OutputFolder));
             if (string.IsNullOrWhiteSpace(job.OutputName))
                 throw new ExportValidationException(ExportErrorCode.MissingOutputName, "An output name is required.", nameof(job.OutputName));
-            if (!float.IsFinite(job.Framerate) || job.Framerate <= 0)
-                throw new ExportValidationException(ExportErrorCode.InvalidFramerate, "Framerate must be a finite value greater than zero.", nameof(job.Framerate));
+            // The workspace timeline is intentionally fixed at 30 FPS. Accept legacy
+            // project values but never propagate them to an output file.
 
             var outputPath = Path.GetFullPath(Path.Combine(
                 job.OutputFolder,
                 request.Options.OutputPrefix + job.OutputName + request.Options.OutputSuffix + ToExtension(request.Options.Format)));
+            if (!outputPaths.Add(outputPath))
+                throw new InvalidDataException("多个任务的输出路径相同 / Duplicate task output: " + outputPath);
+            if (allInputs.Contains(outputPath))
+                throw new ExportValidationException(ExportErrorCode.OutputWouldOverwriteInput,
+                    "输出会覆盖输入素材 / Output would overwrite an input: " + outputPath);
             var inputPaths = request.Parts.Select(part => part.FilePath)
                 .Append(job.SourceFile)
                 .Concat(job.Layers?.Select(layer => layer.FilePath) ?? [])
@@ -128,8 +155,8 @@ public sealed class AnimationExportEngine : IAnimationExportEngine
         {
             Name = job.SourceFile,
             OutputName = job.OutputName,
-            OutputFolder = job.OutputFolder,
-            OutputFramerate = job.Framerate,
+            OutputFolder = WorkspacePaths.ResolveAnimationOutputFolder(job.SourceFile, job.OutputFolder),
+            OutputFramerate = WorkspacePaths.StandardAnimationFramerate,
             EnableLeftHandIK = job.EnableLeftHandIk,
             EnableRightHandIK = job.EnableRightHandIk,
             LeftHandPoseFile = job.LeftHandPoseFile,

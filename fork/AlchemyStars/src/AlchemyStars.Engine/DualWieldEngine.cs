@@ -18,14 +18,16 @@ public sealed class DualWieldEngine
 {
     public static IReadOnlyList<string> GetOutputFiles(WorkspaceDocument document, WorkspaceDualAnimation task, bool preview = false)
     {
-        if (string.IsNullOrWhiteSpace(task.OutputFolder)) throw new InvalidDataException("请选择双持输出目录 / Choose a dual output folder.");
+        var left = document.Animations.SingleOrDefault(a => a.Id == task.LeftAnimationId)
+            ?? throw new InvalidDataException("左侧动画任务不存在 / Left animation task is missing.");
+        var outputFolder = WorkspacePaths.ResolveAnimationOutputFolder(left.Name, task.OutputFolder);
         var stem = (preview ? "" : document.OutputPrefix) + task.Name + (preview ? "" : document.OutputSuffix);
         if (string.IsNullOrWhiteSpace(task.Name) || stem.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0 || stem is "." or "..")
             throw new InvalidDataException("双持输出名称无效 / Invalid dual output name.");
         var format = preview ? ".cast" : OutputFormats.Normalize(document.OutputFormat);
-        var output = Path.GetFullPath(Path.Combine(task.OutputFolder, stem + format));
+        var output = Path.GetFullPath(Path.Combine(outputFolder, stem + format));
         return !preview && task.ExportWeaponModels
-            ? [output, Path.GetFullPath(Path.Combine(task.OutputFolder, stem + "_model.cast"))] : [output];
+            ? [output, Path.GetFullPath(Path.Combine(outputFolder, stem + "_model.cast"))] : [output];
     }
 
     public DualWieldResult Export(WorkspaceDocument document, WorkspaceDualAnimation task, bool preview = false)
@@ -40,12 +42,11 @@ public sealed class DualWieldEngine
             throw new InvalidDataException("挂点模式需要一个手臂模型和一个武器模型 / Attached mode requires one hands model and one weapon model.");
         if (document.MatchOldCallOfDuty)
             throw new InvalidDataException("双持任务请关闭旧版 COD 兼容 / Disable legacy COD transforms for dual wield.");
-        if (!float.IsFinite(left.OutputFramerate) || left.OutputFramerate <= 0 || left.OutputFramerate != right.OutputFramerate)
-            throw new InvalidDataException(IsChinese
-                ? $"左右任务输出帧率不一致或无效。\n左侧：{Path.GetFileName(left.Name)} — {left.OutputFramerate:g} FPS\n右侧：{Path.GetFileName(right.Name)} — {right.OutputFramerate:g} FPS\n\n请在“动画 → 输出目标 → 输出帧率”中设置相同的正数帧率，并与源动画及叠加层保持一致。"
-                : $"Source task frame rates differ or are invalid.\nLeft: {Path.GetFileName(left.Name)} — {left.OutputFramerate:g} FPS\nRight: {Path.GetFileName(right.Name)} — {right.OutputFramerate:g} FPS\n\nSet matching positive output frame rates in Animations → Output target, matching the source and layer files.");
         var format = preview ? ".cast" : OutputFormats.Normalize(document.OutputFormat);
         var outputs = GetOutputFiles(document, task, preview);
+        foreach (var path in new[] { left, right }.SelectMany(a =>
+            new[] { a.Name, a.LeftHandPoseFile, a.RightHandPoseFile }.Concat(a.Layers.Select(l => l.Name)))
+            .Where(path => !string.IsNullOrWhiteSpace(path))) WorkspacePaths.RequireCastAnimation(path);
         var output = outputs[0];
         var modelOutput = outputs.Count > 1 ? outputs[1] : null;
         var inputs = document.Parts.Select(p => p.FilePath).Concat(document.Animations.SelectMany(a =>
@@ -101,23 +102,10 @@ public sealed class DualWieldEngine
         SkeletonAnimation Bake(WorkspaceAnimation source, SkeletonMergePlan plan)
         {
             var job = request.Animations[document.Animations.IndexOf(source)];
-            // The inherited pipeline samples in frames. Reject FPS conversion rather than relabeling time.
-            foreach (var (path, index) in new[] { job.SourceFile }.Concat((job.Layers ?? []).Select(l => l.FilePath)).Select((path, index) => (path, index)))
+            // All source clips are resampled into the shared 30 FPS timeline before binding.
+            foreach (var path in new[] { job.SourceFile }.Concat((job.Layers ?? []).Select(l => l.FilePath)))
             {
-                var clip = AnimationConverter.TranslatorFactory.Load<SkeletonAnimation>(path);
-                var rate = Path.GetExtension(path).Equals(".cast", StringComparison.OrdinalIgnoreCase)
-                    ? AnimationClipMetadataReader.Read(path).Framerate : clip.Framerate;
-                if (rate != job.Framerate)
-                {
-                    var side = ReferenceEquals(source, left) ? (IsChinese ? "左侧" : "Left") : (IsChinese ? "右侧" : "Right");
-                    var role = index == 0 ? (IsChinese ? "源动画" : "Source animation") : (IsChinese ? $"叠加层 {index}" : $"Layer {index}");
-                    var hint = index == 0
-                        ? (IsChinese ? $"请将该动画任务的“输出帧率”改为 {rate:g} FPS，并确认另一侧任务和所有叠加层使用相同帧率。" : $"Set this task's output frame rate to {rate:g} FPS, and use the same rate for the other task and all layers.")
-                        : (IsChinese ? "请将叠加动画重采样到任务帧率，或统一所有来源与任务的帧率。如果此文件是单帧手部姿势，请移到对应的“手部姿势文件”栏。" : "Resample this layer to the task frame rate, or match all source and task rates. If this is a single-frame hand pose, use the corresponding Hand pose file field instead.");
-                    throw new InvalidDataException(IsChinese
-                        ? $"{side}任务的{role}帧率不匹配。\n任务：{Path.GetFileName(source.Name)}\n文件：{path}\n文件帧率：{rate:g} FPS\n任务输出帧率：{job.Framerate:g} FPS\n\n{hint}\n当前双持处理不会自动重采样。"
-                        : $"{side} task: {role} frame rate mismatch.\nTask: {Path.GetFileName(source.Name)}\nFile: {path}\nFile frame rate: {rate:g} FPS\nTask output frame rate: {job.Framerate:g} FPS\n\n{hint}\nDual processing does not automatically resample animation.");
-                }
+                var clip = AnimationConverter.LoadAtStandardFramerate(path);
                 plan.BindAnimation(clip);
                 var known = plan.Skeleton.Bones.Select(b => b.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
                 foreach (var target in clip.Targets.Where(t => !known.Contains(t.BoneName))) unknown.Add(target.BoneName);
@@ -147,7 +135,7 @@ public sealed class DualWieldEngine
             if (ReferenceEquals(p, rightMount)) throw new InvalidDataException("挂点不能互为祖先 / Mounts cannot be ancestors of each other.");
         for (var p = rightMount.Parent; p is not null; p = p.Parent)
             if (ReferenceEquals(p, leftMount)) throw new InvalidDataException("挂点不能互为祖先 / Mounts cannot be ancestors of each other.");
-        var baked = new SkeletonAnimation(task.Name, skeleton) { Framerate = left.OutputFramerate, TransformType = TransformType.Absolute };
+        var baked = new SkeletonAnimation(task.Name, skeleton) { Framerate = WorkspacePaths.StandardAnimationFramerate, TransformType = TransformType.Absolute };
         for (var frame = 0; frame < count; frame++)
         {
             Sample(leftClip, frame); Sample(rightClip, frame);

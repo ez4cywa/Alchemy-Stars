@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.3.0-preview.23 — 2026-09-10 (CAST timing, export safety and resource workflow)
+
+Chinese release notes: [更新日志](docs/releases/1.3.0-preview.23.zh-CN.md).
+
+- Normalize CAST animation, pose and layer sampling to the fixed 30 FPS export timeline. Source frame rates are read from the CAST animation node, output duration uses ceiling-based frame conversion, and translation, rotation, scale and action tracks are resampled rather than merely relabelled. This keeps a 60 FPS source at the correct duration and preserves intermediate poses.
+- Reject invalid or non-finite CAST frame rates before export. Timeline metadata now reports output-frame units, so the editor bars, playback and exported output agree on duration.
+- Enforce CAST-only animation imports for base animations, layers, hand poses, drag-and-drop paths, file-picker selections, clipboard payloads and dual-wield sources. SEAnim remains an output format, but cannot silently enter an input slot.
+- Prevent an export from overwriting any model, animation, pose or layer input in the whole export batch. Duplicate output paths are rejected before writing, including cross-task collisions.
+- Improve blend-template analysis: batch scans reuse model and directory metadata, match poses and offsets within the same animation family, support action variants, avoid ambiguous ties and restrict automatic defaults to the intended idle/pose/offset naming patterns.
+- Preserve manual hand-pose and IK edits while applying automatic defaults. Default hand fields are ordered before IK inference, refresh after source changes, and are cleared safely when resources are removed.
+- Fix animation-resource deletion when the list selection changes during collection removal. Dual-wield references, automatic-default subscriptions and stale selection state are cleaned before choosing the next item; deleting the final animation now leaves a valid empty selection.
+- Keep the effective unified output directory visible in the inspector, harden paste/drop race handling, and retain editable path fields and trailing filename visibility.
+- Add regression coverage for 60-to-30 FPS duration and midpoint sampling, output collisions and source immutability, CAST-only rejection, resource deletion, variant matching, clipboard/picker races, UI synchronization and AOT startup.
+
 ## 1.3.0-preview.22 — 2026-09-09 (Ubuntu GTK/Yaru control templates)
 
 Chinese release notes: [更新日志](docs/releases/1.3.0-preview.22.zh-CN.md).

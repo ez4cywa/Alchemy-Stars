@@ -23,6 +23,77 @@ namespace Alchemist.UI
     {
         public static Graphics3DTranslatorFactory TranslatorFactory { get; set; } = new Graphics3DTranslatorFactory().WithDefaultTranslators();
 
+        /// <summary>Loads an animation and converts its keyframe timeline to the canonical 30 FPS workspace rate.</summary>
+        internal static SkeletonAnimation LoadAtStandardFramerate(string path)
+        {
+            var source = TranslatorFactory.Load<SkeletonAnimation>(path);
+            if (Path.GetExtension(path).Equals(".cast", StringComparison.OrdinalIgnoreCase))
+            {
+                var nodes = Cast.NET.CastReader.Load(path).RootNodes
+                    .SelectMany(root => root.EnumerateChildrenOfType<Cast.NET.Nodes.AnimationNode>()).ToArray();
+                if (nodes.Length != 1) throw new InvalidDataException("Expected one CAST animation: " + path);
+                source.Framerate = nodes[0].Framerate;
+            }
+            if (!float.IsFinite(source.Framerate) || source.Framerate <= 0)
+                throw new InvalidDataException("Invalid source animation framerate: " + path);
+            var sourceRate = float.IsFinite(source.Framerate) && source.Framerate > 0
+                ? source.Framerate : 30f;
+            if (MathF.Abs(sourceRate - 30f) < 0.0001f)
+            {
+                source.Framerate = 30f;
+                return source;
+            }
+
+            var sourceFrameCount = source.GetAnimationFrameCount();
+            if (!float.IsFinite(sourceFrameCount) || sourceFrameCount <= 0)
+                sourceFrameCount = 1;
+            var outputFrameCount = Math.Max(1, (int)MathF.Ceiling(MathF.Max(0, sourceFrameCount - 1) * 30f / sourceRate) + 1);
+            var result = new SkeletonAnimation(source.Name ?? string.Empty)
+            {
+                Framerate = 30f,
+                TransformType = source.TransformType,
+                TransformSpace = source.TransformSpace,
+            };
+
+            foreach (var sourceTarget in source.Targets)
+            {
+                var target = new SkeletonAnimationTarget(sourceTarget.BoneName)
+                {
+                    TransformType = sourceTarget.TransformType,
+                    ChildTransformType = sourceTarget.ChildTransformType,
+                };
+                if (sourceTarget.TranslationFrameCount > 0)
+                    for (var frame = 0; frame < outputFrameCount; frame++)
+                        target.AddTranslationFrame(frame, sourceTarget.SampleTranslation(frame * sourceRate / 30f));
+                if (sourceTarget.RotationFrameCount > 0)
+                    for (var frame = 0; frame < outputFrameCount; frame++)
+                        target.AddRotationFrame(frame, Quaternion.Normalize(sourceTarget.SampleRotation(frame * sourceRate / 30f)));
+                if (sourceTarget.ScaleFrameCount > 0)
+                    for (var frame = 0; frame < outputFrameCount; frame++)
+                        target.AddScaleFrame(frame, SampleVector(sourceTarget.ScaleFrames!, frame * sourceRate / 30f, Vector3.One));
+                result.Targets.Add(target);
+            }
+
+            if (source.Actions is not null)
+                foreach (var action in source.Actions)
+                {
+                    var scaled = result.CreateAction(action.Name);
+                    scaled.Type = action.Type;
+                    scaled.KeyFrames = action.KeyFrames.Select(frame => new AnimationKeyFrame<float, Action<Graphics3DScene>?>(
+                        frame.Frame * 30f / sourceRate, frame.Value)).ToList();
+                }
+            return result;
+
+            static Vector3 SampleVector(List<AnimationKeyFrame<float, Vector3>> frames, float time, Vector3 fallback)
+            {
+                var (first, second) = AnimationKeyFrameHelper.GetFramePairIndex(frames, time, 0f);
+                if (first < 0) return fallback;
+                if (first == second) return frames[first].Value;
+                return Vector3.Lerp(frames[first].Value, frames[second].Value,
+                    (time - frames[first].Frame) / (frames[second].Frame - frames[first].Frame));
+            }
+        }
+
         internal static IKTwoBoneSolver? CreateIKSolver(string name, IKSettings settings, Skeleton skeleton, AnimationPlayer player)
         {
             Logging.Logger.Info($"Attempting to create IK solver: {name}");
@@ -107,7 +178,7 @@ namespace Alchemist.UI
             AnimationSamplerSolver? lSolver = null;
             AnimationSamplerSolver? rSolver = null;
 
-            var mainAnimation = TranslatorFactory.Load<SkeletonAnimation>(animation.Name);
+            var mainAnimation = LoadAtStandardFramerate(animation.Name);
             mergePlan.BindAnimation(mainAnimation);
             var contributingAnimations = new List<SkeletonAnimation> { mainAnimation };
 
@@ -123,7 +194,7 @@ namespace Alchemist.UI
             if (!string.IsNullOrWhiteSpace(animation.LeftHandPoseFile))
             {
                 Logging.Logger.Info($"Loading left hand pose: {animation.LeftHandPoseFile}");
-                var leftHandPose = TranslatorFactory.Load<SkeletonAnimation>(animation.LeftHandPoseFile);
+                var leftHandPose = LoadAtStandardFramerate(animation.LeftHandPoseFile);
                 mergePlan.BindAnimation(leftHandPose);
                 contributingAnimations.Add(leftHandPose);
                 plSampler = new SkeletonAnimationSampler("PLLayer", leftHandPose, skeleton, player);
@@ -137,7 +208,7 @@ namespace Alchemist.UI
             if (!string.IsNullOrWhiteSpace(animation.RightHandPoseFile))
             {
                 Logging.Logger.Info($"Loading right hand pose: {animation.RightHandPoseFile}");
-                var rightHandPose = TranslatorFactory.Load<SkeletonAnimation>(animation.RightHandPoseFile);
+                var rightHandPose = LoadAtStandardFramerate(animation.RightHandPoseFile);
                 mergePlan.BindAnimation(rightHandPose);
                 contributingAnimations.Add(rightHandPose);
                 prSampler = new SkeletonAnimationSampler("PRLayer", rightHandPose, skeleton, player);
@@ -214,7 +285,7 @@ namespace Alchemist.UI
             foreach (var layer in animation.Layers)
             {
                 Logging.Logger.Info($"Loading layer: {layer.Name} of type: {layer.Type}");
-                var anim = TranslatorFactory.Load<SkeletonAnimation>(layer.Name);
+                var anim = LoadAtStandardFramerate(layer.Name);
                 mergePlan.BindAnimation(anim);
                 contributingAnimations.Add(anim);
 
@@ -378,7 +449,7 @@ namespace Alchemist.UI
             var newAnim = new SkeletonAnimation(animation.OutputName, skeleton)
             {
                 TransformType = TransformType.Absolute,
-                Framerate = animation.OutputFramerate,
+                Framerate = 30f,
             };
 
             Logging.Logger.Info($"Generating frames");

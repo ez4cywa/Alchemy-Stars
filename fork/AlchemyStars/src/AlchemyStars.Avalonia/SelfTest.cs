@@ -88,6 +88,7 @@ internal static class SelfTest
             var previousCulture = CultureInfo.CurrentUICulture;
             var testDirectory = Path.Combine(Path.GetTempPath(), $"AlchemyStars-AotSelfTest-{Guid.NewGuid():N}");
             Directory.CreateDirectory(testDirectory);
+            AnimationBlendTemplateSmoke.Run(testDirectory);
             OutputDirectorySmoke.RunAsync(testDirectory).GetAwaiter().GetResult();
             try
             {
@@ -190,8 +191,62 @@ internal static class SelfTest
                 viewModel.Preview.ToggleFirstPerson();
                 Require(!viewModel.Preview.IsFirstPerson, "First-person preview did not return to orbit mode.");
 
+                var clipboardAnimation = new WorkspaceAnimation
+                {
+                    Name = Path.Combine(testDirectory, "clipboard-base.cast"),
+                    OutputName = "clipboard-output",
+                    OutputFolder = Path.Combine(testDirectory, "output"),
+                    EnableLeftHandIK = false,
+                    RightIKTargetBoneName = "tag_grip_attach",
+                };
+                clipboardAnimation.Layers.Add(new WorkspaceLayer { Name = Path.Combine(testDirectory, "clipboard-layer.cast"), Offset = 7 });
+                var animationClipboard = ResourceLibraryClipboard.Create(clipboardAnimation);
+                Require(ResourceLibraryClipboard.TryRead(animationClipboard, out var decodedAnimation, out _)
+                    && decodedAnimation is not null
+                    && decodedAnimation.Name == clipboardAnimation.Name
+                    && decodedAnimation.OutputName == clipboardAnimation.OutputName
+                    && decodedAnimation.OutputFramerate == 30
+                    && decodedAnimation.Layers.Count == 1
+                    && decodedAnimation.Layers[0].Offset == 7,
+                    "Animation resource clipboard did not preserve editable settings.");
+                var clipboardPart = new WorkspacePart
+                {
+                    FilePath = Path.Combine(testDirectory, "clipboard-weapon.cast"),
+                    ParentBoneTag = "tag_weapon",
+                    Type = ModelPartKind.Weapon,
+                };
+                var partClipboard = ResourceLibraryClipboard.Create(clipboardPart);
+                Require(ResourceLibraryClipboard.TryRead(partClipboard, out _, out var decodedPart)
+                    && decodedPart is not null
+                    && decodedPart.FilePath == clipboardPart.FilePath
+                    && decodedPart.ParentBoneTag == clipboardPart.ParentBoneTag
+                    && decodedPart.Type == ModelPartKind.Weapon,
+                    "Model resource clipboard did not preserve editable settings.");
+                using (var clipboardViewModel = new MainWindowViewModel(engine, projectStore,
+                    new ApplicationPreferencesStore(Path.Combine(testDirectory, "clipboard-settings.json")), filePicker))
+                {
+                    Require(clipboardViewModel.PasteResource(animationClipboard)
+                        && clipboardViewModel.Animations.Count == 1
+                        && clipboardViewModel.SelectedAnimation?.Id != clipboardAnimation.Id,
+                        "Pasted animation was not inserted as a new resource.");
+                    Require(clipboardViewModel.PasteResource(partClipboard)
+                        && clipboardViewModel.Parts.Any(part => part.FilePath == clipboardPart.FilePath),
+                        "Pasted model was not inserted into the resource library.");
+                }
+
                 Require(viewModel.AddAnimationPaths([Path.Combine(testDirectory, "idle.cast")]) == 1, "Animation import routing failed.");
                 Require(viewModel.SelectedAnimation?.OutputFolder == string.Empty, "New animation output folder must stay blank.");
+                using (var removalViewModel = new MainWindowViewModel(engine, projectStore,
+                    new ApplicationPreferencesStore(Path.Combine(testDirectory, "removal-settings.json")), filePicker))
+                {
+                    removalViewModel.AddAnimationPaths([Path.Combine(testDirectory, "remove-first.cast"), Path.Combine(testDirectory, "remove-second.cast")]);
+                    removalViewModel.RemoveSelectedAnimation();
+                    Require(removalViewModel.Animations.Count == 1 && removalViewModel.SelectedAnimation is not null,
+                        "Removing the selected animation did not keep a valid next selection.");
+                    removalViewModel.RemoveSelectedAnimation();
+                    Require(removalViewModel.Animations.Count == 0 && removalViewModel.SelectedAnimation is null,
+                        "Removing the final animation did not clear the selection.");
+                }
                 var handsPath = Path.Combine(testDirectory, "misleading_weapon_name.cast");
                 var weaponPath = Path.Combine(testDirectory, "receiver.cast");
                 var attachmentPath = Path.Combine(testDirectory, "magazine.cast");

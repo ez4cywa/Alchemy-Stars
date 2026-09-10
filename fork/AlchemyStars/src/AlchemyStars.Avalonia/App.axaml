@@ -468,6 +468,31 @@
       <Setter Property="Height" Value="NaN" />
       <Setter Property="VerticalContentAlignment" Value="Top" />
     </Style>
+    <!-- Long inspector paths stay readable: the field keeps normal editing behaviour, but while it is
+         not focused the tail of the path is shown with a leading ellipsis, matching the asset lists.
+         Only the presenter is hidden so every theme keeps its own field chrome; the overlay is
+         hit-test transparent, so clicks, focus and drag/drop still reach the TextBox underneath.
+         The 13 DIP margin matches the shared 1 DIP border plus 12 DIP field padding. -->
+    <Style Selector="Panel.path-field TextBox /template/ TextPresenter">
+      <Setter Property="Opacity" Value="0" />
+    </Style>
+    <Style Selector="Panel.path-field:focus-within TextBox /template/ TextPresenter">
+      <Setter Property="Opacity" Value="1" />
+    </Style>
+    <Style Selector="TextBlock.path-display">
+      <Setter Property="Margin" Value="13,0,13,0" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+      <Setter Property="TextTrimming" Value="PrefixCharacterEllipsis" />
+      <Setter Property="Foreground" Value="{DynamicResource AlchemyTextBrush}" />
+      <Setter Property="IsHitTestVisible" Value="False" />
+      <Setter Property="AutomationProperties.AccessibilityView" Value="Raw" />
+    </Style>
+    <Style Selector="Panel.path-field:focus-within TextBlock.path-display">
+      <Setter Property="IsVisible" Value="False" />
+    </Style>
+    <Style Selector="Panel.path-field:disabled TextBlock.path-display">
+      <Setter Property="Opacity" Value="0.5" />
+    </Style>
     <Style Selector="CheckBox">
       <Setter Property="MinHeight" Value="44" />
       <Setter Property="Foreground" Value="{DynamicResource AlchemyTextBrush}" />

@@ -7,7 +7,9 @@ $ErrorActionPreference = 'Stop'
 $repositoryRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
 $project = Join-Path $repositoryRoot 'fork\AlchemyStars\src\AlchemyStars.Avalonia\AlchemyStars.Avalonia.csproj'
 $outputRoot = [System.IO.Path]::GetFullPath((Join-Path $repositoryRoot 'output'))
-$publishDirectory = [System.IO.Path]::GetFullPath((Join-Path $outputRoot 'avalonia-aot-preview22'))
+$publishDirectory = [System.IO.Path]::GetFullPath((Join-Path $outputRoot 'avalonia-aot-preview23'))
+$bundledDotnet = Join-Path $repositoryRoot 'output\dotnet-sdk\dotnet.exe'
+$dotnet = if (Test-Path -LiteralPath $bundledDotnet) { $bundledDotnet } else { 'dotnet' }
 function Assert-OutputChild([string]$Path) {
     if (-not $Path.StartsWith($outputRoot + [System.IO.Path]::DirectorySeparatorChar, [System.StringComparison]::OrdinalIgnoreCase)) {
         throw "Refusing to clean a path outside the repository output directory: $Path"
@@ -23,13 +25,15 @@ $env:DOTNET_CLI_TELEMETRY_OPTOUT = '1'
 $env:AVALONIA_TELEMETRY_OPTOUT = '1'
 $env:ALCHEMY_STARS_SETTINGS_PATH = Join-Path $outputRoot 'avalonia-aot-verification-settings.json'
 
-dotnet publish $project `
+& $dotnet publish $project `
     -c $Configuration `
     -r $RuntimeIdentifier `
     --self-contained true `
+    --no-restore `
     -o $publishDirectory `
     --nologo `
-    -p:NuGetAudit=false
+    -p:NuGetAudit=false `
+    -p:UsedAvaloniaProducts=
 if ($LASTEXITCODE -ne 0) {
     throw "Native AOT publish failed with exit code $LASTEXITCODE."
 }

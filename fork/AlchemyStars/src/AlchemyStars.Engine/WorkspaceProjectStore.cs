@@ -59,7 +59,7 @@ public sealed class WorkspaceProjectStore
                 animation.Name,
                 animation.OutputName,
                 animation.OutputFolder,
-                animation.OutputFramerate,
+                WorkspacePaths.StandardAnimationFramerate,
                 animation.EnableLeftHandIK,
                 animation.EnableRightHandIK,
                 animation.LeftHandPoseFile,

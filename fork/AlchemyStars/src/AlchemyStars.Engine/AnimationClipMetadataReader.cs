@@ -37,7 +37,10 @@ public static class AnimationClipMetadataReader
         var framerate = float.IsFinite(animation.Framerate) && animation.Framerate > 0
             ? animation.Framerate
             : 30f;
-        return new AnimationClipMetadata(firstFrame, lastFrame, frameCount, framerate);
+        if (!float.IsFinite(animation.Framerate) || animation.Framerate <= 0)
+            throw new InvalidDataException("Invalid source animation framerate: " + filePath);
+        var normalizedLast = (int)MathF.Ceiling(Math.Max(0, lastFrame) * 30f / framerate);
+        return new AnimationClipMetadata(0, normalizedLast, normalizedLast + 1, 30f);
     }
 
     private static IEnumerable<CastNode> DescendantsAndSelf(CastNode node)

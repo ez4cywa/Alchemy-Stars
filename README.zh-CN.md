@@ -2,10 +2,10 @@
 
 # Alchemy Stars（炼金之星）
 
-> **Avalonia AOT 预览测试分支：** 本测试线使用 .NET 11 Preview 7、Avalonia 12.1.2，版本为 `1.3.0-preview.22`，完整桌面工作流已可作为自包含 Native AOT 程序运行。正式版仍是 `main` 上的 v1.1.9；在 .NET 11 GA 前，现有 WPF 程序仍是稳定基线，请勿把本分支构建作为稳定版分发。
+> **Avalonia AOT 预览测试分支：** 本测试线使用 .NET 11 Preview 7、Avalonia 12.1.2，版本为 `1.3.0-preview.23`，完整桌面工作流已可作为自包含 Native AOT 程序运行。正式版仍是 `main` 上的 v1.1.9；在 .NET 11 GA 前，现有 WPF 程序仍是稳定基线，请勿把本分支构建作为稳定版分发。
 
 
-本次更新：[preview.22 简明更新日志](docs/releases/1.3.0-preview.22.zh-CN.md)，新增独立的 Ubuntu GTK/Yaru 风格控件模板、Gtk 材质字段和 34 图标主题包，保留 preview.21 的配件挂点修复。
+本次更新：[preview.23 详细更新日志](docs/releases/1.3.0-preview.23.zh-CN.md)，修复不同帧率动画的时间线换算，增加输出覆盖保护和 CAST-only 输入校验，改进资源删除、剪贴板、路径显示及自动手部默认值，并补充回归验证。包含 preview.22 的 Ubuntu GTK/Yaru 主题改动。
 使用方法见 [Avalonia 预览版快速指南](docs/avalonia-aot-user-guide.zh-CN.md)；详细结果见 [Avalonia AOT 迁移报告](docs/avalonia-aot-migration.md)与 [.NET 11 Preview 兼容性报告](docs/dotnet11-preview.md)。
 
 本分支新增「双持动画」栏目和 Blender 4.3 FBX 转换，参见 [双持处理指南](docs/dual-wield.zh-CN.md)。可从一份手臂、一份武器模型和左右动画任务生成统一双持场景。
@@ -120,7 +120,7 @@ Alchemy Stars 保留原版批处理、动画层、IK 与 RedFox 转换管线，�
 
 `run-tests.ps1` 会编译稳定 WPF 基线并执行 Maya 转换回归。`verify-avalonia-aot.ps1` 会发布裁剪后的本机程序，执行 AOT 契约与标准工程导出，启动真实 Win32 窗口，通过 Windows UI Automation 检查控件名称、焦点和操作区，并在 900 × 600 最小尺寸渲染四个页面与居中对话框。
 
-项目约定每次功能性改动都迭代版本；本次测试版本为 `1.3.0-preview.22`，稳定版本仍为 `1.1.9`。
+项目约定每次功能性改动都迭代版本；本次测试版本为 `1.3.0-preview.23`，稳定版本仍为 `1.1.9`。
 
 1.1.9 的 UI 检查修正了 About 图标裁切、工具栏挤压、动画层路径过窄及部分控件对比度不足的问题。检查范围和验证边界见 [UI 检查记录](design-system/alchemy-stars/pages/ui-audit-1.1.9.md)。
 

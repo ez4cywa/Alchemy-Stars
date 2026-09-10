@@ -23,7 +23,8 @@ public sealed class AvaloniaFilePickerAdapter(
             SuggestedStartLocation = await ResolveStartLocationAsync(scope),
             FileTypeFilter = project ? [ProjectFileType, AllFileType] : [CastFileType, AllFileType],
         });
-        var paths = files.Select(file => file.Path.LocalPath).Where(path => !string.IsNullOrWhiteSpace(path)).ToArray();
+        var paths = files.Select(file => file.Path.LocalPath).Where(path => !string.IsNullOrWhiteSpace(path))
+            .Where(path => project || WorkspacePaths.IsCastAnimationFile(path)).ToArray();
         if (paths.Length > 0)
             preferences.RememberDirectory(scope, paths[0]);
         return paths;

@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
@@ -336,7 +337,51 @@ public sealed partial class MainWindow : Window
             e.Handled = true;
             return;
         }
+        if (!e.Handled && e.KeyModifiers == KeyModifiers.Control && e.Key is Key.C or Key.V
+            && CanHandleResourceClipboard(e.Source as Visual))
+        {
+            e.Handled = true;
+            _ = HandleResourceClipboardAsync(e.Key);
+            return;
+        }
         if (!e.Handled) e.Handled = HandleListShortcut(e.Key, e.KeyModifiers, e.Source as Visual);
+    }
+
+    private bool CanHandleResourceClipboard(Visual? source)
+    {
+        if (ViewModel.IsBusy || ViewModel.IsDialogOpen || source is null) return false;
+        var ancestors = source.GetVisualAncestors().Prepend(source).ToArray();
+        if (ancestors.Any(item => item is TextBox)) return false;
+        var list = ancestors.OfType<ListBox>().FirstOrDefault(item => item.IsEffectivelyVisible);
+        if (list is null || !(ReferenceEquals(list.ItemsSource, ViewModel.Animations) || ReferenceEquals(list.ItemsSource, ViewModel.Parts))) return false;
+        if (list.SelectedItem is WorkspaceAnimation animation) ViewModel.SelectedAnimation = animation;
+        if (list.SelectedItem is WorkspacePart part) ViewModel.SelectedPart = part;
+        if (list is null || (ReferenceEquals(list.ItemsSource, ViewModel.Animations) && !ViewModel.IsAnimationsPage)
+            || (ReferenceEquals(list.ItemsSource, ViewModel.Parts) && !ViewModel.IsModelPartsPage)) return false;
+        return TopLevel.GetTopLevel(this)?.Clipboard is not null;
+    }
+
+    private async Task HandleResourceClipboardAsync(Key key)
+    {
+        try
+        {
+            var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
+            if (clipboard is null) return;
+        if (key == Key.C)
+        {
+            var payload = ViewModel.CopySelectedResource();
+            if (payload is null) return;
+            await clipboard.SetTextAsync(payload);
+            return;
+        }
+            var workspace = ViewModel.Workspace;
+            var page = ViewModel.SelectedPage;
+            var pastedPayload = await clipboard.TryGetTextAsync();
+            if (ReferenceEquals(workspace, ViewModel.Workspace) && page == ViewModel.SelectedPage
+                && !ViewModel.IsBusy && !ViewModel.IsDialogOpen)
+                ViewModel.PasteResource(pastedPayload);
+        }
+        catch (Exception error) { ViewModel.ReportShortcutError(error); }
     }
 
     private void DialogKeyDown(object? sender, KeyEventArgs e)

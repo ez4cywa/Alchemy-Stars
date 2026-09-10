@@ -39,6 +39,16 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
     private string footerStatus;
     private readonly Dictionary<WorkspacePart, long> partSourceRequests = [];
     private long nextPartSourceRequest;
+    private readonly Dictionary<WorkspaceAnimation, AnimationBlendTemplateAnalysis> automaticHandDefaults = [];
+    private readonly HashSet<(WorkspaceAnimation Animation, string Property)> manualHandFields = [];
+    private bool applyingHandDefaults;
+    private void HandDefaultEdited(object? sender, PropertyChangedEventArgs e)
+    {
+        if (!applyingHandDefaults && sender is WorkspaceAnimation animation && e.PropertyName is
+            nameof(WorkspaceAnimation.LeftHandPoseFile) or nameof(WorkspaceAnimation.RightHandPoseFile)
+            or nameof(WorkspaceAnimation.LeftIKTargetBoneName) or nameof(WorkspaceAnimation.RightIKTargetBoneName))
+            manualHandFields.Add((animation, e.PropertyName));
+    }
     internal Func<string, Task<ModelPartClassification?>> PartClassifier { get; set; } = path => Task.Run(() => ClassifyPart(path));
 
     public MainWindowViewModel(
@@ -88,6 +98,9 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
         {
             UnwatchDualSources();
             partSourceRequests.Clear();
+            foreach (var item in automaticHandDefaults.Keys) item.PropertyChanged -= HandDefaultEdited;
+            automaticHandDefaults.Clear();
+            manualHandFields.Clear();
             workspace = value;
             selectedDual = null;
             WatchDualSources();
@@ -126,7 +139,24 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
     public bool IsChinese => ResolveChinese(languageMode);
     public string LanguageMode => languageMode;
     public string? CurrentProjectPath { get => currentProjectPath; private set { currentProjectPath = value; OnPropertyChanged(); OnPropertyChanged(nameof(CurrentProjectLabel)); OnPropertyChanged(nameof(WindowTitle)); } }
-    public WorkspaceAnimation? SelectedAnimation { get => selectedAnimation; set { if (!ReferenceEquals(selectedAnimation, value)) Preview.Clear(); selectedAnimation = value; SelectedLayer = null; Timeline.SetAnimation(value); OnPropertyChanged(); OnPropertyChanged(nameof(HasSelectedAnimation)); } }
+    public WorkspaceAnimation? SelectedAnimation
+    {
+        get => selectedAnimation;
+        set
+        {
+            if (!ReferenceEquals(selectedAnimation, value)) Preview.Clear();
+            if (selectedAnimation is not null) selectedAnimation.PropertyChanged -= SelectedOutputChanged;
+            selectedAnimation = value;
+            if (value is not null) value.PropertyChanged += SelectedOutputChanged;
+            SelectedLayer = null; Timeline.SetAnimation(value);
+            OnPropertyChanged(); OnPropertyChanged(nameof(HasSelectedAnimation)); OnPropertyChanged(nameof(SelectedOutputDirectory));
+        }
+    }
+    public string SelectedOutputDirectory => HasUnifiedOutputDirectory ? UnifiedOutputDirectory : SelectedAnimation?.EffectiveOutputFolder ?? string.Empty;
+    private void SelectedOutputChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(WorkspaceAnimation.Name) or nameof(WorkspaceAnimation.OutputFolder)) OnPropertyChanged(nameof(SelectedOutputDirectory));
+    }
     public WorkspacePart? SelectedPart
     {
         get => selectedPart;
@@ -261,10 +291,26 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
     public int AddAnimationPaths(IEnumerable<string> paths)
     {
         var added = 0;
-        foreach (var path in NormalizeCastPaths(paths))
+        var normalized = NormalizeCastPaths(paths).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+        var templates = AnimationBlendTemplateAnalyzer.AnalyzeBatch(normalized, Parts.Select(part => part.FilePath));
+        foreach (var template in templates)
         {
-            var animation = new WorkspaceAnimation { Name = path, OutputFolder = string.Empty };
+            var animation = new WorkspaceAnimation
+            {
+                Name = template.BaseAnimationFile,
+                OutputFolder = string.Empty,
+                EnableLeftHandIK = template.EnableLeftHandIK,
+                EnableRightHandIK = template.EnableRightHandIK,
+                LeftHandPoseFile = template.LeftHandPoseFile,
+                RightHandPoseFile = template.RightHandPoseFile,
+                LeftIKTargetBoneName = template.LeftIKTargetBoneName,
+                RightIKTargetBoneName = template.RightIKTargetBoneName,
+            };
+            foreach (var layerPath in template.LayerFiles)
+                animation.Layers.Add(new WorkspaceLayer { Name = layerPath, Type = AnimationLayerKind.Additive });
             Animations.Add(animation);
+            automaticHandDefaults[animation] = template;
+            animation.PropertyChanged += HandDefaultEdited;
             SelectedAnimation = animation;
             added++;
         }
@@ -324,6 +370,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
         }
         if (added > 0)
         {
+            RefreshForegripTemplateDefaults();
             preferences.RememberDirectory("part", SelectedPart?.FilePath);
             FooterStatus = detected == 0
                 ? string.Format(CultureInfo.CurrentCulture, Text.PartsAdded, added)
@@ -364,11 +411,57 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
 
     public void RemoveSelectedAnimation()
     {
-        if (SelectedAnimation is null)
+        var removed = SelectedAnimation;
+        if (removed is null)
             return;
-        var index = Animations.IndexOf(SelectedAnimation);
-        Animations.Remove(SelectedAnimation);
+        var index = Animations.IndexOf(removed);
+        var removedId = removed.Id;
+        foreach (var dual in DualAnimations)
+        {
+            if (dual.LeftAnimationId == removedId) dual.LeftAnimationId = string.Empty;
+            if (dual.RightAnimationId == removedId) dual.RightAnimationId = string.Empty;
+        }
+        automaticHandDefaults.Remove(removed);
+        manualHandFields.RemoveWhere(field => ReferenceEquals(field.Animation, removed));
+        removed.PropertyChanged -= HandDefaultEdited;
+        Animations.Remove(removed);
         SelectedAnimation = Animations.Count == 0 ? null : Animations[Math.Min(index, Animations.Count - 1)];
+    }
+
+    internal string? CopySelectedResource()
+    {
+        if (IsAnimationsPage && SelectedAnimation is { } animation) return ResourceLibraryClipboard.Create(animation);
+        if (IsModelPartsPage && SelectedPart is { } part) return ResourceLibraryClipboard.Create(part);
+        return null;
+    }
+
+    internal bool PasteResource(string? payload)
+    {
+        if (!ResourceLibraryClipboard.TryRead(payload, out var animation, out var part)) return false;
+        if (animation is not null)
+        {
+            foreach (var path in new[] { animation.Name, animation.LeftHandPoseFile, animation.RightHandPoseFile }
+                .Concat(animation.Layers.Select(layer => layer.Name)).Where(path => !string.IsNullOrWhiteSpace(path)))
+                WorkspacePaths.RequireCastAnimation(path);
+            animation.Id = Guid.NewGuid().ToString("N");
+            var originalName = animation.OutputName;
+            var suffix = 1;
+            while (Animations.Any(item => item.OutputName.Equals(animation.OutputName, StringComparison.OrdinalIgnoreCase)))
+                animation.OutputName = originalName + "_copy" + (suffix++ == 1 ? "" : (suffix - 1).ToString(CultureInfo.InvariantCulture));
+            Animations.Add(animation);
+            SelectedAnimation = animation;
+            FooterStatus = string.Format(CultureInfo.CurrentCulture, Text.AnimationsAdded, 1);
+            return true;
+        }
+        if (part is not null)
+        {
+            part.AutoClassification = null;
+            Parts.Add(part);
+            SelectedPart = part;
+            FooterStatus = string.Format(CultureInfo.CurrentCulture, Text.PartsAdded, 1);
+            return true;
+        }
+        return false;
     }
 
     public void RemoveSelectedPart()
@@ -377,6 +470,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
             return;
         var index = Parts.IndexOf(SelectedPart);
         Parts.Remove(SelectedPart);
+        RefreshForegripTemplateDefaults();
         SelectedPart = Parts.Count == 0 ? null : Parts[Math.Min(index, Parts.Count - 1)];
     }
 
@@ -409,7 +503,10 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
     {
         var path = (await picker.PickFilesAsync(FilePickerPurpose.Animation, false)).FirstOrDefault();
         if (path is not null)
+        {
+            WorkspacePaths.RequireCastAnimation(path);
             animation.Name = path;
+        }
     }
 
     public async Task ReplacePartSourceAsync(WorkspacePart part)
@@ -437,7 +534,10 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
     {
         var path = (await picker.PickFilesAsync(FilePickerPurpose.AnimationLayer, false)).FirstOrDefault();
         if (path is not null)
+        {
+            WorkspacePaths.RequireCastAnimation(path);
             layer.Name = path;
+        }
     }
 
     public async Task SetPoseAsync(WorkspaceAnimation animation, bool left)
@@ -445,6 +545,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
         var path = (await picker.PickFilesAsync(left ? FilePickerPurpose.LeftPose : FilePickerPurpose.RightPose, false)).FirstOrDefault();
         if (path is null)
             return;
+        WorkspacePaths.RequireCastAnimation(path);
         if (left)
             animation.LeftHandPoseFile = path;
         else
@@ -621,6 +722,14 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
     public void SetPathFromDrop(object target, string path, string role)
     {
         var normalized = PathInput.Normalize(path);
+        if (role is "animation" or "leftPose" or "rightPose" or "layer")
+        {
+            if (!WorkspacePaths.IsCastAnimationFile(normalized))
+            {
+                ShowDialog(Text.Notification, "动画输入仅支持 CAST / Animation input must be CAST.", true);
+                return;
+            }
+        }
         switch (target)
         {
             case WorkspaceAnimation animation when role == "animation": animation.Name = normalized; preferences.RememberDirectory("animation", normalized); break;
@@ -641,6 +750,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
         if (!partSourceRequests.TryGetValue(part, out var latest) || latest != request) return;
         partSourceRequests.Remove(part);
         if (!Parts.Contains(part) || !string.Equals(part.FilePath, normalized, StringComparison.OrdinalIgnoreCase)) return;
+        RefreshForegripTemplateDefaults();
         if (classification is not null)
         {
             part.Type = classification.Kind;
@@ -664,6 +774,30 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
         catch (Exception exception) when (exception is not OutOfMemoryException)
         {
             return null;
+        }
+    }
+
+    private void RefreshForegripTemplateDefaults()
+    {
+        var items = Animations.Where(animation => WorkspacePaths.IsCastAnimationFile(animation.Name)).ToArray();
+        var analyses = AnimationBlendTemplateAnalyzer.AnalyzeBatch(items.Select(animation => animation.Name).ToArray(), Parts.Select(part => part.FilePath));
+        for (var index = 0; index < items.Length; index++)
+        {
+            var animation = items[index];
+            var analysis = analyses[index];
+            automaticHandDefaults.TryGetValue(animation, out var previous);
+            applyingHandDefaults = true;
+            if (!manualHandFields.Contains((animation, nameof(WorkspaceAnimation.LeftIKTargetBoneName))) && (string.IsNullOrWhiteSpace(animation.LeftIKTargetBoneName) || previous is not null && animation.LeftIKTargetBoneName == previous.LeftIKTargetBoneName))
+                animation.LeftIKTargetBoneName = analysis.LeftIKTargetBoneName;
+            if (!manualHandFields.Contains((animation, nameof(WorkspaceAnimation.RightIKTargetBoneName))) && (string.IsNullOrWhiteSpace(animation.RightIKTargetBoneName) || previous is not null && animation.RightIKTargetBoneName == previous.RightIKTargetBoneName))
+                animation.RightIKTargetBoneName = analysis.RightIKTargetBoneName;
+            if (!manualHandFields.Contains((animation, nameof(WorkspaceAnimation.LeftHandPoseFile))) && (string.IsNullOrWhiteSpace(animation.LeftHandPoseFile) || previous is not null && animation.LeftHandPoseFile == previous.LeftHandPoseFile))
+                animation.LeftHandPoseFile = analysis.LeftHandPoseFile;
+            if (!manualHandFields.Contains((animation, nameof(WorkspaceAnimation.RightHandPoseFile))) && (string.IsNullOrWhiteSpace(animation.RightHandPoseFile) || previous is not null && animation.RightHandPoseFile == previous.RightHandPoseFile))
+                animation.RightHandPoseFile = analysis.RightHandPoseFile;
+            automaticHandDefaults[animation] = analysis;
+            applyingHandDefaults = false;
+            if (previous is null) animation.PropertyChanged += HandDefaultEdited;
         }
     }
 
@@ -886,8 +1020,9 @@ public sealed partial class UiText
     public string LeftTargetOverride => L("左手目标覆盖", "Left target override");
     public string RightTargetOverride => L("右手目标覆盖", "Right target override");
     public string OutputName => L("输出名称", "Output name");
-    public string OutputFolder => L("输出目录（必须明确选择）", "Output folder (explicit selection required)");
+    public string OutputFolder => L("输出目录（默认：源文件夹/output）", "Output folder (default: source folder/output)");
     public string Framerate => L("输出帧率", "Output framerate");
+    public string FixedFramerate => L("30 FPS（固定）", "30 FPS (fixed)");
     public string Layers => L("动画层", "Animation layers");
     public string AddLayer => L("添加动画层", "Add layer");
     public string EmptyLayers => L("右键或拖入 CAST 添加动画层", "Right-click or drop CAST files to add layers");
@@ -983,7 +1118,7 @@ public sealed partial class UiText
     public string Close => L("关闭", "Close");
     public string Notification => L("通知", "Notification");
     public string Ready => L("工作区就绪", "Workspace ready");
-    public string NewProjectCreated => L("已新建项目；动画输出目录保持为空。", "New project created; animation output folders remain blank.");
+    public string NewProjectCreated => L("已新建项目；未指定目录时导出到源动画同目录的 output 文件夹。", "New project created; unspecified outputs use an output folder beside the source animation.");
     public string ProjectLoaded => L("已打开项目：{0}", "Project opened: {0}");
     public string ProjectSaved => L("已保存项目：{0}", "Project saved: {0}");
     public string ProjectLoadFailed => L("项目打开失败", "Project open failed");
@@ -1001,7 +1136,7 @@ public sealed partial class UiText
     public string ExportFailedTitle => L("导出失败", "Export failed");
     public string NeedPart => L("请至少添加一个模型部件。", "Add at least one model part.");
     public string NeedAnimation => L("请至少添加一个动画。", "Add at least one animation.");
-    public string NeedOutputFolder => L("请为每个动画明确选择输出目录。", "Explicitly select an output folder for every animation.");
+    public string NeedOutputFolder => L("无法根据源动画推断输出目录，请先填写有效的动画路径。", "The output folder could not be inferred; enter a valid animation source path.");
     public string NeedOutputName => L("请填写输出名称。", "Enter an output name.");
     public string InvalidFramerate => L("输出帧率必须大于零。", "Output framerate must be greater than zero.");
     public string OutputWouldOverwrite => L("输出路径与输入文件相同，已阻止覆盖。请选择其他输出目录或名称。", "The output matches an input file. Choose another output folder or name.");

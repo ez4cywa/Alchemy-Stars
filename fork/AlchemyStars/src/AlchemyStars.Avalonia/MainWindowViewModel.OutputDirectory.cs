@@ -32,6 +32,7 @@ public sealed partial class MainWindowViewModel
         OnPropertyChanged(nameof(UnifiedOutputDirectory));
         OnPropertyChanged(nameof(HasUnifiedOutputDirectory));
         OnPropertyChanged(nameof(UnifiedOutputDirectoryStatus));
+        OnPropertyChanged(nameof(SelectedOutputDirectory));
     }
 
     // Only export requests are redirected. Project fields and preview requests keep their own paths.
