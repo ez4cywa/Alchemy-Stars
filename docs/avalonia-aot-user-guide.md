@@ -2,7 +2,7 @@
 
 # Alchemy Stars Avalonia preview quick guide
 
-This guide applies to `1.3.0-preview.23`. WPF v1.1.9 remains the supported release until .NET 11 GA.
+This guide applies to `1.3.0-preview.24`. WPF v1.1.9 remains the supported release until .NET 11 GA.
 
 The sidebar switches between Animation blend, Model parts, Dual merge, Settings and About. It shows icons and labels at normal widths and collapses to icons in narrow windows. The base-animation library sits on the left, a real CAST preview in the center, composition layers across the bottom, and collapsible properties on the right. Drag the dividers or focus them and use arrow keys to resize panels. Icon commands have localized tooltips and UI Automation names; the titlebar displays the current page, with window controls at the upper right.
 
@@ -17,6 +17,14 @@ The sidebar switches between Animation blend, Model parts, Dual merge, Settings 
 The app remembers the last directory for each picker category and can follow the Windows display language or be pinned to Chinese/English. Project files remain compatible with the original `.aprj` structure.
 
 For the canonical Hawk recipe, open `fork/AlchemyStars/Example/Hawk/HawkSprint.aprj`. It is the single source of truth used by managed and Native AOT export verification.
+
+## FBX up axis
+
+Full-model CAST packages and FBX exports retain the source model metadata's Y-up or Z-up axis. Missing metadata uses a fresh Maya scene's Y-up convention; it cannot reveal the asset's intended orientation. Model parts with different or unsupported axes are rejected before merging; normalize their coordinate systems first.
+
+The Blender bridge converts the complete model/armature scene into Blender's basis, then explicitly exports the source axis. The Maya bridge explicitly sets both scene and export axes. Numeric units follow Maya's default centimetres. Maya automatically adapts imported FBX to its current scene axis, so use the same scene axis when comparing against a direct CAST import. Animation-only CAST output is unchanged by this fix.
+
+Developer regression: `mayapy scripts/verify-fbx-axis.py --blender <blender.exe>` checks FBX axis metadata and compares animated joint world matrices and skinned vertices against direct CAST import in Maya for both backends.
 
 ## Utilities: remember an arms model
 

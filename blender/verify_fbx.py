@@ -13,11 +13,13 @@ bpy.ops.wm.open_mainfile(filepath=str(reference.resolve()))
 rig = next(o for o in bpy.context.scene.objects if o.type == "ARMATURE")
 frames = list(range(bpy.context.scene.frame_start, bpy.context.scene.frame_end + 1))
 mesh_count = sum(o.type == "MESH" for o in bpy.context.scene.objects)
+unit_scale = bpy.context.scene.unit_settings.scale_length
 expected = {}
 for frame in frames:
     bpy.context.scene.frame_set(frame)
     expected[frame] = {b.name: (rig.matrix_world @ b.matrix).translation.copy() for b in rig.pose.bones}
 bpy.ops.wm.read_factory_settings(use_empty=True)
+bpy.context.scene.unit_settings.scale_length = unit_scale
 bpy.ops.import_scene.fbx(filepath=str(fbx.resolve()), anim_offset=0.0)
 rigs = [o for o in bpy.context.scene.objects if o.type == "ARMATURE"]
 assert len(rigs) == 1, "FBX must contain one armature"

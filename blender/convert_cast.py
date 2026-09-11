@@ -37,7 +37,14 @@ def main():
         raise FileNotFoundError("Bundled Blender CAST plugin is missing")
     sys.path.insert(0, str(addon_root))
     import io_scene_cast
-    from io_scene_cast.cast import Cast, Model, Animation
+    from io_scene_cast.cast import Cast, Model, Animation, Metadata
+    roots = Cast.load(str(source)).Roots()
+    metadata = next((m for root in roots for m in root.ChildrenOfType(Metadata)), None)
+    # CAST without an axis follows a fresh Maya scene (Y-up). Do not inherit
+    # Blender's Z-up convention or a workstation's saved preferences.
+    source_up = (metadata.UpAxis() if metadata else None) or "y"
+    if source_up not in ("y", "z"):
+        raise ValueError("Unsupported CAST up axis: " + source_up)
     io_scene_cast.register()
     bpy.ops.wm.read_factory_settings(use_empty=True)
     result = bpy.ops.import_scene.cast(filepath=str(source), import_merge=False, import_reset=True,
@@ -56,8 +63,12 @@ def main():
         if len(modifiers) != 1 or modifiers[0].object != rig:
             raise RuntimeError("Mesh is not bound to the unified armature: " + mesh.name)
     scene = bpy.context.scene
+    # CAST positions are imported verbatim into Maya's default centimetres.
+    scene.unit_settings.system = "METRIC"
+    scene.unit_settings.scale_length = 0.01
     report = {"blender": bpy.app.version_string, "source": str(source), "sha256": digest,
               "armatures": len(armatures), "bones": len(rig.data.bones), "meshes": len(meshes),
+              "source_up_axis": source_up, "fbx_up_axis": source_up,
               "fps": scene.render.fps / scene.render.fps_base,
               "range": [scene.frame_start, scene.frame_end],
               "dqs_meshes": sum(any(m.type == "ARMATURE" and m.use_deform_preserve_volume for m in mesh.modifiers) for mesh in meshes)}
@@ -131,6 +142,14 @@ def main():
         if report["dqs_meshes"] != len(meshes):
             raise RuntimeError("DQS skinning was not preserved")
         scene.frame_set(int(first))
+    # Convert the complete scene once, including skinned meshes. Keep bone
+    # rest/pose/animation data in its source basis; the armature object carries
+    # the change of basis for every frame. Never rotate bones independently.
+    source_to_blender = Matrix.Rotation(math.pi / 2, 4, "X") if source_up == "y" else Matrix.Identity(4)
+    for obj in [rig, *meshes]:
+        if obj.parent is None:
+            obj.matrix_world = source_to_blender @ obj.matrix_world
+    bpy.context.view_layer.update()
     if args.blend:
         args.blend.parent.mkdir(parents=True, exist_ok=True)
         bpy.ops.wm.save_as_mainfile(filepath=str(args.blend.resolve()))
@@ -142,6 +161,8 @@ def main():
             obj.select_set(True)
         bpy.context.view_layer.objects.active = rig
         result = bpy.ops.export_scene.fbx(filepath=str(args.output.resolve()), use_selection=True,
+            axis_up=source_up.upper(), axis_forward="-Z" if source_up == "y" else "Y",
+            apply_unit_scale=True, apply_scale_options="FBX_SCALE_UNITS",
             object_types={"ARMATURE", "MESH"}, add_leaf_bones=False, bake_anim=True,
             bake_anim_use_all_actions=False, bake_anim_use_nla_strips=False,
             bake_anim_simplify_factor=0.0, bake_anim_step=1.0)

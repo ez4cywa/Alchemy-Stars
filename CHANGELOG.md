@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.3.0-preview.24 — 2026-09-11 (FBX coordinate-system preservation)
+
+Chinese release notes: [更新日志](docs/releases/1.3.0-preview.24.zh-CN.md).
+
+- Preserve the model CAST up axis in merged/model packages and temporary FBX input; use Y-up for missing metadata and reject unsupported or mixed model axes before merging.
+- Convert the entire Blender scene into its native basis, then explicitly export the source up axis. Match Maya's centimetre convention to avoid a 100x scale change. Explicitly set Maya's scene and FBX export axes.
+- Add Maya round-trip regression checks for Y-up, Z-up and missing metadata through both backends, comparing FBX axis metadata, animated joint world matrices and skinned vertices. Add managed/AOT package-metadata regression coverage.
+
 ## 1.3.0-preview.23 — 2026-09-10 (CAST timing, export safety and resource workflow)
 
 Chinese release notes: [更新日志](docs/releases/1.3.0-preview.23.zh-CN.md).

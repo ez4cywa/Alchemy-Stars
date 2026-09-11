@@ -15,6 +15,8 @@ internal sealed class SkeletonMergePlan
 
     public Skeleton Skeleton { get; } = new("Alchemy Stars Merged Skeleton");
     public List<Source> Sources { get; } = [];
+    public string UpAxis { get; private set; } = "y";
+    private bool hasUpAxis;
     public Dictionary<string, string> LeftWeaponNames { get; } = new(StringComparer.OrdinalIgnoreCase);
     public Dictionary<string, string> RightWeaponNames { get; } = new(StringComparer.OrdinalIgnoreCase);
     private readonly List<Identity> identities = [];
@@ -27,7 +29,9 @@ internal sealed class SkeletonMergePlan
             var path = Path.GetFullPath(part.FilePath);
             var snapshot = part.Type == PartType.Weapon && weaponSnapshot is not null ? weaponSnapshot : File.ReadAllBytes(path);
             using var stream = new MemoryStream(snapshot, writable: false);
-            var models = CastReader.Load(stream).RootNodes.SelectMany(DescendantsAndSelf).OfType<ModelNode>().ToArray();
+            var cast = CastReader.Load(stream);
+            plan.AcceptUpAxis(cast, path);
+            var models = cast.RootNodes.SelectMany(DescendantsAndSelf).OfType<ModelNode>().ToArray();
             if (models.Length == 0)
                 throw new InvalidDataException($"Model part has no CAST model: {path}");
             for (var index = 0; index < models.Length; index++)
@@ -50,7 +54,9 @@ internal sealed class SkeletonMergePlan
             var path = Path.GetFullPath(part.FilePath);
             var snapshot = (side == "left" ? leftSnapshot : side == "right" ? rightSnapshot : null) ?? File.ReadAllBytes(path);
             using var stream = new MemoryStream(snapshot, writable: false);
-            var models = CastReader.Load(stream).RootNodes.SelectMany(DescendantsAndSelf).OfType<ModelNode>().ToArray();
+            var cast = CastReader.Load(stream);
+            plan.AcceptUpAxis(cast, path);
+            var models = cast.RootNodes.SelectMany(DescendantsAndSelf).OfType<ModelNode>().ToArray();
             if (models.Length != 1) throw new InvalidDataException("Dual wield requires one model node per input file.");
             plan.AddModel(part, path, snapshot, 0, models[0], false, side, names);
         }
@@ -61,6 +67,20 @@ internal sealed class SkeletonMergePlan
         plan.Skeleton.AssignBoneIndices();
         plan.Skeleton.GenerateGlobalTransforms();
         return plan;
+    }
+
+    private void AcceptUpAxis(Cast.NET.Cast cast, string path)
+    {
+        // Match Maya CAST's first root-level metadata node. Missing metadata
+        // follows a fresh Maya scene, not Blender's native Z-up convention.
+        var value = cast.RootNodes.SelectMany(root => root.Children).OfType<MetadataNode>().FirstOrDefault()?.UpAxis;
+        var axis = string.IsNullOrEmpty(value) ? "y" : value;
+        if (axis is not ("y" or "z"))
+            throw new InvalidDataException($"不支持的 CAST 向上轴 / Unsupported CAST up axis '{axis}': {path}");
+        if (hasUpAxis && axis != UpAxis)
+            throw new InvalidDataException($"模型向上轴不一致，请先统一坐标系 / Mixed CAST up axes ({UpAxis}/{axis}): {path}");
+        UpAxis = axis;
+        hasUpAxis = true;
     }
 
     private void AddModel(Part part, string path, byte[] snapshot, int modelIndex, ModelNode model, bool legacy,

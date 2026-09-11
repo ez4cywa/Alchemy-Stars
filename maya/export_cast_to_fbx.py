@@ -33,18 +33,28 @@ def main() -> int:
         import maya.cmds as cmds
         import maya.mel as mel
         import castplugin
+        from cast import Cast, Metadata
+
+        metadata = next((m for root in Cast.load(str(cast_path)).Roots()
+                         for m in root.ChildrenOfType(Metadata)), None)
+        source_up = (metadata.UpAxis() if metadata else None) or "y"
+        if source_up not in ("y", "z"):
+            raise ValueError("Unsupported CAST up axis: " + source_up)
 
         castplugin.sceneSettings["importMerge"] = False
         castplugin.sceneSettings["importReset"] = False
         castplugin.sceneSettings["importAtTime"] = False
         castplugin.sceneSettings["importSkin"] = True
         castplugin.sceneSettings["importLooping"] = True
+        castplugin.sceneSettings["importAxis"] = True
         castplugin.utilityCreateProgress = lambda status="", maximum=0: None
         castplugin.utilityStepProgress = lambda instance, status="": None
         castplugin.utilityEndProgress = lambda instance: None
         castplugin.importMaterialNode = lambda path, material: "lambert1"
 
         cmds.file(new=True, force=True)
+        cmds.upAxis(ax=source_up, rv=True)
+        cmds.currentUnit(linear="cm")
         cmds.loadPlugin("shaderFXPlugin", quiet=True)
         if not cmds.objExists("lambert1SG"):
             cmds.sets(renderable=True, noSurfaceShader=True, empty=True, name="lambert1SG")
@@ -61,6 +71,7 @@ def main() -> int:
 
         fbx_path.parent.mkdir(parents=True, exist_ok=True)
         mel.eval("FBXResetExport;")
+        mel.eval(f"FBXExportUpAxis {source_up};")
         mel.eval("FBXExportBakeComplexAnimation -v true;")
         mel.eval(f"FBXExportBakeComplexStart -v {minimum:g};")
         mel.eval(f"FBXExportBakeComplexEnd -v {maximum:g};")
@@ -77,6 +88,8 @@ def main() -> int:
             raise RuntimeError(f"Maya did not create the FBX output: {fbx_path}")
         print(json.dumps({
             "mayaVersion": cmds.about(version=True),
+            "sourceUpAxis": source_up,
+            "fbxUpAxis": source_up,
             "input": str(cast_path),
             "output": str(fbx_path),
             "playbackRange": [minimum, maximum],

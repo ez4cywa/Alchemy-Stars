@@ -60,6 +60,8 @@ internal static class MayaCastPackage
 
             var packageRoot = new CastNode(CastNodeIdentifier.Root);
             packageRoot.Hash = nextHash++;
+            var metadata = new CastNode(CastNodeIdentifier.Metadata) { Hash = nextHash++, Parent = packageRoot };
+            metadata.AddString("up", plan.UpAxis);
             mergedModel.Parent = packageRoot;
             if (animation is not null)
             {

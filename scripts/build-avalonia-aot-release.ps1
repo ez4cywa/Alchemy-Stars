@@ -4,10 +4,10 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$version = '1.3.0-preview.23'
+$version = '1.3.0-preview.24'
 $repositoryRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
 $releaseRoot = [System.IO.Path]::GetFullPath((Join-Path $repositoryRoot 'release'))
-$publishDirectory = [System.IO.Path]::GetFullPath((Join-Path $repositoryRoot 'output\avalonia-aot-preview23'))
+$publishDirectory = [System.IO.Path]::GetFullPath((Join-Path $repositoryRoot 'output\avalonia-aot-preview24'))
 $stagingDirectory = [System.IO.Path]::GetFullPath((Join-Path $releaseRoot "Alchemy Stars $version"))
 $resolvedArchive = if ([string]::IsNullOrWhiteSpace($ArchivePath)) {
     [System.IO.Path]::GetFullPath((Join-Path $releaseRoot "AlchemyStars-$version-win-x64.zip"))
@@ -47,7 +47,7 @@ $rootFiles = @(
     @{ Source = 'LICENSE'; Target = 'LICENSE.txt' },
     @{ Source = 'THIRD_PARTY_NOTICES.md'; Target = 'THIRD_PARTY_NOTICES.md' },
     @{ Source = 'docs\dual-wield.zh-CN.md'; Target = 'Docs\DUAL-WIELD.zh-CN.md' },
-    @{ Source = 'docs\releases\1.3.0-preview.23.zh-CN.md'; Target = 'Docs\RELEASE-NOTES.zh-CN.md' },
+    @{ Source = 'docs\releases\1.3.0-preview.24.zh-CN.md'; Target = 'Docs\RELEASE-NOTES.zh-CN.md' },
     @{ Source = 'docs\samples\appearance\theme.json'; Target = 'Samples\Appearance\theme.json' },
     @{ Source = 'docs\samples\appearance\icons-template.zip'; Target = 'Samples\Appearance\icons-template.zip' },
     @{ Source = 'docs\samples\appearance\README.zh-CN.md'; Target = 'Samples\Appearance\README.zh-CN.md' },
