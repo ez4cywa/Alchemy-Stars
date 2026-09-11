@@ -15,13 +15,16 @@
           <Button x:Name="FitButton" Classes="panel-command compact-preview-command" Click="FitClick" ToolTip.Tip="{Binding Text.FitPreview}" AutomationProperties.Name="{Binding Text.FitPreview}"><Button.ContextMenu><ContextMenu><MenuItem Header="{Binding Text.FitSubjectMenu}" Click="FitClick" /><MenuItem Header="{Binding Text.FitAllGeometryMenu}" Click="FitAllClick" /></ContextMenu></Button.ContextMenu><local:ThemedIcon Classes="product-icon" IsHitTestVisible="False" Width="17" Height="17" Glyph="fit-view" /></Button>
           <Button Classes="panel-command compact-preview-command" IsEnabled="{Binding CanAdjustCamera}" Click="ZoomInClick" ToolTip.Tip="{Binding Text.ZoomIn}" AutomationProperties.Name="{Binding Text.ZoomIn}"><local:ThemedIcon Classes="product-icon" IsHitTestVisible="False" Width="17" Height="17" Glyph="zoom-in" /></Button>
           <Button Classes="panel-command compact-preview-command" IsEnabled="{Binding CanAdjustCamera}" Click="ZoomOutClick" ToolTip.Tip="{Binding Text.ZoomOut}" AutomationProperties.Name="{Binding Text.ZoomOut}"><local:ThemedIcon Classes="product-icon" IsHitTestVisible="False" Width="17" Height="17" Glyph="zoom-out" /></Button>
-          <Button Classes="panel-command compact-preview-command" Click="BonesClick" ToolTip.Tip="{Binding Text.ShowBones}" AutomationProperties.Name="{Binding Text.ShowBones}"><local:ThemedIcon Classes="product-icon" IsHitTestVisible="False" Glyph="inverse-kinematics" /></Button>
+          <ToggleButton x:Name="BonesToggle" Classes="preview-command compact-preview-command" IsChecked="{Binding ShowBones, Mode=TwoWay}"
+              ToolTip.Tip="{Binding Text.ShowBones}" AutomationProperties.Name="{Binding Text.ShowBones}" AutomationProperties.AcceleratorKey="B">
+            <local:ThemedIcon Classes="product-icon" IsHitTestVisible="False" Glyph="inverse-kinematics" />
+          </ToggleButton>
         </StackPanel>
       </ScrollViewer>
-      <Border x:Name="Viewport" Grid.Column="1" Background="{DynamicResource AlchemyCanvasBrush}" Focusable="True" ClipToBounds="True"
+      <Border x:Name="Viewport" Classes="accessible-focus" Grid.Column="1" Background="{DynamicResource AlchemyCanvasBrush}" Focusable="True" ClipToBounds="True"
           SizeChanged="ViewportSizeChanged" PointerPressed="ViewportPressed" PointerMoved="ViewportMoved" PointerReleased="ViewportReleased"
           PointerWheelChanged="ViewportWheel" KeyDown="ViewportKeyDown" ToolTip.Tip="{Binding InteractionHelp}"
-          AutomationProperties.Name="{Binding InteractionHelp}">
+          AutomationProperties.Name="{Binding Text.PreviewViewport}" AutomationProperties.HelpText="{Binding InteractionHelp}">
         <Grid>
           <local:GpuCastPreviewControl Frame="{Binding FrameData}" IsVisible="{Binding HasScene}" AutomationProperties.Name="{Binding Status}" />
           <StackPanel IsVisible="{Binding !HasScene}" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="20" Spacing="14">

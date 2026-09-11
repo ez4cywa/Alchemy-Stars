@@ -70,6 +70,8 @@ public sealed partial class App : Application
                         await UtilitiesSmoke.RunAsync(mainWindow, viewModel);
                     if (Program.ShortcutsSmokeRequested)
                         await ShortcutsSmoke.RunAsync(mainWindow, viewModel);
+                    if (Program.AccessibilityInteractionSmokeRequested)
+                        await AccessibilityInteractionSmoke.RunAsync(mainWindow, viewModel);
                     if (Program.TextMenuSmokeRequested)
                         await TextMenuSmoke.RunAsync(mainWindow, viewModel);
                     if (Program.InspectorSmokeRequested)

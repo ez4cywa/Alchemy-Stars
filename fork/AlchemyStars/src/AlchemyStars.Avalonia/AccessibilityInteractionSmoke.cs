@@ -1,0 +1,105 @@
+using Avalonia.Automation;
+using Avalonia.Automation.Peers;
+using Avalonia.Automation.Provider;
+using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
+using Avalonia.Input;
+using Avalonia.VisualTree;
+
+namespace AlchemyStars.Avalonia;
+
+internal static class AccessibilityInteractionSmoke
+{
+    internal static async Task RunAsync(MainWindow window, MainWindowViewModel vm)
+    {
+        vm.CloseDialog();
+        vm.SelectPage(WorkspacePage.Animations);
+        await Task.Delay(60);
+        var origin = window.GetVisualDescendants().OfType<Button>().First(button => button.Classes.Contains("activity"));
+        var shell = window.FindControl<Grid>("ShellGrid")!;
+        var overlay = window.FindControl<Grid>("DialogOverlay")!;
+        var close = window.FindControl<Button>("DialogCloseButton")!;
+        var reader = window.FindControl<ScrollViewer>("DialogMessageView")!;
+        Require(origin.Focus(NavigationMethod.Tab), "The workspace could not receive keyboard focus.");
+        vm.ShowShortcuts();
+        await Task.Delay(80);
+        Require(close.IsFocused && !shell.IsEffectivelyEnabled, "Modal focus/background isolation failed.");
+        Require(!origin.Focus(), "A background control stole modal focus.");
+        Require(AutomationProperties.GetHelpText(close) == vm.DialogAccessibleDescription
+            && AutomationProperties.GetHelpText(reader) == vm.Text.MessageScrollHelp, "Dialog text/help is not accessible.");
+        foreach (var direction in new[] { NavigationDirection.Next, NavigationDirection.Previous })
+            for (var index = 0; index < 8; index++)
+            {
+                window.FocusManager!.TryMoveFocus(direction);
+                Require(window.FocusManager.GetFocusedElement() is Control focused && overlay.IsVisualAncestorOf(focused),
+                    "Tab/Shift+Tab escaped the dialog.");
+            }
+        Require(reader.Focus(NavigationMethod.Tab) && reader.FocusAdorner is not null, "Long messages have no keyboard focus indicator.");
+        reader.RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyDownEvent, Key = Key.PageDown });
+        Require(reader.Offset.Y > 0, "Page Down did not scroll the long message.");
+        if (Program.RenderSmokePath is { } imagePath)
+        {
+            var mode = vm.ThemeModeIndex;
+            try
+            {
+                foreach (var theme in new[] { 0, 1 })
+                {
+                    vm.ThemeModeIndex = theme;
+                    await Task.Delay(80);
+                    reader.Focus(NavigationMethod.Tab);
+                    using var bitmap = new global::Avalonia.Media.Imaging.RenderTargetBitmap(
+                        new global::Avalonia.PixelSize((int)window.Width, (int)window.Height));
+                    bitmap.Render(window);
+                    bitmap.Save(Path.Combine(Path.GetDirectoryName(imagePath)!, $"dialog-focus-{(vm.IsChinese ? "zh" : "en")}-{theme}.png"),
+                        global::Avalonia.Media.Imaging.PngBitmapEncoderOptions.Default);
+                }
+            }
+            finally { vm.ThemeModeIndex = mode; }
+        }
+        reader.RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyDownEvent, Key = Key.Escape });
+        await Task.Delay(80);
+        Require(!vm.IsDialogOpen && shell.IsEffectivelyEnabled && origin.IsFocused, "Escape did not restore workspace focus.");
+
+        var file = Path.Combine(Path.GetTempPath(), "AlchemyStars-a11y-" + Guid.NewGuid().ToString("N") + ".cast");
+        try
+        {
+            CastAxisSmoke.Write(file, "y");
+            await vm.Preview.LoadAsync(file);
+            await Task.Delay(60);
+            var preview = window.GetVisualDescendants().OfType<CastPreviewView>().First(view => view.IsEffectivelyVisible);
+            var toggle = preview.FindControl<ToggleButton>("BonesToggle")!;
+            var viewport = preview.FindControl<Control>("Viewport")!;
+            var peer = ControlAutomationPeer.CreatePeerForElement(toggle)!;
+            var before = vm.Preview.ShowBones;
+            ((IToggleProvider)peer).Toggle();
+            Require(vm.Preview.ShowBones != before && toggle.IsChecked == vm.Preview.ShowBones, "Accessible bone toggle did not change state.");
+            viewport.RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyDownEvent, Key = Key.B });
+            Require(vm.Preview.ShowBones == before && toggle.IsChecked == before, "Keyboard bone state did not synchronize with UI Automation.");
+            Require(peer.GetName() == vm.Text.ShowBones && AutomationProperties.GetName(viewport) == vm.Text.PreviewViewport
+                && AutomationProperties.GetHelpText(viewport) == vm.Preview.InteractionHelp && viewport.FocusAdorner is not null,
+                "Preview name/help/focus indicator is missing.");
+        }
+        finally { vm.Preview.Clear(); File.Delete(file); }
+
+        var selectedExport = window.FindControl<Button>("ExportSelectedAnimationButton")!;
+        var selected = new WorkspaceAnimation { Name = "a11y-selection.cast" };
+        vm.Animations.Add(selected);
+        vm.SelectedAnimation = selected;
+        await Task.Delay(50);
+        Require(selectedExport.IsEffectivelyEnabled && AutomationProperties.GetName(selectedExport) == vm.Text.ExportSelectedAnimation
+            && AutomationProperties.GetAcceleratorKey(selectedExport) == "Ctrl+Shift+E", "Single export is not accessible.");
+        var shortcut = window.KeyBindings.Single(binding => binding.Gesture?.Matches(new KeyEventArgs
+            { Key = Key.E, KeyModifiers = KeyModifiers.Control | KeyModifiers.Shift }) == true);
+        Require(shortcut.Command!.CanExecute(null), "Single-export shortcut is unavailable with a selection.");
+        vm.SelectedAnimation = null;
+        await Task.Delay(50);
+        Require(!selectedExport.IsEffectivelyEnabled && !shortcut.Command.CanExecute(null), "Single export is enabled without a selection.");
+        vm.Animations.Remove(selected);
+        Console.WriteLine("UI accessibility: modal Tab cycle, Escape/focus restore, background isolation, long-message scroll, help, preview toggle state and selected-export command PASS");
+    }
+
+    private static void Require(bool condition, string message)
+    {
+        if (!condition) throw new InvalidOperationException(message);
+    }
+}

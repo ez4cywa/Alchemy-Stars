@@ -16,6 +16,7 @@ internal static class Program
     internal static string? RenderDialogKind { get; private set; }
     internal static string? StartupProjectPath { get; private set; }
     internal static bool AccessibilitySmokeRequested { get; private set; }
+    internal static bool AccessibilityInteractionSmokeRequested { get; private set; }
     internal static string? PreviewSmokePath { get; private set; }
     internal static bool BuildPreviewSmoke { get; private set; }
     internal static bool FirstPersonPreviewRequested { get; private set; }
@@ -81,6 +82,7 @@ internal static class Program
         BuildPreviewSmoke = args.Contains("--build-preview", StringComparer.OrdinalIgnoreCase);
         FirstPersonPreviewRequested = args.Contains("--first-person-preview", StringComparer.OrdinalIgnoreCase);
         AccessibilitySmokeRequested = args.Contains("--accessibility-smoke", StringComparer.OrdinalIgnoreCase);
+        AccessibilityInteractionSmokeRequested = args.Contains("--accessibility-interaction-smoke", StringComparer.OrdinalIgnoreCase);
         ExternalLinkLogPath = GetOption(args, "--external-link-log");
         UpdateResultPath = GetOption(args, "--update-result");
         UtilitiesSmokeRequested = args.Contains("--utilities-smoke", StringComparer.OrdinalIgnoreCase);

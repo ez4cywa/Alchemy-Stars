@@ -30,7 +30,6 @@ public sealed partial class CastPreviewView : UserControl
     private void FirstPersonClick(object? sender, RoutedEventArgs e) => Preview?.ToggleFirstPerson();
     private void ZoomInClick(object? sender, RoutedEventArgs e) => Preview?.Zoom(1);
     private void ZoomOutClick(object? sender, RoutedEventArgs e) => Preview?.Zoom(-1);
-    private void BonesClick(object? sender, RoutedEventArgs e) { if (Preview is { } preview) preview.ShowBones = !preview.ShowBones; }
     private void PlayClick(object? sender, RoutedEventArgs e) => Preview?.TogglePlayback();
     private void PreviousClick(object? sender, RoutedEventArgs e) => Preview?.Step(-1);
     private void NextClick(object? sender, RoutedEventArgs e) => Preview?.Step(1);

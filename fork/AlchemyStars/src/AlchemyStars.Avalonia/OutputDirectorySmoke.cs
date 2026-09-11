@@ -21,6 +21,7 @@ internal static class OutputDirectorySmoke
         await vm.ChooseUnifiedOutputDirectoryAsync();
         Require(vm.HasUnifiedOutputDirectory && vm.UnifiedOutputDirectory == unified, "Directory selection was not applied.");
         vm.Animations.Add(new WorkspaceAnimation { Name = "later.cast", OutputName = "later" });
+        vm.CloseDialog();
         await vm.ExportAsync();
         Require(engine.Request!.Animations.All(job => job.OutputFolder == unified), "Current and future animations were not redirected.");
         Require(new ApplicationPreferencesStore(settings).Snapshot().UnifiedOutputDirectory == unified, "Unified output did not persist across store restart.");
@@ -43,6 +44,7 @@ internal static class OutputDirectorySmoke
         Require(loaded.Animations[0].OutputFolder == original && loaded.DualAnimations[0].OutputFolder == original,
             "Saving a project serialized overridden paths.");
         vm.ClearUnifiedOutputDirectory();
+        vm.CloseDialog();
         await vm.ExportAsync();
         Require(engine.Request!.Animations[0].OutputFolder == original && engine.Request.Animations[1].OutputFolder == string.Empty,
             "Clearing did not restore per-item paths.");

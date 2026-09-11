@@ -7,7 +7,7 @@ $ErrorActionPreference = 'Stop'
 $repositoryRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
 $project = Join-Path $repositoryRoot 'fork\AlchemyStars\src\AlchemyStars.Avalonia\AlchemyStars.Avalonia.csproj'
 $outputRoot = [System.IO.Path]::GetFullPath((Join-Path $repositoryRoot 'output'))
-$publishDirectory = [System.IO.Path]::GetFullPath((Join-Path $outputRoot 'avalonia-aot-preview24'))
+$publishDirectory = [System.IO.Path]::GetFullPath((Join-Path $outputRoot 'avalonia-aot-preview25'))
 $bundledDotnet = Join-Path $repositoryRoot 'output\dotnet-sdk\dotnet.exe'
 $dotnet = if (Test-Path -LiteralPath $bundledDotnet) { $bundledDotnet } else { 'dotnet' }
 function Assert-OutputChild([string]$Path) {
@@ -39,6 +39,8 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 $executable = Join-Path $publishDirectory 'AlchemyStars.Avalonia.exe'
+$accessibilityInteraction = Start-Process -FilePath $executable -ArgumentList '--startup-smoke --accessibility-interaction-smoke' -WindowStyle Hidden -Wait -PassThru
+if ($accessibilityInteraction.ExitCode -ne 0) { throw 'Native AOT accessibility interaction regression failed.' }
 $selfTest = Start-Process `
     -FilePath $executable `
     -ArgumentList '--self-test' `

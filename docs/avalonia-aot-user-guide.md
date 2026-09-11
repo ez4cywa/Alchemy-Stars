@@ -2,7 +2,7 @@
 
 # Alchemy Stars Avalonia preview quick guide
 
-This guide applies to `1.3.0-preview.24`. WPF v1.1.9 remains the supported release until .NET 11 GA.
+This guide applies to `1.3.0-preview.25`. WPF v1.1.9 remains the supported release until .NET 11 GA.
 
 The sidebar switches between Animation blend, Model parts, Dual merge, Settings and About. It shows icons and labels at normal widths and collapses to icons in narrow windows. The base-animation library sits on the left, a real CAST preview in the center, composition layers across the bottom, and collapsible properties on the right. Drag the dividers or focus them and use arrow keys to resize panels. Icon commands have localized tooltips and UI Automation names; the titlebar displays the current page, with window controls at the upper right.
 
@@ -17,6 +17,12 @@ The sidebar switches between Animation blend, Model parts, Dual merge, Settings 
 The app remembers the last directory for each picker category and can follow the Windows display language or be pinned to Chinese/English. Project files remain compatible with the original `.aprj` structure.
 
 For the canonical Hawk recipe, open `fork/AlchemyStars/Example/Hawk/HawkSprint.aprj`. It is the single source of truth used by managed and Native AOT export verification.
+
+## Selected export and keyboard accessibility
+
+Select an animation and choose **Export selected** or press `Ctrl+Shift+E` to export just that job. `Ctrl+E` still exports all jobs. The selected job retains its layers, IK, format, naming and unified output directory. Unselected jobs with missing assets do not block it, but no workspace input may be overwritten. The action is unavailable without a selection, during a task, or while a message is open.
+
+Dialogs isolate the workspace and cycle `Tab` / `Shift+Tab` internally. Focus the message reader to use arrow keys or `Page Up` / `Page Down`; `Esc` closes the dialog and restores the previous focus. Dialog text and preview instructions are exposed to assistive technology. Show bones is a semantic toggle synchronized with the `B` key.
 
 ## FBX up axis
 

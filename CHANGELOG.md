@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.3.0-preview.25 — 2026-09-11 (selected animation export and keyboard accessibility)
+
+Chinese release notes: [更新日志](docs/releases/1.3.0-preview.25.zh-CN.md).
+
+- Add Export selected (Ctrl+Shift+E) alongside Export all. Preserve the selected animation's layers, IK, format, naming and unified output folder without validating unrelated jobs; still protect all workspace source files from overwrite.
+- Isolate dialog/busy keyboard focus from the workspace, cycle Tab inside messages, restore the previous control on close, and support keyboard scrolling with a visible focus indicator for long messages.
+- Expose dialog text/help and preview keyboard instructions to assistive technology; expose Show bones as a real toggle with synchronized keyboard/UI Automation state.
+- Add single-job engine/UI regression coverage, modal focus/navigation checks and Windows UI Automation validation.
+
 ## 1.3.0-preview.24 — 2026-09-11 (FBX coordinate-system preservation)
 
 Chinese release notes: [更新日志](docs/releases/1.3.0-preview.24.zh-CN.md).

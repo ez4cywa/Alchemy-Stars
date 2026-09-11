@@ -14,6 +14,7 @@ public sealed partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        InitializeAccessibility();
         AddHandler(KeyDownEvent, WindowKeyDown, RoutingStrategies.Tunnel);
         PropertyChanged += (_, e) =>
         {
@@ -91,8 +92,8 @@ public sealed partial class MainWindow : Window
                     SelectedLayerSection.UpdateLayout();
                     SelectedLayerSection.BringIntoView();
                 }, DispatcherPriority.Loaded);
-            if (eventArgs.PropertyName == nameof(MainWindowViewModel.IsDialogOpen) && viewModel.IsDialogOpen)
-                Dispatcher.UIThread.Post(() => DialogCloseButton.Focus());
+            if (eventArgs.PropertyName is nameof(MainWindowViewModel.IsDialogOpen) or nameof(MainWindowViewModel.IsBusy))
+                UpdateOverlayFocus();
         };
         return viewModel;
     }
@@ -254,6 +255,7 @@ public sealed partial class MainWindow : Window
     private void SystemLanguageClick(object? sender, RoutedEventArgs e) => ViewModel.UseSystemLanguage();
     private void SaveDefaultsClick(object? sender, RoutedEventArgs e) => ViewModel.SaveDefaults();
     private void CloseDialogClick(object? sender, RoutedEventArgs e) => ViewModel.CloseDialog();
+    private async void ExportSelectedAnimationClick(object? sender, RoutedEventArgs e) => await ViewModel.ExportSelectedAnimationAsync();
     private async void OpenUpstreamClick(object? sender, RoutedEventArgs e) => await ViewModel.OpenUpstreamAsync();
     private async void OpenProjectRepositoryClick(object? sender, RoutedEventArgs e) => await ViewModel.OpenProjectRepositoryAsync();
 

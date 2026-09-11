@@ -93,6 +93,7 @@ internal static class SelfTest
             try
             {
                 CastAxisSmoke.Run(testDirectory);
+                SingleAnimationExportSmoke.RunAsync(testDirectory).GetAwaiter().GetResult();
                 CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo("zh-CN");
                 var preferences = new ApplicationPreferencesStore(Path.Combine(testDirectory, "settings.json"));
                 Require(preferences.Snapshot().ThemeStyle == "apple" && preferences.Snapshot().ThemeMode == "light",

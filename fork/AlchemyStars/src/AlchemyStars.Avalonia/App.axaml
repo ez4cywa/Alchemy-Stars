@@ -12,6 +12,14 @@
   <Application.Styles>
     <FluentTheme />
 
+    <Style Selector=":is(Control).accessible-focus">
+      <Setter Property="FocusAdorner">
+        <Template>
+          <Border BorderThickness="2" BorderBrush="{DynamicResource AlchemyFocusBrush}" CornerRadius="3" IsHitTestVisible="False" />
+        </Template>
+      </Setter>
+    </Style>
+
     <Style Selector="Window">
       <Setter Property="FontFamily" Value="SF Pro Text, Inter, Segoe UI, Microsoft YaHei UI, sans-serif" />
       <Setter Property="FontSize" Value="13" />

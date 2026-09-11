@@ -43,8 +43,8 @@ try {
     $buttonCondition = [System.Windows.Automation.PropertyCondition]::new(
         [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
         [System.Windows.Automation.ControlType]::Button)
-    $requiredButtons = @('New', 'Open', 'Save', 'Save as', 'Export all', 'Animation blend', 'Model parts', 'Dual merge', 'Settings', 'About', 'Close')
-    $keyTargets = @('New', 'Open', 'Save', 'Save as', 'Export all', 'Close')
+    $requiredButtons = @('New', 'Open', 'Save', 'Save as', 'Export selected', 'Export all', 'Animation blend', 'Model parts', 'Dual merge', 'Settings', 'About', 'Close')
+    $keyTargets = @('New', 'Open', 'Save', 'Save as', 'Export selected', 'Export all', 'Close')
     $elements = @{}
     foreach ($name in $requiredButtons) {
         $nameCondition = [System.Windows.Automation.PropertyCondition]::new(
@@ -55,7 +55,7 @@ try {
         $element = $null
         for ($index = 0; $index -lt $candidates.Count; $index++) {
             $candidate = $candidates.Item($index)
-            if ($candidate.Current.IsKeyboardFocusable) {
+            if ($name -ne 'Close' -or $candidate.Current.IsKeyboardFocusable) {
                 $element = $candidate
                 break
             }
@@ -64,6 +64,13 @@ try {
             throw "Required accessible button was not exposed: $name"
         }
         $elements[$name] = $element
+    }
+
+    foreach ($name in $requiredButtons | Where-Object { $_ -ne 'Close' }) {
+        if ($elements[$name].Current.IsEnabled) { throw "Background control stayed enabled behind a modal: $name" }
+    }
+    if ([string]::IsNullOrWhiteSpace($elements['Close'].Current.HelpText)) {
+        throw 'The dialog close action does not expose the message to assistive technology.'
     }
 
     foreach ($name in $keyTargets) {
@@ -115,6 +122,11 @@ try {
     ([System.Windows.Automation.InvokePattern]$closeButton.GetCurrentPattern(
         [System.Windows.Automation.InvokePattern]::Pattern)).Invoke()
     Start-Sleep -Milliseconds 150
+    foreach ($name in @('New', 'Open', 'Save', 'Save as', 'Export selected', 'Export all', 'About')) {
+        if (-not $elements[$name].Current.IsEnabled -or -not $elements[$name].Current.IsKeyboardFocusable) {
+            throw "Closing the modal did not restore keyboard interaction: $name"
+        }
+    }
     ([System.Windows.Automation.InvokePattern]$elements['About'].GetCurrentPattern(
         [System.Windows.Automation.InvokePattern]::Pattern)).Invoke()
 
@@ -161,7 +173,7 @@ try {
         throw "About actions did not route the expected external links: $($openedLinks -join ', ')"
     }
 
-    Write-Output 'Windows UI Automation names, keyboard focus, 44x44 key targets, both About actions and duration-aware track geometry: PASS'
+    Write-Output 'Windows UI Automation names, modal background isolation/help, restored keyboard interaction, selected export, 44x44 key targets, About actions and duration-aware track geometry: PASS'
 }
 finally {
     $env:ALCHEMY_STARS_SETTINGS_PATH = $previousSettingsPath

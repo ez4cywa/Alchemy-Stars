@@ -150,6 +150,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
             if (value is not null) value.PropertyChanged += SelectedOutputChanged;
             SelectedLayer = null; Timeline.SetAnimation(value);
             OnPropertyChanged(); OnPropertyChanged(nameof(HasSelectedAnimation)); OnPropertyChanged(nameof(SelectedOutputDirectory));
+            OnPropertyChanged(nameof(CanExportSelectedAnimation));
         }
     }
     public string SelectedOutputDirectory => HasUnifiedOutputDirectory ? UnifiedOutputDirectory : SelectedAnimation?.EffectiveOutputFolder ?? string.Empty;
@@ -204,11 +205,14 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
     public bool IsModelPartsPage => SelectedPage == WorkspacePage.ModelParts;
     public bool IsSettingsPage => SelectedPage == WorkspacePage.Settings;
     public bool IsAboutPage => SelectedPage == WorkspacePage.About;
-    public bool IsBusy { get => isBusy; private set { isBusy = value; OnPropertyChanged(); } }
+    public bool IsBusy { get => isBusy; private set { isBusy = value; OnPropertyChanged(); OnPropertyChanged(nameof(CanInteract)); OnPropertyChanged(nameof(CanExportSelectedAnimation)); } }
     public string BusyMessage { get => busyMessage; private set { busyMessage = value; OnPropertyChanged(); } }
-    public bool IsDialogOpen { get => isDialogOpen; private set { isDialogOpen = value; OnPropertyChanged(); } }
-    public string DialogTitle { get => dialogTitle; private set { dialogTitle = value; OnPropertyChanged(); } }
-    public string DialogMessage { get => dialogMessage; private set { dialogMessage = value; OnPropertyChanged(); } }
+    public bool IsDialogOpen { get => isDialogOpen; private set { isDialogOpen = value; OnPropertyChanged(); OnPropertyChanged(nameof(CanInteract)); OnPropertyChanged(nameof(CanExportSelectedAnimation)); } }
+    public bool CanInteract => !IsBusy && !IsDialogOpen;
+    public bool CanExportSelectedAnimation => CanInteract && IsAnimationsPage && HasSelectedAnimation;
+    public string DialogTitle { get => dialogTitle; private set { dialogTitle = value; OnPropertyChanged(); OnPropertyChanged(nameof(DialogAccessibleDescription)); } }
+    public string DialogMessage { get => dialogMessage; private set { dialogMessage = value; OnPropertyChanged(); OnPropertyChanged(nameof(DialogAccessibleDescription)); } }
+    public string DialogAccessibleDescription => DialogTitle + Environment.NewLine + DialogMessage;
     public bool DialogIsError { get => dialogIsError; private set { dialogIsError = value; OnPropertyChanged(); } }
     public string FooterStatus { get => footerStatus; private set { footerStatus = value; OnPropertyChanged(); } }
     public IReadOnlyList<string> OutputFormats => AlchemyStars.Engine.OutputFormats.All;
@@ -562,7 +566,15 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
     public async Task ExportAsync()
     {
         if (IsDualPage) { await ProcessDualAsync(false); return; }
-        if (IsBusy)
+        await ExportAnimationsAsync(selectedOnly: false);
+    }
+
+    public Task ExportSelectedAnimationAsync() => CanExportSelectedAnimation
+        ? ExportAnimationsAsync(selectedOnly: true) : Task.CompletedTask;
+
+    private async Task ExportAnimationsAsync(bool selectedOnly)
+    {
+        if (!CanInteract)
             return;
         try
         {
@@ -572,8 +584,13 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
             var request = ApplyUnifiedOutputDirectory(projectStore.CreateExportRequest(Workspace));
             var selection = SelectedAnimation;
             var selectedIndex = selection is null ? 0 : Animations.IndexOf(selection);
+            if (selectedOnly)
+            {
+                request = AnimationExportEngine.SelectAnimation(request, selectedIndex);
+                selectedIndex = 0;
+            }
             var result = await Task.Run(() => engine.Export(request));
-            if (request.Options.Format == ExportFormat.Cast && ReferenceEquals(selection, SelectedAnimation))
+            if (request.Options.Format == ExportFormat.Cast && result.OutputFiles.Count > 0 && ReferenceEquals(selection, SelectedAnimation))
                 await Preview.LoadAsync(result.OutputFiles[Math.Clamp(selectedIndex, 0, result.OutputFiles.Count - 1)], parts: request.Parts, legacy: request.Options.MatchOldCallOfDuty);
             FooterStatus = string.Format(CultureInfo.CurrentCulture, Text.ExportComplete, result.OutputFiles.Count);
             ShowDialog(Text.ExportCompleteTitle, string.Format(CultureInfo.CurrentCulture, Text.ExportCompleteBody, result.OutputFiles.Count) + Environment.NewLine + string.Join(Environment.NewLine, result.OutputFiles), false);
@@ -862,6 +879,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
 
     private void RaisePageState()
     {
+        OnPropertyChanged(nameof(CanExportSelectedAnimation));
         OnPropertyChanged(nameof(CurrentExportLabel));
         OnPropertyChanged(nameof(IsDualPage));
         OnPropertyChanged(nameof(CurrentPageTitle));

@@ -50,7 +50,7 @@ internal static class CastAxisSmoke
         throw new InvalidOperationException("Invalid/mixed CAST up axes were accepted.");
     }
 
-    private static void Write(string path, string? axis)
+    internal static void Write(string path, string? axis)
     {
         var root = new CastNode(CastNodeIdentifier.Root) { Hash = 1 };
         if (axis is not null)

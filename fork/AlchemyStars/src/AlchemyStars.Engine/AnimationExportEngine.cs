@@ -11,7 +11,7 @@ namespace AlchemyStars.Engine;
 
 public sealed class AnimationExportEngine : IAnimationExportEngine
 {
-    public const string EngineVersion = "1.3.0-preview.24";
+    public const string EngineVersion = "1.3.0-preview.25";
 
     /// <summary>Creates an independent bind skeleton for previewing animation-only CAST data.</summary>
     public static RedFox.Graphics3D.Skeletal.Skeleton CreatePreviewSkeleton(IReadOnlyList<ModelPartSpec> parts, bool legacy) =>
@@ -65,6 +65,25 @@ public sealed class AnimationExportEngine : IAnimationExportEngine
         return new AnimationExportResult(outputs);
     }
 
+    /// <summary>Selects one job while keeping protection for every workspace source file.</summary>
+    public static AnimationExportRequest SelectAnimation(AnimationExportRequest request, int index)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        if (index < 0 || index >= request.Animations.Count) throw new ArgumentOutOfRangeException(nameof(index));
+        var job = request.Animations[index];
+        var output = Path.GetFullPath(Path.Combine(job.OutputFolder,
+            request.Options.OutputPrefix + job.OutputName + request.Options.OutputSuffix + ToExtension(request.Options.Format)));
+        if (InputPaths(request).Contains(output, StringComparer.OrdinalIgnoreCase))
+            throw new ExportValidationException(ExportErrorCode.OutputWouldOverwriteInput,
+                "输出会覆盖输入素材 / Output would overwrite an input: " + output);
+        return request with { Animations = [job] };
+    }
+
+    private static IEnumerable<string> InputPaths(AnimationExportRequest request) => request.Parts.Select(part => part.FilePath)
+        .Concat(request.Animations.SelectMany(job => new[] { job.SourceFile, job.LeftHandPoseFile, job.RightHandPoseFile }
+            .Concat((job.Layers ?? []).Select(layer => layer.FilePath))))
+        .Where(path => !string.IsNullOrWhiteSpace(path)).Select(Path.GetFullPath);
+
     private static void Validate(AnimationExportRequest request)
     {
         if (request.Parts is null || request.Parts.Count == 0)
@@ -75,11 +94,7 @@ public sealed class AnimationExportEngine : IAnimationExportEngine
         foreach (var part in request.Parts)
             RequireFile(part.FilePath, "Model part");
 
-        var allInputs = request.Parts.Select(part => part.FilePath).Concat(request.Animations.SelectMany(job =>
-            new[] { job.SourceFile, job.LeftHandPoseFile, job.RightHandPoseFile }
-                .Concat((job.Layers ?? []).Select(layer => layer.FilePath))))
-            .Where(path => !string.IsNullOrWhiteSpace(path)).Select(Path.GetFullPath)
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var allInputs = InputPaths(request).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var outputPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var job in request.Animations)
