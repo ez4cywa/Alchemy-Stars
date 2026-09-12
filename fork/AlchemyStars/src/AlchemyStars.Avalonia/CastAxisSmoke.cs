@@ -199,7 +199,12 @@ internal static class CastAxisSmoke
             "Keep-scene mode trusted mismatched metadata and rotated raw animation coordinates.");
         Require(CastReader.Load(output).RootNodes.Single().Children.OfType<MetadataNode>().Single().UpAxis == "y",
             "Keep-scene mode did not retain the primary model metadata marker.");
-        Console.WriteLine("Keep scene axis: mismatched model/animation metadata preserves raw coordinates PASS");
+        var previewAxis = CastPreviewScene.ResolvePreviewUpAxis(request.Options.OutputUpAxis, animation);
+        Require(previewAxis == "z" && CastPreviewScene.Load(output, upAxisOverride: previewAxis).UpAxis == "z",
+            "Keep-scene preview did not use the retained animation coordinate direction.");
+        Require(CastPreviewScene.ResolvePreviewUpAxis("y", animation) == "y",
+            "Explicit output axis did not take priority over the animation metadata.");
+        Console.WriteLine("Keep scene axis: mismatched metadata preserves raw coordinates and previews in the animation basis PASS");
     }
 
     private static void VerifyDual(string folder)
@@ -241,8 +246,12 @@ internal static class CastAxisSmoke
         var engine = new DualWieldEngine();
         project.OutputUpAxis = "z";
         var z = engine.Export(project, task);
+        task.Name = "dual-z-preview";
+        var zPreview = engine.Export(project, task, preview: true);
         project.OutputUpAxis = "y"; task.Name = "dual-y";
         var y = engine.Export(project, task);
+        task.Name = "dual-y-preview";
+        var yPreview = engine.Export(project, task, preview: true);
         project.OutputUpAxis = "source"; task.Name = "dual-keep";
         var kept = engine.Export(project, task);
         foreach (var file in kept.OutputFiles)
@@ -252,7 +261,7 @@ internal static class CastAxisSmoke
             foreach (var file in result.OutputFiles)
                 Require(CastReader.Load(file).RootNodes.Single().Children.OfType<MetadataNode>().Single().UpAxis == axis,
                     "Dual animation/companion model axis differs from selection.");
-        var zScene = CastPreviewScene.Load(z.OutputFile); var yScene = CastPreviewScene.Load(y.OutputFile);
+        var zScene = CastPreviewScene.Load(zPreview.OutputFile); var yScene = CastPreviewScene.Load(yPreview.OutputFile);
         for (var frame = 0; frame < zScene.FrameCount; frame++)
         {
             zScene.Sample(frame); yScene.Sample(frame);
@@ -282,7 +291,7 @@ internal static class CastAxisSmoke
         return destination == "y" ? Vector3.Transform(result, Quaternion.CreateFromAxisAngle(Vector3.UnitX, -MathF.PI / 2)) : result;
     }
 
-    private static void AddGeometry(string path)
+    internal static void AddGeometry(string path)
     {
         var cast = CastReader.Load(path);
         var root = cast.RootNodes.Single();

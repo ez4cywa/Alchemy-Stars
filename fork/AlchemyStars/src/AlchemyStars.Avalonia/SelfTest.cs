@@ -5,7 +5,7 @@ using System.Numerics;
 
 namespace AlchemyStars.Avalonia;
 
-internal static class SelfTest
+internal static partial class SelfTest
 {
     public static int RunPreview(string path, string? projectPath = null)
     {
@@ -14,7 +14,9 @@ internal static class SelfTest
             var before = System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(path));
             var store = new WorkspaceProjectStore();
             var request = projectPath is null ? null : store.CreateExportRequest(store.Load(projectPath));
-            var scene = CastPreviewScene.Load(path, request?.Parts, request?.Options.MatchOldCallOfDuty ?? false);
+            var previewAxis = request is null ? null : CastPreviewScene.ResolvePreviewUpAxis(
+                request.Options.OutputUpAxis, request.Animations.FirstOrDefault()?.SourceFile);
+            var scene = CastPreviewScene.Load(path, request?.Parts, request?.Options.MatchOldCallOfDuty ?? false, previewAxis);
             Require(scene.FrameCount > 1, "Expected an animated CAST for the preview regression.");
             var watch = System.Diagnostics.Stopwatch.StartNew();
             var first = CastPreviewRenderer.Render(scene, 0, 640, 400, PreviewCamera.Default, false);
@@ -70,6 +72,14 @@ internal static class SelfTest
                 "Maya camera X/Z rotation produced an invalid view basis.");
             Require(MathF.Abs(firstPersonView.FocalLength - 320) < 1e-4f, "First-person horizontal FOV is not 90 degrees.");
             Require(MathF.Abs(firstPersonView.NearClip - 0.1f) < 1e-5f, "First-person camera does not use Maya's default near clip.");
+            foreach (var (axis, direction) in new[] { ('x', Vector3.UnitX), ('y', Vector3.UnitY), ('z', Vector3.UnitZ) })
+            {
+                var snapped = CastPreviewRenderer.SnapToAxis(PreviewCamera.Default, "z", axis, true);
+                var basis = CastPreviewRenderer.ResolveOrbitBasis("z", snapped);
+                Require(Vector3.Distance(basis.Forward, -direction) < 1e-5f
+                    && float.IsFinite(basis.Right.X) && float.IsFinite(basis.Up.X),
+                    $"Camera axis gizmo produced an invalid +{axis} view.");
+            }
             try
             {
                 engine.Export(new AnimationExportRequest(

@@ -42,6 +42,12 @@
               </Border>
             </Grid>
           </Border>
+          <local:CameraAxisGizmo x:Name="AxisGizmo" Classes="accessible-focus" Width="82" Height="82" Margin="0,30,10,0"
+              HorizontalAlignment="Right" VerticalAlignment="Top" IsVisible="{Binding CanAdjustCamera}"
+              CameraYaw="{Binding CameraYaw}" CameraPitch="{Binding CameraPitch}" SceneUpAxis="{Binding SceneUpAxis}"
+              Background="{DynamicResource AlchemySurfaceRaisedBrush}" BorderBrush="{DynamicResource AlchemyBorderStrongBrush}"
+              Focusable="True" Cursor="SizeAll" ToolTip.Tip="{Binding Text.CameraAxisGizmoHelp}"
+              AutomationProperties.Name="{Binding Text.CameraAxisGizmo}" AutomationProperties.HelpText="{Binding Text.CameraAxisGizmoHelp}" />
         </Grid>
       </Border>
     </Grid>

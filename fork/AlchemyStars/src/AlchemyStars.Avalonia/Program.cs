@@ -66,6 +66,11 @@ internal static class Program
         if (hawkArgumentIndex >= 0)
             return SelfTest.RunHawk(args.Skip(hawkArgumentIndex + 1).ToArray());
 
+        var modelExportArgumentIndex = Array.FindIndex(args, argument =>
+            argument.Equals("--model-export-smoke", StringComparison.OrdinalIgnoreCase));
+        if (modelExportArgumentIndex >= 0)
+            return SelfTest.RunModelExport(args.Skip(modelExportArgumentIndex + 1).ToArray());
+
         var projectArgumentIndex = Array.FindIndex(args, argument =>
             argument.Equals("--project-smoke", StringComparison.OrdinalIgnoreCase));
         if (projectArgumentIndex >= 0)

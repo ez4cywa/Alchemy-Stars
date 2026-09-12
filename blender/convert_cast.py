@@ -39,6 +39,8 @@ def main():
     import io_scene_cast
     from io_scene_cast.cast import Cast, Model, Animation, Metadata
     roots = Cast.load(str(source)).Roots()
+    source_animations = [a for root in roots for a in root.ChildrenOfType(Animation)]
+    has_animation = len(source_animations) > 0
     metadata = next((m for root in roots for m in root.ChildrenOfType(Metadata)), None)
     # CAST without an axis follows a fresh Maya scene (Y-up). Do not inherit
     # Blender's Z-up convention or a workstation's saved preferences.
@@ -56,7 +58,7 @@ def main():
     if len(armatures) != 1 or not meshes:
         raise RuntimeError("Expected a complete CAST scene with one armature and meshes")
     rig = armatures[0]
-    if rig.animation_data is None or rig.animation_data.action is None:
+    if has_animation and (rig.animation_data is None or rig.animation_data.action is None):
         raise RuntimeError("Imported armature has no active action")
     for mesh in meshes:
         modifiers = [m for m in mesh.modifiers if m.type == "ARMATURE"]
@@ -69,6 +71,7 @@ def main():
     report = {"blender": bpy.app.version_string, "source": str(source), "sha256": digest,
               "armatures": len(armatures), "bones": len(rig.data.bones), "meshes": len(meshes),
               "source_up_axis": source_up, "fbx_up_axis": source_up,
+              "has_animation": has_animation,
               "fps": scene.render.fps / scene.render.fps_base,
               "range": [scene.frame_start, scene.frame_end],
               "dqs_meshes": sum(any(m.type == "ARMATURE" and m.use_deform_preserve_volume for m in mesh.modifiers) for mesh in meshes)}
@@ -165,7 +168,7 @@ def main():
         result = bpy.ops.export_scene.fbx(filepath=str(args.output.resolve()), use_selection=True,
             axis_up=source_up.upper(), axis_forward="-Z" if source_up == "y" else "Y",
             apply_unit_scale=True, apply_scale_options="FBX_SCALE_UNITS",
-            object_types={"ARMATURE", "MESH"}, add_leaf_bones=False, bake_anim=True,
+            object_types={"ARMATURE", "MESH"}, add_leaf_bones=False, bake_anim=has_animation,
             bake_anim_use_all_actions=False, bake_anim_use_nla_strips=False,
             bake_anim_simplify_factor=0.0, bake_anim_step=1.0)
         if "FINISHED" not in result or not args.output.is_file() or args.output.stat().st_size == 0:

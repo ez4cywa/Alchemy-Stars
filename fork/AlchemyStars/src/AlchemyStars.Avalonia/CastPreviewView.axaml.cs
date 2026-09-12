@@ -14,6 +14,8 @@ public sealed partial class CastPreviewView : UserControl
         LayoutUpdated += (_, _) => { if (IsEffectivelyVisible) Preview?.SetViewportSize(Viewport.Bounds.Width, Viewport.Bounds.Height); };
         FrameSlider.AddHandler(PointerPressedEvent, (_, _) => Preview?.Pause(), RoutingStrategies.Tunnel);
         FrameSlider.AddHandler(KeyDownEvent, (_, _) => Preview?.Pause(), RoutingStrategies.Tunnel);
+        AxisGizmo.OrbitRequested += (_, e) => Preview?.Orbit(e.X, e.Y);
+        AxisGizmo.AxisViewRequested += (_, e) => Preview?.SetAxisView(e.Axis, e.Positive);
     }
     private CastPreviewViewModel? Preview => DataContext as CastPreviewViewModel;
     internal void VerifyContextMenuLocalization()

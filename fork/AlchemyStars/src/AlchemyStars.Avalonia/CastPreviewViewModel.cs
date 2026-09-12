@@ -51,25 +51,28 @@ public sealed class CastPreviewViewModel : INotifyPropertyChanged, IDisposable
     public bool ShowBones { get => showBones; set { showBones = value; Changed(); RequestRender(); } }
     public bool IsFirstPerson => camera.Mode == PreviewCameraMode.FirstPerson;
     public bool CanAdjustCamera => HasScene && !IsFirstPerson;
+    public float CameraYaw => camera.Yaw;
+    public float CameraPitch => camera.Pitch;
+    public string SceneUpAxis => scene?.UpAxis ?? "z";
     public string CameraModeLabel => IsFirstPerson ? Text.ExitFirstPersonView : Text.FirstPersonView;
     public string InteractionHelp => IsFirstPerson ? Text.FirstPersonPreviewHelp : Text.PreviewHelp;
     public string FirstPersonBadge => Text.FirstPersonBadge;
 
-    public async Task LoadAsync(string path, string? label = null, IReadOnlyList<ModelPartSpec>? parts = null, bool legacy = false)
+    public async Task LoadAsync(string path, string? label = null, IReadOnlyList<ModelPartSpec>? parts = null, bool legacy = false, string? upAxisOverride = null)
     {
         Clear();
         var version = generation;
         IsLoading = true;
         try
         {
-            var loaded = await Task.Run(() => CastPreviewScene.Load(path, parts, legacy));
+            var loaded = await Task.Run(() => CastPreviewScene.Load(path, parts, legacy, upAxisOverride));
             if (version != generation || disposed) return;
             scene = loaded;
             renderRevision++;
             source = label ?? path;
             camera = PreviewCamera.Default;
             showBones = loaded.VertexCount == 0;
-            Changed(nameof(Source)); Changed(nameof(ShowBones)); RefreshLabels();
+            Changed(nameof(Source)); Changed(nameof(ShowBones)); RefreshCameraState(); RefreshLabels();
             await RenderAsync();
         }
         catch (Exception exception)
@@ -88,7 +91,7 @@ public sealed class CastPreviewViewModel : INotifyPropertyChanged, IDisposable
         Pause();
         scene = null; frame = 0; source = string.Empty; error = string.Empty; camera = PreviewCamera.Default; IsLoading = false;
         frameData = null; Changed(nameof(FrameData));
-        Changed(nameof(Source)); RefreshLabels();
+        Changed(nameof(Source)); RefreshCameraState(); RefreshLabels();
     }
 
     public void SetViewportSize(double w, double h)
@@ -115,8 +118,14 @@ public sealed class CastPreviewViewModel : INotifyPropertyChanged, IDisposable
     public void Orbit(double x, double y)
     {
         if (IsFirstPerson) return;
-        camera = camera with { Yaw = camera.Yaw + (float)x * 0.01f, Pitch = Math.Clamp(camera.Pitch + (float)y * 0.01f, -1.45f, 1.45f) };
+        camera = camera with { Yaw = camera.Yaw + (float)x * 0.01f, Pitch = Math.Clamp(camera.Pitch + (float)y * 0.01f, -1.55f, 1.55f) };
+        RefreshCameraState();
         RequestRender();
+    }
+    public void SetAxisView(char axis, bool positive)
+    {
+        if (scene is null || IsFirstPerson) return;
+        SetCamera(CastPreviewRenderer.SnapToAxis(camera, scene.UpAxis, axis, positive));
     }
     public void Zoom(double amount)
     {
@@ -132,7 +141,14 @@ public sealed class CastPreviewViewModel : INotifyPropertyChanged, IDisposable
         Changed(nameof(CameraModeLabel));
         Changed(nameof(InteractionHelp));
         Changed(nameof(FirstPersonBadge));
+        RefreshCameraState();
         RequestRender();
+    }
+    private void RefreshCameraState()
+    {
+        Changed(nameof(CameraYaw));
+        Changed(nameof(CameraPitch));
+        Changed(nameof(SceneUpAxis));
     }
     private void RequestRender() { renderRevision++; _ = RenderAsync(); }
 

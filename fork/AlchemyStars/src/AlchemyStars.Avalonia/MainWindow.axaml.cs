@@ -231,6 +231,7 @@ public sealed partial class MainWindow : Window
     private async void OpenPreviewClick(object? sender, RoutedEventArgs e) => await ViewModel.OpenPreviewAsync();
     private async void AddAnimationClick(object? sender, RoutedEventArgs e) => await ViewModel.AddAnimationsAsync();
     private async void AddPartClick(object? sender, RoutedEventArgs e) => await ViewModel.AddPartsAsync();
+    private async void ExportBoundModelClick(object? sender, RoutedEventArgs e) => await ViewModel.ExportBoundModelAsync();
     private async void AddLayerClick(object? sender, RoutedEventArgs e) => await ViewModel.AddLayersAsync();
     private void RemoveAnimationClick(object? sender, RoutedEventArgs e) => ViewModel.RemoveSelectedAnimation();
     private void GenerateSprintBatchClick(object? sender, RoutedEventArgs e) => ViewModel.GenerateSprintBatch();

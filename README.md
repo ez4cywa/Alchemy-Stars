@@ -39,7 +39,7 @@ Alchemy Stars keeps the upstream animation-layer concepts intact. Attribution an
 - Rejects cyclic IK targets and fixes two-bone IK and animation-clone state loss.
 - Restores layer and part ownership after project loading so reorder, remove, and drag operations remain usable.
 - Supports `.cast`, `.fbx`, `.smd`, and `.seanim`; SMD contains the full skeleton and per-frame local transforms, while FBX preserves models, skinning, and animation through Maya.
-- Optionally writes a true animation-only CAST with no model, mesh, material, or skin data; full-scene CAST remains the default.
+- Writes animation CAST as animation-only data by default, while composition previews use a separate complete scene. The Model Parts workspace can export the bound hands, weapon and attachments separately.
 - Optionally bakes only bones referenced by the base animation, poses, layers, or IK, while automatically retaining any indirectly changed bone and falling back to all bones for unknown solvers.
 - Uses system file dialogs for animation, pose-layer, model, project, and output paths; each path box also accepts typed, pasted, or directly dropped paths and remembers the most recent folder for its category.
 - Leaves the output folder blank for every newly imported animation. Export therefore requires an explicit destination and cannot silently replace a same-named source CAST; existing projects retain their saved destinations.
@@ -62,9 +62,11 @@ The app starts with an empty batch. Use the toolbar buttons, the folder buttons 
 
 For safety, a newly imported animation has no default output folder. Choose, paste, type, or drop an output destination before exporting. This prevents a same-named `.cast` output from overwriting the input animation. Replacing the input animation does not repopulate the destination, while an output folder explicitly stored in an existing `.aprj` remains unchanged.
 
-Open **Settings → Output** to choose `.cast`, `.fbx`, `.smd`, or `.seanim` as the default output format. For `.cast`, **Animation-only CAST** omits the complete model scene. **Bake relevant bones only** reduces baked curves to source-animation, pose, layer, IK, and indirectly changed bones. Both options apply immediately, are remembered globally, and are stored in project files.
+Open **Settings → Output** to choose `.cast`, `.fbx`, `.smd`, or `.seanim` as the default animation format. Animation CAST always contains animation data only, with no switch required. **Bake relevant bones only** reduces baked curves to source-animation, pose, layer, IK, and indirectly changed bones. Composition preview always uses a separate complete CAST cache, so the hands and weapon remain visible.
 
-Relevant-bone baking is off by default for maximum compatibility. It is safe for a full-scene export when the retained curves pass validation. When importing an animation-only CAST onto an existing rig, use the exact matching skeleton in a clean bind pose; otherwise leave this option off. SMD must still write a complete pose on every frame. FBX requires a locally installed Maya, with Maya 2025 preferred.
+In **Model Parts**, choose **Export bound model** in the inspector to write the hands, weapon and attachments with the same skeleton attachment, mesh transform and skin-weight remapping used by animation blending. The file is named `<weapon source name>_model`; CAST, FBX, SMD and SEAnim animation formats produce CAST, FBX, SMD and SEModel model files respectively.
+
+Relevant-bone baking is off by default for maximum compatibility. When importing an animation-only CAST onto an existing rig, use the exact matching skeleton in a clean bind pose; the same project can export that bound model separately. SMD must still write a complete pose on every frame. FBX requires a locally installed Blender or Maya.
 
 On the Animation page, right-click anywhere in the main list—including blank space—and choose **Import animations…**. The animation-layer area has its own **Import animation layers…** menu. When an external file is dropped over an animation-layer area, that hovered animation takes priority over the outer selection. The Model Parts list offers the same blank-area right-click workflow. All lists also support `Shift+F10`.
 

@@ -11,8 +11,10 @@ The sidebar switches between Animation blend, Model parts, Dual merge, Settings 
 3. Add optional left/right pose files and enable only the IK chains required by the animation.
 4. Add layers in order. A file dropped or right-click imported inside **Animation layers** is always treated as a layer, not a new base animation.
 5. Enter an output name and explicitly choose an output folder. New entries intentionally leave this field blank.
-6. In **Settings**, choose CAST, FBX, SMD or SEAnim. Animation-only CAST and relevant-bones-only baking are optional; keep full baking for the broadest compatibility.
+6. In **Settings**, choose CAST, FBX, SMD or SEAnim. Animation CAST is animation-only by default with no switch; relevant-bones-only baking remains optional, and full baking has the broadest compatibility.
 7. Choose **Export all** or press `Ctrl+E`. Progress and results stay centered inside the application.
+
+When the hands and weapon are ready, choose **Export bound model** in the Model Parts inspector. It reuses the animation blend skeleton attachment, mesh transform and skin-weight remapping rules, including attachments. The file is named `<weapon source name>_model`; CAST, FBX, SMD and SEAnim animation formats map to CAST, FBX, SMD and SEModel model files.
 
 The app remembers the last directory for each picker category and can follow the Windows display language or be pinned to Chinese/English. Project files remain compatible with the original `.aprj` structure.
 
@@ -28,11 +30,11 @@ Dialogs isolate the workspace and cycle `Tab` / `Shift+Tab` internally. Focus th
 
 Choose **Keep scene axis (unspecified, default)**, **Z-up** or **Y-up** in Settings → Output format → Output up axis. This controls the whole exported scene, not individual parts. It is persisted in the project and can be saved as the default for new projects. Existing explicit Y/Z selections remain unchanged.
 
-Keep scene axis writes the primary model's marker (arms first, otherwise the first model in merge order) and preserves every input's raw coordinates. This tolerates third-party CAST files whose axis marker does not match their numeric data. Choose explicit Z-up or Y-up when every input has reliable axis metadata and should be converted. Full/selected exports, previews, dual animations and companion models share this rule.
+Keep scene axis writes the primary model's marker (arms first, otherwise the first model in merge order) and preserves every input's raw coordinates. This tolerates third-party CAST files whose axis marker does not match their numeric data. Composition previews use the base animation's marker for the camera in this mode, rather than reinterpreting the retained coordinates through a potentially incorrect arms marker. Choose explicit Z-up or Y-up when every input has reliable axis metadata and should be converted. Full/selected exports, dual animations and companion models share the same coordinate-preservation rule.
 
 Inputs may mix X/Y/Z-up without rejection. Before merging, bone translations/rotations/scale axes, mesh positions, normals and tangents are converted in memory; base animations, layers and hand poses use the same target basis. Missing/unknown metadata uses Y-up and cannot reveal an asset's intended orientation. Source files are never rewritten.
 
-Model CAST, animation-only CAST and FBX carry the resolved output axis explicitly. SMD/SEAnim numbers follow the same rule without a matching scene-axis field. The Blender/Maya bridges retain centimetre units and the preview camera follows the file axis. Preserving an X-up FBX requires Blender; the Maya backend supports explicit Y/Z-up output.
+Model CAST, animation-only CAST and FBX carry the resolved output axis explicitly. SMD/SEAnim numbers follow the same rule without a matching scene-axis field. The Blender/Maya bridges retain centimetre units. The preview's upper-right XYZ gizmo follows the camera: drag it to orbit, click a positive or negative axis endpoint to snap the view, or focus it and press X/Y/Z (Shift for the negative axis). Preserving an X-up FBX requires Blender; the Maya backend supports explicit Y/Z-up output.
 
 Developer regression: `AlchemyStars.Avalonia.exe --axis-smoke <test-output-directory> --fbx`. The backend round-trip check remains `mayapy scripts/verify-fbx-axis.py --blender <blender.exe>`.
 
@@ -76,13 +78,13 @@ Selecting a built-in theme disables custom colors and radii but keeps custom ico
 
 ## Merged CAST preview
 
-Choose **Build preview** in the composition workspace header to merge the selected animation into a unique temporary CAST with the existing export engine. It does not require or change the formal output folder; its cache is removed after loading an independent scene. **Open CAST preview** reads an existing merged file. A successful CAST export also previews the selected result.
+Choose **Build preview** in the composition workspace header to merge the selected animation into a unique temporary complete CAST with the existing export engine. It does not require or change the formal output folder; its cache is removed after loading an independent scene containing the hands and weapon meshes. **Open CAST preview** reads an existing file. Formal animation CAST contains animation data only; after export, the UI builds a separate complete preview snapshot so preview and disk output stay independent.
 
 - Drag the viewport or use arrow keys to orbit; use the wheel or +/− to zoom.
 - Choose the camera button or press `1` for a fixed first-person view. It matches a newly created Maya camera at `T(0,0,0)`, applies `R(90°,0°,-90°)`, and uses a 90° horizontal FOV. Preview-only safe framing keeps the complete weapon visible without changing the CAST scene or export. Press `1` again, or use either Fit command, to return to orbit view.
 - Use playback, Space, the frame slider and previous/next frame buttons to inspect animation.
 - Press F to frame the subject. Right-click **Fit subject** or press Shift+F to include all geometry, including distant spare parts.
-- Toggle the bone button for a skeleton overlay. Animation-only CAST contains curves, not an embedded skeleton: load its matching model parts into the current project first. The viewport identifies this project-supplied skeleton; matching bone names alone cannot guarantee a matching bind pose.
+- Toggle the bone button for a skeleton overlay. An exported animation CAST contains curves without an embedded skeleton, while composition preview uses a separate complete model scene. Before manually opening an animation-only CAST, load its matching model parts into the project; matching bone names alone cannot guarantee a matching bind pose.
 - The current renderer shows clay geometry without textures/materials. Settings edits do not automatically rebuild a snapshot: choose **Build preview** again.
 - Track bars read source metadata in the background. Their widths represent true CAST frame counts, their horizontal positions include configured frame offsets, and the header shows the shared frame range. The text inside each bar repeats its frame count; an unreadable source stays visible and is marked **Frames unavailable**.
 - Animation sampling, skinning, projection and lighting run in the background with at most one frame in flight and a 960×640 projection cap. The interactive viewport submits the prepared triangles through Avalonia's GPU-backed Skia custom drawing; a deterministic software renderer is retained for headless verification. Playback performance depends on scene complexity; validate final usage in Maya.

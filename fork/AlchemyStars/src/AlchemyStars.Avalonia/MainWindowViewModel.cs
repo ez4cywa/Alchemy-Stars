@@ -170,6 +170,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
             if (selectedPart is not null) selectedPart.PropertyChanged += SelectedPartChanged;
             OnPropertyChanged();
             OnPropertyChanged(nameof(HasSelectedPart));
+            OnPropertyChanged(nameof(CanExportBoundModel));
             RaisePartClassificationState();
         }
     }
@@ -206,11 +207,14 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
     public bool IsModelPartsPage => SelectedPage == WorkspacePage.ModelParts;
     public bool IsSettingsPage => SelectedPage == WorkspacePage.Settings;
     public bool IsAboutPage => SelectedPage == WorkspacePage.About;
-    public bool IsBusy { get => isBusy; private set { isBusy = value; OnPropertyChanged(); OnPropertyChanged(nameof(CanInteract)); OnPropertyChanged(nameof(CanExportSelectedAnimation)); } }
+    public bool IsBusy { get => isBusy; private set { isBusy = value; OnPropertyChanged(); OnPropertyChanged(nameof(CanInteract)); OnPropertyChanged(nameof(CanExportSelectedAnimation)); OnPropertyChanged(nameof(CanExportBoundModel)); } }
     public string BusyMessage { get => busyMessage; private set { busyMessage = value; OnPropertyChanged(); } }
-    public bool IsDialogOpen { get => isDialogOpen; private set { isDialogOpen = value; OnPropertyChanged(); OnPropertyChanged(nameof(CanInteract)); OnPropertyChanged(nameof(CanExportSelectedAnimation)); } }
+    public bool IsDialogOpen { get => isDialogOpen; private set { isDialogOpen = value; OnPropertyChanged(); OnPropertyChanged(nameof(CanInteract)); OnPropertyChanged(nameof(CanExportSelectedAnimation)); OnPropertyChanged(nameof(CanExportBoundModel)); } }
     public bool CanInteract => !IsBusy && !IsDialogOpen;
     public bool CanExportSelectedAnimation => CanInteract && IsAnimationsPage && HasSelectedAnimation;
+    public bool CanExportBoundModel => CanInteract && IsModelPartsPage
+        && Parts.Any(part => part.Type == ModelPartKind.ViewHands)
+        && Parts.Any(part => part.Type == ModelPartKind.Weapon);
     public string DialogTitle { get => dialogTitle; private set { dialogTitle = value; OnPropertyChanged(); OnPropertyChanged(nameof(DialogAccessibleDescription)); } }
     public string DialogMessage { get => dialogMessage; private set { dialogMessage = value; OnPropertyChanged(); OnPropertyChanged(nameof(DialogAccessibleDescription)); } }
     public string DialogAccessibleDescription => DialogTitle + Environment.NewLine + DialogMessage;
@@ -593,6 +597,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
             BusyMessage = Text.Exporting;
             FooterStatus = Text.Exporting;
             var request = ApplyUnifiedOutputDirectory(projectStore.CreateExportRequest(Workspace));
+            request = request with { Options = request.Options with { CastAnimationOnly = request.Options.Format == ExportFormat.Cast } };
             var selection = SelectedAnimation;
             var selectedIndex = selection is null ? 0 : Animations.IndexOf(selection);
             if (selectedOnly)
@@ -601,10 +606,16 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
                 selectedIndex = 0;
             }
             var result = await Task.Run(() => engine.Export(request));
+            var previewNotice = string.Empty;
             if (request.Options.Format == ExportFormat.Cast && result.OutputFiles.Count > 0 && ReferenceEquals(selection, SelectedAnimation))
-                await Preview.LoadAsync(result.OutputFiles[Math.Clamp(selectedIndex, 0, result.OutputFiles.Count - 1)], parts: request.Parts, legacy: request.Options.MatchOldCallOfDuty);
+            {
+                var previewIndex = Math.Clamp(selectedIndex, 0, result.OutputFiles.Count - 1);
+                try { await LoadAnimationPreviewSnapshotAsync(request, previewIndex, result.OutputFiles[previewIndex]); }
+                catch (Exception exception) { previewNotice = Environment.NewLine + Environment.NewLine + Text.PreviewRefreshFailed + exception.Message; }
+            }
             FooterStatus = string.Format(CultureInfo.CurrentCulture, Text.ExportComplete, result.OutputFiles.Count);
-            ShowDialog(Text.ExportCompleteTitle, string.Format(CultureInfo.CurrentCulture, Text.ExportCompleteBody, result.OutputFiles.Count) + Environment.NewLine + string.Join(Environment.NewLine, result.OutputFiles), false);
+            ShowDialog(Text.ExportCompleteTitle, string.Format(CultureInfo.CurrentCulture, Text.ExportCompleteBody, result.OutputFiles.Count)
+                + Environment.NewLine + string.Join(Environment.NewLine, result.OutputFiles) + previewNotice, false);
         }
         catch (Exception exception)
         {
@@ -643,11 +654,16 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
             var selection = SelectedAnimation;
             var request = projectStore.CreateExportRequest(Workspace);
             var job = request.Animations[Animations.IndexOf(selection)] with { OutputFolder = cache, OutputName = "composition" };
-            request = request with { Animations = [job], Options = request.Options with { Format = ExportFormat.Cast, OutputPrefix = "", OutputSuffix = "" } };
+            request = request with { Animations = [job], Options = request.Options with
+                { Format = ExportFormat.Cast, OutputPrefix = "", OutputSuffix = "", CastAnimationOnly = false } };
             Directory.CreateDirectory(cache);
             var result = await Task.Run(() => engine.Export(request));
             if (ReferenceEquals(selection, SelectedAnimation))
-                await Preview.LoadAsync(result.OutputFiles.Single(), Text.PreviewSnapshot + " · " + selection.OutputName, request.Parts, request.Options.MatchOldCallOfDuty);
+            {
+                var previewAxis = CastPreviewScene.ResolvePreviewUpAxis(request.Options.OutputUpAxis, job.SourceFile);
+                await Preview.LoadAsync(result.OutputFiles.Single(), Text.PreviewSnapshot + " · " + selection.OutputName,
+                    request.Parts, request.Options.MatchOldCallOfDuty, previewAxis);
+            }
         }
         catch (Exception exception) { ShowDialog(Text.PreviewFailed, LocalizeExportError(exception), true); }
         finally
@@ -838,6 +854,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
         {
             RefreshForegripTemplateDefaults();
             RaisePartClassificationState();
+            OnPropertyChanged(nameof(CanExportBoundModel));
         }
     }
 
@@ -898,6 +915,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
     private void RaisePageState()
     {
         OnPropertyChanged(nameof(CanExportSelectedAnimation));
+        OnPropertyChanged(nameof(CanExportBoundModel));
         OnPropertyChanged(nameof(CurrentExportLabel));
         OnPropertyChanged(nameof(IsDualPage));
         OnPropertyChanged(nameof(CurrentPageTitle));
@@ -1027,6 +1045,8 @@ public sealed partial class UiText
     public string ZoomIn => L("放大 / +", "Zoom in / +");
     public string ZoomOut => L("缩小 / −", "Zoom out / −");
     public string ShowBones => L("显示 / 隐藏骨架", "Show / hide skeleton");
+    public string CameraAxisGizmo => L("相机 XYZ 轴向旋钮", "Camera XYZ orientation gizmo");
+    public string CameraAxisGizmoHelp => L("拖动旋转相机；点击彩色正轴或小圆点负轴端点切换视图；获得焦点后可按 X/Y/Z，Shift 为负轴。", "Drag to orbit; click a colored positive-axis or small negative-axis endpoint to snap the view. When focused, use X/Y/Z and hold Shift for the negative axis.");
     public string PreviewHelp => L("拖动旋转 · 滚轮缩放 · 方向键旋转 · 灰模预览，不含贴图", "Drag or arrow keys to orbit · wheel to zoom · clay preview, no textures");
     public string FirstPersonPreviewHelp => L("第一人称 90° FOV · Maya 摄像机 T(0,0,0)、R(90°,0°,-90°) · 按 1 返回环绕视角 · 灰模预览，不含贴图", "First person 90° FOV · Maya camera T(0,0,0), R(90°,0°,-90°) · press 1 for orbit · clay preview, no textures");
     public string TrackName => L("名称", "Name");
@@ -1105,9 +1125,8 @@ public sealed partial class UiText
     public string OutputUpAxis => L("输出向上轴", "Output up axis");
     public string KeepSceneAxis => L("保持原场景（不指定）", "Keep scene axis (unspecified)");
     public string OutputUpAxisHelp => L("未指定时保留输入的原始坐标（以手臂轴标记写出）；选择 Y/Z 时才按各文件轴标记整体转换。源文件不变。", "Unspecified preserves raw input coordinates and writes the arms axis marker; choosing Y/Z converts each file from its axis marker. Source files stay unchanged.");
-    public string FormatHelp => L("为当前项目选择目标管线和烘焙策略。", "Choose the target pipeline and bake strategy for this project.");
-    public string AnimationOnlyCast => L("仅输出合并动画 CAST", "Animation-only merged CAST");
-    public string AnimationOnlyHelp => L("只保留唯一的合并动画；导入或预览时需要匹配的骨架。", "Retains one merged animation; importing or previewing requires a matching skeleton.");
+    public string FormatHelp => L("动画使用所选格式；绑定模型使用对应模型格式（SEAnim 对应 SEModel）。", "Animations use the selected format; bound models use its model counterpart (SEAnim maps to SEModel).");
+    public string AnimationModelSeparationHelp => L("动画导出默认只写动画数据；合成预览始终使用含手臂和武器的独立场景。", "Animation export writes animation data only; composition preview always uses a separate scene containing the hands and weapon.");
     public string SelectiveBake => L("仅烘焙相关骨骼", "Bake relevant bones only");
     public string SelectiveBakeHelp => L("减小动画曲线数量；目标骨架必须与绑定姿势完全匹配。", "Reduces animation curves; the target skeleton must exactly match the bind pose.");
     public string OldCod => L("兼容旧版 Call of Duty", "Legacy Call of Duty compatibility");
@@ -1142,7 +1161,7 @@ public sealed partial class UiText
     public string ApplicationIcon => L("炼金之星应用图标", "Alchemy Stars application icon");
     public string AboutSubtitle => L("面向第一人称武器资产的 CAST 动画合并与 Maya 2025 工作流", "CAST animation merging and Maya 2025 workflow for first-person weapon assets");
     public string AboutOverview => L("炼金之星改进自 Scobalula/Alchemist。本测试版已将完整工作流迁移至 Avalonia，并通过 Native AOT 发布；WPF 版本在 .NET 11 正式版迁移前继续作为生产基线。", "Alchemy Stars improves Scobalula/Alchemist. This preview migrates the complete workflow to Avalonia and publishes with Native AOT; WPF remains the production baseline until the .NET 11 GA migration.");
-    public string Capabilities => L("支持基于骨架结构的模型部件自动识别、完整或仅动画 CAST、FBX、SMD、SEAnim、普通/叠加/手势动画层、左右手 IK、相关骨骼烘焙、DQS 蒙皮和旧版 .aprj。合成工作区通过 GPU 加速的 Skia 绘制预览平滑 CAST 灰模、骨架和逐帧动画；安全第一人称取景保持武器完整显示，动画层轨道按源文件真实帧数和偏移显示。", "Supports skeleton-based model-part detection, full-scene or animation-only CAST, FBX, SMD, SEAnim, normal/additive/gesture layers, IK, relevant-bone baking, DQS skinning and legacy .aprj files. The composition workspace uses GPU-backed Skia drawing for smooth CAST geometry, skeleton and frame preview; safe first-person framing keeps the weapon visible, while layer tracks reflect true source frame counts and offsets.");
+    public string Capabilities => L("支持基于骨架结构的模型部件自动识别、动画与绑定模型分离导出、CAST、FBX、SMD、SEAnim/SEModel、普通/叠加/手势动画层、左右手 IK、相关骨骼烘焙、DQS 蒙皮和旧版 .aprj。合成工作区通过 GPU 加速的 Skia 绘制预览平滑 CAST 灰模、骨架和逐帧动画；安全第一人称取景保持武器完整显示，动画层轨道按源文件真实帧数和偏移显示。", "Supports skeleton-based model-part detection, separate animation and bound-model export, CAST, FBX, SMD, SEAnim/SEModel, normal/additive/gesture layers, IK, relevant-bone baking, DQS skinning and legacy .aprj files. The composition workspace uses GPU-backed Skia drawing for smooth CAST geometry, skeleton and frame preview; safe first-person framing keeps the weapon visible, while layer tracks reflect true source frame counts and offsets.");
     public string Build => L("版本与环境", "Build and environment");
     public string ProjectRepositoryTitle => L("项目 GitHub", "Project GitHub");
     public string ProjectRepositoryHelp => L("源代码、问题反馈、版本记录与发布包均维护在项目仓库中。", "Source code, issue tracking, version history and release packages are maintained in the project repository.");

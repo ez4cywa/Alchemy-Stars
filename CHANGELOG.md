@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.3.0-preview.28 — 2026-09-12 (foregrip IK target and configurable output frame rate)
+## 1.3.0-preview.28 — 2026-09-13 (animation workflow, preview controls and bound-model export)
 
 Chinese release notes: [更新日志](docs/releases/1.3.0-preview.28.zh-CN.md).
 
@@ -9,6 +9,9 @@ Chinese release notes: [更新日志](docs/releases/1.3.0-preview.28.zh-CN.md).
 - Refresh timeline durations when the target frame rate changes, validate positive finite rates at export, restore invalid persisted values to 30 FPS, and cover 30/60 FPS output behavior in the Native AOT self-test.
 - Keep the product title centered against the visible workspace at the 900 × 600 minimum size and make Native AOT UI Automation tolerate cold-start attachment and unavailable external timeline fixtures.
 - Make the default Keep scene axis mode preserve raw model and animation coordinates even when third-party CAST metadata disagrees. Explicit Y/Z selections still convert from each file's declared axis. Fit the complete scene in the 90-degree first-person preview.
+- Make composition previews use the base animation's declared axis when Keep scene axis preserves raw coordinates, so incorrect arms metadata cannot turn the camera into a top view. Add a Blender-style XYZ camera gizmo with orbit dragging, clickable positive/negative axis endpoints and keyboard axis views.
+- Separate animation deliverables from preview/model scenes: CAST animation export now always writes animation-only data without a settings switch, while preview builds a private full-scene CAST so hands and weapon meshes remain visible.
+- Add Export bound model to Model Parts. It uses the production skeleton/skin merge, names output `<weapon>_model`, and follows the selected format as CAST, FBX, SMD or SEModel for SEAnim workflows. Blender FBX conversion now accepts model-only CAST packages.
 - Validate the supplied Hawk and Mike2011 assets: the foregrip wrist target stays within 0.01 units across the sampled jog, and both dual weapon roots stay exactly on their left/right mounts through idle, fire and reload.
 
 ## 1.3.0-preview.27 — 2026-09-12 (optional scene output-axis conversion)

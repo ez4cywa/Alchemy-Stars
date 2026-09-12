@@ -161,7 +161,7 @@ public sealed class DualWieldEngine
         foreach (var (clip, side) in new[] { (leftClip, "left/"), (rightClip, "right/") })
             if (clip.Actions is not null)
                 foreach (var action in clip.Actions) baked.CreateAction(side + action.Name, action.KeyFrames);
-        AnimationConverter.SaveBaked(finalPlan, baked, output, format, !preview && document.CastAnimationOnly);
+        AnimationConverter.SaveBaked(finalPlan, baked, output, format, !preview);
         if (modelOutput is not null) MayaCastPackage.SaveModel(modelOutput, finalPlan, AnimationConverter.TranslatorFactory);
         return new(output, count, skeleton.Bones.Count, unknown.Order().ToArray(), modelOutput);
 

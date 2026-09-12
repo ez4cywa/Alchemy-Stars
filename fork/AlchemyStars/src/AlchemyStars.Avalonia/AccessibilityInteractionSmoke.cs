@@ -69,6 +69,7 @@ internal static class AccessibilityInteractionSmoke
             var preview = window.GetVisualDescendants().OfType<CastPreviewView>().First(view => view.IsEffectivelyVisible);
             var toggle = preview.FindControl<ToggleButton>("BonesToggle")!;
             var viewport = preview.FindControl<Control>("Viewport")!;
+            var gizmo = preview.FindControl<CameraAxisGizmo>("AxisGizmo")!;
             var peer = ControlAutomationPeer.CreatePeerForElement(toggle)!;
             var before = vm.Preview.ShowBones;
             ((IToggleProvider)peer).Toggle();
@@ -78,6 +79,13 @@ internal static class AccessibilityInteractionSmoke
             Require(peer.GetName() == vm.Text.ShowBones && AutomationProperties.GetName(viewport) == vm.Text.PreviewViewport
                 && AutomationProperties.GetHelpText(viewport) == vm.Preview.InteractionHelp && viewport.FocusAdorner is not null,
                 "Preview name/help/focus indicator is missing.");
+            Require(gizmo.IsEffectivelyVisible && gizmo.Focus(NavigationMethod.Tab)
+                && AutomationProperties.GetName(gizmo) == vm.Text.CameraAxisGizmo
+                && AutomationProperties.GetHelpText(gizmo) == vm.Text.CameraAxisGizmoHelp,
+                "Camera axis gizmo is inaccessible.");
+            gizmo.RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyDownEvent, Key = Key.X });
+            Require(MathF.Abs(vm.Preview.CameraYaw) < 1e-5f && MathF.Abs(vm.Preview.CameraPitch) < 1e-5f,
+                "Camera axis gizmo keyboard view selection failed.");
         }
         finally { vm.Preview.Clear(); File.Delete(file); }
 
@@ -95,6 +103,27 @@ internal static class AccessibilityInteractionSmoke
         await Task.Delay(50);
         Require(!selectedExport.IsEffectivelyEnabled && !shortcut.Command.CanExecute(null), "Single export is enabled without a selection.");
         vm.Animations.Remove(selected);
+        vm.SelectPage(WorkspacePage.ModelParts);
+        await Task.Delay(50);
+        var modelExport = window.FindControl<Button>("ExportBoundModelButton")!;
+        var addedParts = new List<WorkspacePart>();
+        if (!vm.Parts.Any(part => part.Type == ModelPartKind.ViewHands))
+        {
+            var hands = new WorkspacePart { FilePath = "a11y-hands.cast", Type = ModelPartKind.ViewHands };
+            vm.Parts.Add(hands); addedParts.Add(hands);
+        }
+        if (!vm.Parts.Any(part => part.Type == ModelPartKind.Weapon))
+        {
+            var weapon = new WorkspacePart { FilePath = "a11y-weapon.cast", Type = ModelPartKind.Weapon };
+            vm.Parts.Add(weapon); addedParts.Add(weapon);
+        }
+        vm.SelectedPart = vm.Parts.Last();
+        await Task.Delay(50);
+        Require(modelExport.IsEffectivelyEnabled && AutomationProperties.GetName(modelExport) == vm.Text.ExportBoundModel
+            && AutomationProperties.GetHelpText(modelExport) == vm.Text.ExportBoundModelHelp,
+            "Bound-model export is not accessible from the model-parts workspace.");
+        foreach (var part in addedParts) vm.Parts.Remove(part);
+        vm.SelectedPart = vm.Parts.FirstOrDefault();
         vm.SelectPage(WorkspacePage.Settings);
         await Task.Delay(80);
         var axisCombo = window.FindControl<ComboBox>("OutputUpAxisCombo")!;
@@ -126,7 +155,7 @@ internal static class AccessibilityInteractionSmoke
                 global::Avalonia.Media.Imaging.PngBitmapEncoderOptions.Default);
         }
         vm.SelectPage(WorkspacePage.Animations);
-        Console.WriteLine("UI accessibility: modal Tab cycle, Escape/focus restore, background isolation, long-message scroll, help, preview toggle state and selected-export command PASS");
+        Console.WriteLine("UI accessibility: modal Tab cycle, Escape/focus restore, background isolation, long-message scroll, help, preview toggle/gizmo state, selected animation export and bound-model export PASS");
     }
 
     private static void Require(bool condition, string message)

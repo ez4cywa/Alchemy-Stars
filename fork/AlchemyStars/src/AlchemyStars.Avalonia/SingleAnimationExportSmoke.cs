@@ -71,6 +71,7 @@ internal static class SingleAnimationExportSmoke
         // Real engine seam: an invalid unselected task must not block the chosen CAST.
         var source = Path.Combine(folder, "source.cast");
         CastAxisSmoke.Write(source, "y");
+        CastAxisSmoke.AddGeometry(source);
         var real = new AnimationExportRequest([new(source, ModelPartKind.ViewHands)],
             [new(Path.Combine(folder, "missing.cast"), "other", folder),
              new(source, "chosen", folder, EnableLeftHandIk: false, EnableRightHandIk: false)],
@@ -89,9 +90,18 @@ internal static class SingleAnimationExportSmoke
         realVm.Animations.Add(realSelected);
         realVm.SelectedAnimation = realSelected;
         await realVm.ExportSelectedAnimationAsync();
-        Require(!realVm.DialogIsError && realVm.Preview.HasScene
-            && realVm.Preview.Source == Path.Combine(folder, "chosen-from-ui.cast")
-            && !File.Exists(Path.Combine(folder, "untouched.cast")), "Successful UI export did not preview the selected output.");
+        var outputChildren = Cast.NET.CastReader.Load(Path.Combine(folder, "chosen-from-ui.cast")).RootNodes.Single().Children;
+        for (var attempt = 0; attempt < 100 && realVm.Preview.FrameData is null; attempt++)
+            await Task.Delay(10);
+        Require(!realVm.DialogIsError, "Successful UI animation export reported an error.");
+        Require(realVm.Preview.HasScene && realVm.Preview.Source == Path.Combine(folder, "chosen-from-ui.cast"),
+            "Successful UI animation export did not load its independent preview scene.");
+        Require(realVm.Preview.FrameData is { TriangleCount: > 0 },
+            "Independent export preview did not render the model geometry.");
+        Require(outputChildren.OfType<Cast.NET.Nodes.ModelNode>().Count() == 0
+            && outputChildren.OfType<Cast.NET.Nodes.AnimationNode>().Count() == 1,
+            "Formal CAST animation output still contains model data.");
+        Require(!File.Exists(Path.Combine(folder, "untouched.cast")), "Selected export wrote an unselected animation.");
         Console.WriteLine("Single animation export: selected index, settings/layers, unified output, guards, all-export, protected workspace inputs and real CAST PASS");
     }
 

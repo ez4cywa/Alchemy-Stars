@@ -156,6 +156,42 @@ internal static class CastPreviewRenderer
         return Vector3.Clamp(rgb, Vector3.Zero, Vector3.One) * 255;
     }
 
+    internal static PreviewCamera SnapToAxis(PreviewCamera camera, string upAxis, char axis, bool positive)
+    {
+        var direction = char.ToLowerInvariant(axis) switch
+        {
+            'x' => Vector3.UnitX,
+            'y' => Vector3.UnitY,
+            'z' => Vector3.UnitZ,
+            _ => throw new ArgumentOutOfRangeException(nameof(axis)),
+        };
+        if (!positive) direction = -direction;
+        var zUpDirection = CastPreviewScene.ToZUp(direction, upAxis);
+        return camera with
+        {
+            Yaw = MathF.Atan2(zUpDirection.Y, zUpDirection.X),
+            Pitch = MathF.Asin(Math.Clamp(zUpDirection.Z, -1, 1)),
+            Mode = PreviewCameraMode.Orbit,
+        };
+    }
+
+    internal static (Vector3 Forward, Vector3 Right, Vector3 Up) ResolveOrbitBasis(string upAxis, PreviewCamera camera)
+    {
+        var eyeDirection = CastPreviewScene.FromZUp(new Vector3(
+            MathF.Cos(camera.Yaw) * MathF.Cos(camera.Pitch),
+            MathF.Sin(camera.Yaw) * MathF.Cos(camera.Pitch),
+            MathF.Sin(camera.Pitch)), upAxis);
+        var forward = Vector3.Normalize(-eyeDirection);
+        var worldUp = CastPreviewScene.FromZUp(Vector3.UnitZ, upAxis);
+        var right = Vector3.Cross(forward, worldUp);
+        if (right.LengthSquared() < 1e-8f)
+            right = Vector3.Cross(forward, CastPreviewScene.FromZUp(Vector3.UnitY, upAxis));
+        if (right.LengthSquared() < 1e-8f)
+            right = Vector3.Cross(forward, CastPreviewScene.FromZUp(Vector3.UnitX, upAxis));
+        right = Vector3.Normalize(right);
+        return (forward, right, Vector3.Normalize(Vector3.Cross(right, forward)));
+    }
+
     internal static PreviewView ResolveView(CastPreviewScene scene, int width, int height, PreviewCamera camera)
     {
         if (camera.Mode == PreviewCameraMode.FirstPerson)
@@ -180,14 +216,11 @@ internal static class CastPreviewRenderer
             return new PreviewView(Vector3.Zero, forward, right, up, focal, 0.1f, sceneOffset);
         }
 
-        var direction = scene.FromZUp(new Vector3(MathF.Cos(camera.Yaw) * MathF.Cos(camera.Pitch), MathF.Sin(camera.Yaw) * MathF.Cos(camera.Pitch), MathF.Sin(camera.Pitch)));
+        var (orbitForward, orbitRight, orbitUp) = ResolveOrbitBasis(scene.UpAxis, camera);
         var radius = camera.AllGeometry ? scene.AllRadius : scene.Radius;
         var center = camera.AllGeometry ? scene.AllCenter : scene.Center;
         var distance = radius * 3.2f / camera.Zoom;
-        var eye = center + direction * distance;
-        var orbitForward = Vector3.Normalize(center - eye);
-        var orbitRight = Vector3.Normalize(Vector3.Cross(orbitForward, scene.FromZUp(Vector3.UnitZ)));
-        var orbitUp = Vector3.Cross(orbitRight, orbitForward);
+        var eye = center - orbitForward * distance;
         return new PreviewView(eye, orbitForward, orbitRight, orbitUp, Math.Min(width, height) * 1.15f,
             Math.Max(0.001f, scene.Radius * 0.001f), Vector3.Zero);
     }

@@ -26,14 +26,48 @@ internal sealed class CastPreviewScene
     public bool UsesProjectSkeleton { get; private init; }
     public string UpAxis { get; private init; } = "z";
 
-    internal Vector3 FromZUp(Vector3 value) => UpAxis switch
+    internal Vector3 FromZUp(Vector3 value) => FromZUp(value, UpAxis);
+
+    internal static Vector3 FromZUp(Vector3 value, string upAxis) => upAxis switch
     {
         "y" => new(value.X, value.Z, -value.Y),
         "x" => new(value.Z, value.Y, -value.X),
         _ => value,
     };
 
-    public static CastPreviewScene Load(string path, IReadOnlyList<ModelPartSpec>? parts = null, bool legacy = false)
+    internal static Vector3 ToZUp(Vector3 value, string upAxis) => upAxis switch
+    {
+        "y" => new(value.X, -value.Z, value.Y),
+        "x" => new(-value.Z, value.Y, value.X),
+        _ => value,
+    };
+
+    internal static string? ResolvePreviewUpAxis(string? outputUpAxis, string? animationPath)
+    {
+        var selected = NormalizeUpAxis(outputUpAxis);
+        if (selected is not null) return selected;
+        if (string.IsNullOrWhiteSpace(animationPath) || !File.Exists(animationPath)) return null;
+        try
+        {
+            using var stream = File.OpenRead(animationPath);
+            var source = CastReader.Load(stream);
+            return NormalizeUpAxis(source.RootNodes.SelectMany(root => root.Children)
+                .OfType<MetadataNode>().FirstOrDefault()?.UpAxis);
+        }
+        catch (IOException) { return null; }
+        catch (UnauthorizedAccessException) { return null; }
+        catch (InvalidDataException) { return null; }
+    }
+
+    private static string? NormalizeUpAxis(string? value) => value?.Trim().ToLowerInvariant() switch
+    {
+        "x" => "x",
+        "y" => "y",
+        "z" => "z",
+        _ => null,
+    };
+
+    public static CastPreviewScene Load(string path, IReadOnlyList<ModelPartSpec>? parts = null, bool legacy = false, string? upAxisOverride = null)
     {
         if (!string.Equals(Path.GetExtension(path), ".cast", StringComparison.OrdinalIgnoreCase))
             throw new NotSupportedException("The preview reads CAST files only.");
@@ -74,8 +108,9 @@ internal sealed class CastPreviewScene
         {
             Skeletons = skeletons,
             UsesProjectSkeleton = usesProjectSkeleton,
-            UpAxis = cast.RootNodes.SelectMany(root => root.Children).OfType<MetadataNode>().FirstOrDefault()?.UpAxis?.Trim().ToLowerInvariant() switch
-            { "z" => "z", "x" => "x", _ => "y" },
+            UpAxis = NormalizeUpAxis(upAxisOverride)
+                ?? NormalizeUpAxis(cast.RootNodes.SelectMany(root => root.Children).OfType<MetadataNode>().FirstOrDefault()?.UpAxis)
+                ?? "y",
             FrameCount = Math.Max(1, (int)(animation?.GetAnimationFrameCount() ?? 1)),
             Framerate = animation is { Framerate: > 0 } ? animation.Framerate : 30,
         };

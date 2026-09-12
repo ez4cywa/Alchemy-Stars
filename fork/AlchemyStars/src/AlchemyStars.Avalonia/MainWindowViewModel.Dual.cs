@@ -115,7 +115,7 @@ public sealed partial class MainWindowViewModel
             if (destinationNames.Distinct(StringComparer.OrdinalIgnoreCase).Count() != destinationNames.Length)
                 throw new InvalidDataException(Text.DualDuplicateOutputs);
             var results = await Task.Run(() => tasks.Select(t => new DualWieldEngine().Export(snapshot, t, preview)).ToArray());
-            if (revision == dualRevision && ReferenceEquals(selection, SelectedDual) && (preview || (snapshot.OutputFormat == ".cast" && !snapshot.CastAnimationOnly)))
+            if (revision == dualRevision && ReferenceEquals(selection, SelectedDual) && preview)
             {
                 var result = results[all ? index : 0];
                 await Preview.LoadAsync(result.OutputFile, Text.PreviewSnapshot + " · " + selection.Name);
