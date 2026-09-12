@@ -1,4 +1,15 @@
-# RF adapter validation — 1.3.0-rf.5
+# RF adapter validation — 1.3.0-rf.6
+
+## RF.6 palm/web penetration and whole-hand seating
+
+- Red-capable actual-mesh test: `verify-ravenfield-palm.py --local-hand-fit --require-weapon-contact --require-pass` fails RF.5 with `VISIBLE_GRIP_GAP ... 24.300 mm`. Four palm points were insufficient: the web targets still followed the authored hand away from the weapon.
+- RF.6 captures all seven reference weapon material points, with inward 1.5 mm targets, and seats the entire left hand using the web contact displacement before local fitting. The arm is re-solved rather than translating a disconnected wrist. Idle seating is approximately 21.411 mm; measured seven-point nearest-weapon distances are 0.144–1.453 mm, target residual 0.324 mm. These are sample distances, not a full-surface collision claim; penetration is intentional.
+- All 563 actual source frames pass the unchanged 5 mm gate. Per-clip maxima: Idle 0.324 mm, Sprint 0.33 mm, Reload 2.183 mm, reload_empty 3.02 mm, Inspect 4.278 mm. Active source contact frames remain 1/1, 67/67, 26/91, 36/113 and 39/291 respectively, identical to RF.5. Release remains based on the original four palm samples, not the newly included web samples.
+- 22 backend contracts pass, including all-seven inward seating, rotation of the captured weapon surface, and untouched authored targets after release. Native AOT publish and bilingual 900 px RF live-UI checks pass.
+- Reports now include seven weapon-anchor distances and the whole-hand seating vector. The full library smoke caught and corrected an old four-point-only reporting assumption before release.
+- Final RF.6 Native export: all 564 clip frames pass; 604 timeline frames, 331 bones and 19 meshes pass independent FBX reimport. Maximum round-trip skin error is 2.033e-6 m, bone-head error 1.821e-6 m, matrix error 5.276e-6. Independent Actions match the Scene intervals. First-person reviews cover frames 1, 40, 110, 207, 247, 373, 425, 480 and 556; RF.5/RF.6 Idle comparisons use the same camera. Output: `output/rf6-qa/final`.
+
+The RF.5 results below are historical, not certification of RF.6 exports.
 
 ## RF.5 joint grip targets and reference weapon contact
 

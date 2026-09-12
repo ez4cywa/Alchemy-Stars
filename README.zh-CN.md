@@ -2,7 +2,7 @@
 
 # Alchemy Stars（炼金之星）
 
-> **RF 独立实验分支：** `EZ4/ravenfield-arms-adapter`，版本 `1.3.0-rf.5`，基于 Avalonia AOT preview.27（.NET 11 Preview 7、Avalonia 12.1.2）。可选局部握持拟合联合测量四个掌面点与三个虎口点，并支持左掌参考武器接触。源素材、原骨绑定/长度和枪位置不变。七点门槛针对配置后的拟合目标，不等于原始源手误差或全表面碰撞验收；Unity 尚未验证。正式版仍为 `main` 上的 v1.1.9。[RF 使用说明](docs/ravenfield-adapter.zh-CN.md)、[RF.5 发布说明](docs/releases/1.3.0-rf.5.zh-CN.md)。
+> **RF 独立实验分支：** `EZ4/ravenfield-arms-adapter`，版本 `1.3.0-rf.6`，基于 Avalonia AOT preview.27（.NET 11 Preview 7、Avalonia 12.1.2）。可选局部握持拟合让整只左手向武器靠拢，四掌面与三虎口目标共同深入表面 1.5 mm，允许穿模并保留离手动作。源素材、原骨绑定/长度和枪位置不变；Unity 尚未验证。正式版仍为 `main` 上的 v1.1.9。[RF 使用说明](docs/ravenfield-adapter.zh-CN.md)、[RF.6 发布说明](docs/releases/1.3.0-rf.6.zh-CN.md)。
 
 
 最新预览版：[preview.27 详细更新日志](docs/releases/1.3.0-preview.27.zh-CN.md)，默认保持原场景轴，也可为整个输出场景选择 Z-up/Y-up。包含混合输入轴、单动画导出与无障碍改进。
@@ -120,7 +120,7 @@ Alchemy Stars 保留原版批处理、动画层、IK 与 RedFox 转换管线，�
 
 `run-tests.ps1` 会编译稳定 WPF 基线并执行 Maya 转换回归。`verify-avalonia-aot.ps1` 会发布裁剪后的本机程序，执行 AOT 契约与标准工程导出，启动真实 Win32 窗口，通过 Windows UI Automation 检查控件名称、焦点和操作区，并在 900 × 600 最小尺寸渲染四个页面与居中对话框。
 
-项目约定每次功能性改动都迭代版本；本次独立 RF 测试版本为 `1.3.0-rf.5`，稳定版本仍为 `1.1.9`。
+项目约定每次功能性改动都迭代版本；本次独立 RF 测试版本为 `1.3.0-rf.6`，稳定版本仍为 `1.1.9`。
 
 1.1.9 的 UI 检查修正了 About 图标裁切、工具栏挤压、动画层路径过窄及部分控件对比度不足的问题。检查范围和验证边界见 [UI 检查记录](design-system/alchemy-stars/pages/ui-audit-1.1.9.md)。
 

@@ -246,8 +246,9 @@ def bake_sequence(rig, rf_meshes, cod, weapon_meshes, transform, factor, config,
                                                          maxWebControlShiftM=max(detail[s]['maxWebControlShiftM'] for s in ('left','right')))
                     support=detail['left']['weaponContact']
                     contact_summary['frames'][-1]['leftWeaponContactWeight']=support['weight']
+                    contact_summary['frames'][-1]['leftWholeHandSeatingM']=detail['left']['wholeHandSeatingM']
                     if support['active']:
-                        distances=np.linalg.norm(np.array(detail['left']['afterPointsM'][:4])-np.array(support['weaponAnchorPointsM']),axis=1)
+                        distances=np.linalg.norm(np.array(detail['left']['afterPointsM'])-np.array(support['weaponAnchorPointsM']),axis=1)
                         contact_summary['frames'][-1]['leftWeaponAnchorDistancesM']=distances.tolist()
                 contact_summary['maxBeforeErrorM'] = max(contact_summary['maxBeforeErrorM'],
                                                         *[detail[s]['beforeMaxErrorM'] for s in ('left', 'right')])

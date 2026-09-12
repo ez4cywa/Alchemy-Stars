@@ -289,6 +289,37 @@ class AdapterContracts(unittest.TestCase):
         np.testing.assert_array_equal(actual,points)
         self.assertEqual(detail['weight'],0)
 
+    def test_weapon_contact_seats_web_inside_and_keeps_authored_release(self):
+        import bpy
+        import numpy as np
+        from types import SimpleNamespace
+        from ravenfield_weapon_contact import SupportContacts
+        bpy.ops.wm.read_factory_settings(use_empty=True)
+        mesh=bpy.data.meshes.new('support-surface')
+        mesh.from_pydata([(-1,-1,0),(1,-1,0),(1,1,0),(-1,1,0)],[],[(0,1,2),(0,2,3)])
+        obj=bpy.data.objects.new('COD_Weapon_Test',mesh)
+        bpy.context.collection.objects.link(obj)
+        bpy.context.view_layer.update()
+        source=np.array([[x,0,.01] for x in (-.03,-.01,.01,.03)]+[[x,.02,.025] for x in (-.02,0,.02)])
+        support=SupportContacts(SimpleNamespace(points=lambda kind:{'le':source}),Matrix.Identity(4))
+        self.assertTrue(support.describe()['enabled'])
+        target,detail=support.targets(source)
+        np.testing.assert_allclose(target[:,2],-.0015,atol=1e-8)
+        self.assertEqual(detail['weight'],1)
+        moved=source+[0,0,.04]
+        target,detail=support.targets(moved)
+        np.testing.assert_array_equal(target,moved)
+        self.assertEqual(detail['weight'],0)
+        # Material triangles and their inward normal follow a rotated weapon.
+        obj.rotation_euler[1]=.7
+        bpy.context.view_layer.update()
+        matrix=np.asarray(obj.matrix_world)
+        rotated=source@matrix[:3,:3].T
+        target,detail=support.targets(rotated)
+        expected=source.copy(); expected[:,2]=-.0015
+        np.testing.assert_allclose(target,expected@matrix[:3,:3].T,atol=1e-7)
+        self.assertEqual(detail['weight'],1)
+
     def test_local_system_welds_seams_and_pins_exterior_and_non_hand(self):
         import numpy as np
         from ravenfield_shape import local_system

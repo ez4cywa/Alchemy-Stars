@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import bpy
 import numpy as np
-from mathutils import Matrix, Vector
+from mathutils import Matrix, Vector, Quaternion, Euler
 from mathutils.bvhtree import BVHTree
 from mathutils.geometry import barycentric_transform
 
@@ -35,6 +35,21 @@ class GripContactFitter(PalmContactFitter):
             baseline_web=self.web_samples.points('rf')
         detail = super().fit(pose,rest,config,report,continuity)
         if self.dynamic is not None:
+            # Seat the whole hand first, including the visible fingers/thenar
+            # outside the seven local controls. Re-solve the arm so wrist and
+            # elbow endpoints stay connected; local skin fitting only finishes
+            # the remaining shape mismatch. Released poses have zero seating.
+            source=self.dynamic.samples.points('source')['le']
+            supported,contact=self.dynamic.support_contacts.targets(source)
+            import math
+            user=Euler([math.radians(v) for v in config['left']['rotation']],'XYZ').to_quaternion()
+            seating=user@Vector((supported-source)[-3:].mean(axis=0))
+            if seating.length > .04: seating=seating.normalized()*.04
+            corrections={s:(Quaternion(detail[s]['rotationQuaternion']),Vector(detail[s]['shiftM'])) for s in ('left','right')}
+            corrections['left']=(corrections['left'][0],corrections['left'][1]+seating)
+            rf.fit_hands(self.target,pose,rest,config,report,continuity,corrections)
+            detail['left']['wholeHandSeatingM']=list(seating)
+            detail['left']['shiftM']=list(corrections['left'][1])
             web = self.dynamic.apply(pose,config)
             for side,setting in (('le','left'),('ri','right')):
                 item=detail[setting]
@@ -55,8 +70,8 @@ class GripContactFitter(PalmContactFitter):
                 item['beforeMaxErrorM']=float(np.linalg.norm(np.array(item['beforePointsM'])-np.array(item['sourcePointsM']),axis=1).max())
                 rf.require(item['maxErrorM']<=item['beforeMaxErrorM']+1e-5,f'{setting} local grip correction worsened the same-frame baseline')
             detail['passed']=all(detail[s]['passed'] for s in ('left','right'))
-            detail['method']='reference-bind-shape-joint-grip-controls-with-authored-release'
-        detail['scope'] = 'Four palm and three fixed web points; left support targets close reference weapon contacts, with authored release'
+            detail['method']='whole-hand-seating-and-joint-grip-controls-with-authored-release'
+        detail['scope'] = 'Four palm and three fixed web points; left hand seats into reference weapon contacts with permitted penetration and authored release'
         for side in ('left','right'):
             errors = np.linalg.norm(np.array(detail[side]['afterPointsM'])-np.array(detail[side]['sourcePointsM']),axis=1)
             detail[side]['webMaxErrorM'] = float(errors[-3:].max())
@@ -77,7 +92,8 @@ def prepare_grip(source,target,source_meshes,target_meshes,transform,pose,rest,c
     fitter.dynamic=DynamicWebCorrection(fitter)
     calibration['dynamicWeb']=fitter.dynamic.description
     calibration['leftSupportReference']=fitter.dynamic.support_contacts.describe()
-    calibration['contract']={'version':1,'targetToleranceM':.005,'maximumControlShiftM':.03,
+    calibration['contract']={'version':2,'targetToleranceM':.005,'maximumControlShiftM':.03,
+                             'maximumWholeHandSeatingM':.04,'weaponContactClearanceM':-.0015,
                              'preserveOriginalBones':True,'preservePerVertexInfluenceCounts':True}
     if not calibration['leftSupportReference']['enabled']:
         report.setdefault('warnings',[]).append('参考帧未建立左掌武器接触，请选择靠近武器的持枪姿势；仍执行手型拟合 / '

@@ -30,6 +30,7 @@ def main():
     parser.add_argument('--baseline-only', action='store_true', help='Measure the old wrist-only fit, without applying contact correction')
     parser.add_argument('--radial-probe', action='store_true', help='Diagnostic six-point palm coverage including the thenar side; not a validated web-space landmark')
     parser.add_argument('--local-hand-fit', action='store_true', help='Use the production local web-space fitting workflow')
+    parser.add_argument('--require-weapon-contact', action='store_true', help='Require the palm AND web region to close to the weapon in the holding reference')
     args = parser.parse_args(sys.argv[sys.argv.index('--')+1:])
     if args.radial_probe:
         import ravenfield_contact
@@ -96,6 +97,10 @@ def main():
             rf.require(abs(independent.max()-item['maxErrorM']) < 1e-9, 'Incorrect contact report maximum')
             rf.require(item['maxErrorM'] <= item['beforeMaxErrorM']+1e-5, 'Contact fit worsened the baseline')
         (output/'verification.json').write_text(json.dumps(detail, indent=2), encoding='utf-8')
+        if args.require_weapon_contact:
+            gap=max(detail['left']['afterWeaponGapM'])
+            print(f'LEFT_PALM_AND_WEB_WEAPON_GAP {gap*1000:.3f} mm')
+            rf.require(gap<=.005, f'VISIBLE_GRIP_GAP: palm/web region remains {gap*1000:.3f} mm from weapon')
         # Transform source roots once, for comparable editable inspection scenes.
         for obj in list(bpy.context.scene.objects):
             if obj == cod or (obj in source+weapons and obj.parent is None):

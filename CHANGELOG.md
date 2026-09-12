@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.0-rf.6 — Local experimental branch (palm/web penetration and whole-hand seating)
+
+- Fix the remaining 24.3 mm web-to-weapon gap: capture all seven contact targets 1.5 mm inside reference weapon triangles, not only four palm points outside the surface.
+- Seat the whole left hand toward the grip before local skin fitting; re-solve the arm to retain elbow/wrist connections. Keep authored release driven by the original four support samples.
+- Add a real-mesh weapon-contact regression and rotated-surface/release contracts. All 563 source frames retain the same 5 mm fit gate; penetration is deliberately allowed.
+
 ## 1.3.0-rf.5 — Local experimental branch (joint grip targets and reference weapon contact)
 
 - Jointly fit four palm and three web-space skin samples, projecting each local control to a 30 mm bound. The current seven-point regression passes all 563 original frames (564 output clip frames after repeating Idle), maximum 4.278 mm against the 5 mm gate.
