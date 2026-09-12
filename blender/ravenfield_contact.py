@@ -23,8 +23,8 @@ MAX_SHIFT_M = .04
 def contact_warning(detail):
     maximum = max(detail[side]['maxErrorM'] for side in ('left', 'right'))
     if maximum > TOLERANCE_M:
-        return (f'掌面贴合未达标：最大对应点误差 {maximum*1000:.2f} mm，目标 5 mm；请检查报告 / '
-                f'Palm fit exceeds tolerance: {maximum*1000:.2f} mm, target 5 mm; inspect report')
+        return (f'握持贴合未达标：最大对应点误差 {maximum*1000:.2f} mm，目标 5 mm；请检查报告 / '
+                f'Grip fit exceeds tolerance: {maximum*1000:.2f} mm, target 5 mm; inspect report')
     return None
 
 

@@ -10,6 +10,8 @@ public sealed class RavenfieldAdaptationOptions : ObservableModel
     private string referenceAnimationId = "";
     private string mode = "pose";
     private bool contactFit = true;
+    private bool localHandFit;
+    public bool LocalHandFit { get => localHandFit; set => SetProperty(ref localHandFit, value); }
     [JsonConverter(typeof(RavenfieldContactFitConverter))]
     public bool ContactFit { get => contactFit; set => SetProperty(ref contactFit, value); }
     public string Mode { get => mode; set => SetProperty(ref mode, value ?? "pose"); }

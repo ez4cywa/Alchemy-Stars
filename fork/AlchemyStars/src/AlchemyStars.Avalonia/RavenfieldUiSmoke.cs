@@ -29,6 +29,9 @@ internal static class RavenfieldUiSmoke
             var mode = view.FindControl<ComboBox>("RfMode")!;
             var help = view.FindControl<TextBlock>("RfModeHelp")!;
             var contact = view.FindControl<CheckBox>("RfContactFit")!;
+            var local = view.FindControl<CheckBox>("RfLocalHandFit")!;
+            contact.IsChecked = true;
+            local.IsChecked = true;
             foreach (var enabled in new[] { false, true })
             {
                 contact.IsChecked = enabled;
@@ -37,7 +40,22 @@ internal static class RavenfieldUiSmoke
                     || !Equals(contact.Content, vm.Text.RfContactFit)
                     || view.FindControl<TextBlock>("RfContactFitHelp")!.Text != vm.Text.RfContactFitHelp)
                     throw new InvalidOperationException("RF contact fit binding or localized label/help mismatch.");
+                if (local.IsEffectivelyEnabled != enabled || local.IsChecked != true || !vm.Workspace.Ravenfield.LocalHandFit)
+                    throw new InvalidOperationException("RF local fit prerequisite disabled state lost the saved preference.");
             }
+            if (local.Content is not TextBlock label || label.Text != vm.Text.RfLocalHandFit
+                || view.FindControl<TextBlock>("RfLocalHandFitHelp")!.Text != vm.Text.RfLocalHandFitHelp)
+                throw new InvalidOperationException("RF local fit localized label/help mismatch.");
+            view.FindControl<TextBlock>("RfLocalHandFitHelp")!.BringIntoView();
+            await Task.Delay(80);
+            window.UpdateLayout();
+            if (local.TranslatePoint(default, scroll) is { } localPosition)
+                scroll.Offset = new Vector(0, Math.Max(0, scroll.Offset.Y + localPosition.Y - 40));
+            await Task.Delay(50);
+            window.UpdateLayout();
+            if (local.Bounds.Width > view.Bounds.Width || label.Bounds.Width > view.Bounds.Width)
+                throw new InvalidOperationException("RF local fit label overflows the view.");
+            Save(window, Path.Combine(directory, "rf-900-" + (chinese ? "zh" : "en") + "-local-fit.png"));
             view.FindControl<TextBlock>("RfContactFitHelp")!.BringIntoView();
             await Task.Delay(80);
             window.UpdateLayout();
@@ -68,7 +86,7 @@ internal static class RavenfieldUiSmoke
             Save(window, Path.Combine(directory, "rf-900-" + (chinese ? "zh" : "en") + "-advanced.png"));
         }
         if (vm.IsChinese != originalLanguage) vm.ToggleLanguage();
-        Console.WriteLine("RF 900px UI: bilingual contact-fit binding/help and live mode switches, expanded layout, numeric widths, scale binding and bounds PASS");
+        Console.WriteLine("RF 900px UI: bilingual local/contact-fit bindings, prerequisite and preserved preference, mode switches, expanded layout and numeric bounds PASS");
     }
 
     private static async Task VerifyReferenceAsync(MainWindow window, MainWindowViewModel vm, RavenfieldView view)
@@ -86,6 +104,7 @@ internal static class RavenfieldUiSmoke
             workspace.Ravenfield.ReferenceAnimationId = workspace.Animations[1].Id;
             workspace.Ravenfield.Mode = "library";
             workspace.Ravenfield.ContactFit = false;
+            workspace.Ravenfield.LocalHandFit = true;
             var project = Path.Combine(temporary.FullName, "two-clips.aprj");
             store.Save(workspace, project);
             vm.LoadProject(project);
@@ -93,6 +112,7 @@ internal static class RavenfieldUiSmoke
             var combo = view.FindControl<ComboBox>("RfReference")!;
             var mode = view.FindControl<ComboBox>("RfMode")!;
             var contact = view.FindControl<CheckBox>("RfContactFit")!;
+            var local = view.FindControl<CheckBox>("RfLocalHandFit")!;
             async Task CheckSelected()
             {
                 await Task.Delay(80);
@@ -101,6 +121,8 @@ internal static class RavenfieldUiSmoke
                     throw new InvalidOperationException("RF saved mode was not restored or changed with language/normal selection.");
                 if (contact.IsChecked != false || vm.RavenfieldContactFit)
                     throw new InvalidOperationException("RF saved disabled contact fit was not restored.");
+                if (local.IsChecked != true || !vm.RavenfieldLocalHandFit || local.IsEffectivelyEnabled)
+                    throw new InvalidOperationException("RF saved local fit should remain checked and disabled while contact fit is off.");
                 if (!ReferenceEquals(combo.SelectedItem, vm.Animations[1]) || combo.SelectedIndex != 1
                     || !combo.GetVisualDescendants().OfType<TextBlock>().Any(t => t.Text == "weapon-fire" && t.IsEffectivelyVisible))
                     throw new InvalidOperationException("RF saved reference is not visibly selected in ComboBox: index=" + combo.SelectedIndex
@@ -115,18 +137,21 @@ internal static class RavenfieldUiSmoke
             await CheckSelected();
             var adapt = view.GetVisualDescendants().OfType<Button>().Single(b => Equals(b.Content, vm.Text.RfAdapt));
             if (!adapt.IsEffectivelyEnabled) throw new InvalidOperationException("Valid RF reference did not enable adaptation.");
+            contact.IsChecked = true;
+            await Task.Delay(50);
+            if (!local.IsEffectivelyEnabled) throw new InvalidOperationException("RF palm alignment did not enable local fit.");
             var runner = vm.RavenfieldRunner;
             var pending = new TaskCompletionSource<RavenfieldAdaptationResult>();
             vm.RavenfieldRunner = (_, index, options, _) =>
             {
-                if (index != 1 || options.Mode != "library" || options.ContactFit) throw new InvalidOperationException("RF UI lost library mode/reference/contact fit in export snapshot.");
+                if (index != 1 || options.Mode != "library" || !options.ContactFit || !options.LocalHandFit) throw new InvalidOperationException("RF UI lost mode/reference/fitting preferences in export snapshot.");
                 return pending.Task;
             };
             try
             {
                 var run = vm.AdaptRavenfieldAsync();
                 await Task.Delay(80);
-                if (!vm.IsBusy || mode.IsEffectivelyEnabled || contact.IsEffectivelyEnabled || adapt.IsEffectivelyEnabled || string.IsNullOrWhiteSpace(vm.BusyMessage))
+                if (!vm.IsBusy || mode.IsEffectivelyEnabled || contact.IsEffectivelyEnabled || local.IsEffectivelyEnabled || adapt.IsEffectivelyEnabled || string.IsNullOrWhiteSpace(vm.BusyMessage))
                     throw new InvalidOperationException("RF busy state did not disable inputs or provide feedback.");
                 pending.SetResult(new("result.blend", "result.fbx", "result.report.json", "result.preview.png", []));
                 await run;
@@ -145,11 +170,15 @@ internal static class RavenfieldUiSmoke
             await Task.Delay(80);
             if (contact.IsChecked != true || !vm.RavenfieldContactFit)
                 throw new InvalidOperationException("RF enabled contact fit did not survive save/reload in UI.");
+            if (local.IsChecked != true || !vm.RavenfieldLocalHandFit || !local.IsEffectivelyEnabled)
+                throw new InvalidOperationException("RF opted-in local fit did not survive save/reload in UI.");
             File.WriteAllText(project, "{\"Ravenfield\":{\"ContactFit\":null}}");
             vm.LoadProject(project);
             await Task.Delay(80);
             if (contact.IsChecked != true || !vm.RavenfieldContactFit)
                 throw new InvalidOperationException("RF null contact fit did not restore the enabled UI default.");
+            if (local.IsChecked != false || vm.RavenfieldLocalHandFit)
+                throw new InvalidOperationException("Old RF project enabled local reshaping without opt-in.");
             Console.WriteLine("RF live UI: contact-fit false/true/null persistence, saved non-idle reference/library mode, language switch, independent selection, busy/completion states and removal PASS");
         }
         finally

@@ -46,6 +46,9 @@ def validate_config(config):
     config.setdefault("mode", "pose")
     config.setdefault("contactFit", True)
     require(type(config['contactFit']) is bool, 'contactFit must be a boolean')
+    config.setdefault('localHandFit', False)
+    require(type(config['localHandFit']) is bool, 'localHandFit must be a boolean')
+    require(not config['localHandFit'] or config['contactFit'], 'localHandFit requires contactFit')
     require(config.get("sourceUnit", "cm") in UNIT_FACTORS, "Source unit must be cm, m or ft")
     config.setdefault("sourceUnit", "cm")
     frame = config.get("idleFrame", 0)
@@ -619,7 +622,11 @@ def main():
                 from ravenfield_contact import PalmContactFitter, contact_warning
                 source_meshes = [o for o in bpy.context.scene.objects if o.type == 'MESH'
                                  and o.name.startswith('COD_ReferenceHands_')]
-                contact = PalmContactFitter(cod, rf, source_meshes, rf_meshes, transform)
+                if config['localHandFit']:
+                    from ravenfield_shape import prepare_grip
+                    contact = prepare_grip(cod,rf,source_meshes,rf_meshes,transform,cod_pose,cod_rest,config,report)
+                else:
+                    contact = PalmContactFitter(cod, rf, source_meshes, rf_meshes, transform)
                 detail = contact.fit(cod_pose, cod_rest, config, report)
                 warning = contact_warning(detail)
                 if warning: report['warnings'].append(warning)

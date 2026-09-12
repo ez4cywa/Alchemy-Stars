@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.3.0-rf.4 — Local experimental branch (export-copy web-space fitting)
+
+- Add `LocalHandFit`, off by default and effective only with `ContactFit`; disabling palm alignment retains the saved local-fit preference.
+- Reshape only the exported local web-space mesh and add mirrored helper bones with redistributed local weights while preserving total weight. Original bone binds, lengths and finger roots, source assets and weapon placement remain unchanged.
+- Track three actual web-space samples plus four palm samples against the source hands, not the gun; bound dynamic helper correction to 30 mm.
+- Add the 113-frame `reload_empty` clip. Five-clip Scene ranges are Idle 1–2, Sprint 13–79, Reload 90–180, reload_empty 191–303 and Inspect 314–604.
+- Report remaining fit failures: Inspect has 49 web-space frames above 5 mm (maximum 9.864 mm); the other four clips meet the web-space threshold. Combined palm/web grip error still exceeds 5 mm in 317 of 564 clip frames. Generated files remain available with a grip-review title. Added helper-bone compatibility in Unity is not yet verified.
+
 ## 1.3.0-rf.3 — Local experimental branch (measured central-palm alignment)
 
 - Track four anatomical bind-surface samples by barycentrics, fit bounded palm corrections and measure actual skin rather than wrist positions alone.

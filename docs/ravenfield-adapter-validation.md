@@ -1,4 +1,18 @@
-# RF adapter validation — 1.3.0-rf.3
+# RF adapter validation — 1.3.0-rf.4
+
+## RF.4 local web-space fitting
+
+- `LocalHandFit` defaults to false. It is effective only with `ContactFit`; disabling contact fitting preserves the stored local-fit preference. Managed tests cover persistence/snapshots and all four combinations through the production fitting-config writer. Real 900px bilingual UI checks cover labels, layout, prerequisite disable and busy states.
+- Opt-in fitting changes only the exported local web-space mesh, adds mirrored helper bones and redistributes local weights while preserving total weight. Original finger roots are not moved; original bone binds/lengths, source models and weapon placement remain unchanged. Fixed-reference calibration is shared across clips, with dynamic helper correction capped at 30 mm.
+- Correspondence now uses three actual web-space points plus four palm points against the source hands, not nearest gun surfaces. This is a 5 mm correspondence gate, not a collision-free or absolute weapon-clearance certificate.
+- Five-clip Scene: Idle 1–2, Sprint 13–79, Reload 90–180, reload_empty 191–303 (113 frames), Inspect 314–604. There are 564 clip frames and 40 gap frames.
+- Current web-space results: Idle, Sprint, Reload and reload_empty stay within 5 mm. Inspect exceeds 5 mm in 49 frames, maximum 9.864 mm. Combined palm/web grip error exceeds 5 mm in 317 of 564 clip frames. Whole-animation grip acceptance therefore still fails; the generated files remain reviewable and the UI says “Files generated; grip fit needs review.”
+- Seventeen Blender contracts pass, including opt-in validation, bounded local controls, rotation equivariance, welded seams and the hand-only eligibility mask. Native AOT publish/self-test, 900×600 bilingual light/dark RF UI and the five-clip engine export pass. Run UI checks with `--page settings --rf-ui-smoke --window-size 900x600 --render-smoke <path>` so the settings visual tree is ready before interaction.
+- Independent fixed-triangle/barycentric first-web verification fails the RF.3 idle at 21.912 mm and passes the final RF.4 static pose at 0.01551 mm. Right web-to-weapon distances are 1.709/2.462/4.818 mm versus source 1.710/2.464/4.818 mm. The left web follows its source hand rather than being attracted to the weapon.
+- Final native-produced FBX passes independent reimport of all 604 frames, 157 bones and 19 meshes: maximum skin error 2.033e-6 m, bone-head error 1.470e-6 m and deformation-matrix error 4.143e-6. All five Actions match their Scene intervals with zero position/matrix/skin difference. Original 101 bind bones differ by at most 6.007e-8 m; aggregating helper weights back to their original parent differs by at most 3.253e-8, and total weight by 3.285e-8. These checks establish interchange fidelity and bind preservation, not full-grip acceptance.
+- Added helper-bone and redistributed-weight compatibility has not been validated in Unity/RFTools. The local Unity Editor license remains inactive. Existing Blender checks and earlier-version FBX round trips do not establish RF.4 Unity or game acceptance.
+
+The RF.3 and earlier records below are historical baselines; their sample counts and preservation claims describe those versions.
 
 ## RF.3 palm-fit addition
 

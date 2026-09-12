@@ -109,7 +109,7 @@ public sealed class RavenfieldAdaptationEngine
             {
                 json.WriteStartObject();
                 json.WriteString("mode", options.Mode);
-                json.WriteBoolean("contactFit", options.ContactFit);
+                WriteFittingConfiguration(json, options);
                 json.WriteString("clipName", request.Animations[animationIndex].OutputName);
                 json.WriteNumber("referenceClip", referenceClip);
                 json.WriteStartArray("clips");
@@ -168,6 +168,12 @@ public sealed class RavenfieldAdaptationEngine
         => report.TryGetProperty("palmContact", out var contact) && contact.ValueKind == JsonValueKind.Object
             && contact.TryGetProperty("passed", out var passed) && passed.ValueKind is JsonValueKind.True or JsonValueKind.False
             ? passed.GetBoolean() : null;
+
+    internal static void WriteFittingConfiguration(Utf8JsonWriter json, RavenfieldAdaptationOptions options)
+    {
+        json.WriteBoolean("contactFit", options.ContactFit);
+        json.WriteBoolean("localHandFit", options.ContactFit && options.LocalHandFit);
+    }
 
     // The internal move seam makes a mid-publication failure reproducible without Blender.
     // Backups live beside the final files, outside Adapt's disposable processing directory.

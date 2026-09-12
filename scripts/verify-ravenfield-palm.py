@@ -28,7 +28,12 @@ def main():
     parser.add_argument('--frame', type=int, default=0)
     parser.add_argument('--require-pass', action='store_true')
     parser.add_argument('--baseline-only', action='store_true', help='Measure the old wrist-only fit, without applying contact correction')
+    parser.add_argument('--radial-probe', action='store_true', help='Diagnostic six-point palm coverage including the thenar side; not a validated web-space landmark')
+    parser.add_argument('--local-hand-fit', action='store_true', help='Use the production local web-space fitting workflow')
     args = parser.parse_args(sys.argv[sys.argv.index('--')+1:])
+    if args.radial_probe:
+        import ravenfield_contact
+        ravenfield_contact.SAMPLES = ((-.25, .4), (0., .4), (.25, .4), (-.25, .7), (0., .7), (.25, .7))
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=True)
     rf.require(not any(p.resolve().is_relative_to(output) for p in (args.input, args.config, args.rf)),
@@ -49,6 +54,10 @@ def main():
         path, _ = rf.extract_rf_source(args.rf.resolve(), temporary)
         target, hands = rf.load_rf(path, config['handScale'])
         fitter = PalmContactFitter(cod, target, source, hands, transform)
+        if args.local_hand_fit:
+            from ravenfield_shape import prepare_grip
+            fitter=prepare_grip(cod,target,source,hands,transform,pose,rest,config,report)
+            (output/'shape.json').write_text(json.dumps(report['localHandFit'],indent=2),encoding='utf-8')
         rf.fit_hands(target, pose, rest, config, report)
         baseline = {b.name: b.matrix.copy() for b in target.pose.bones}
         if args.baseline_only:
@@ -59,6 +68,8 @@ def main():
                 rf.require(maximum <= TOLERANCE_M, f'PALM_CONTACT_FAIL {maximum*1000:.3f} mm exceeds 5 mm')
             return
         detail = fitter.fit(pose, rest, config, report)
+        if args.radial_probe:
+            detail['scope'] = 'Diagnostic six-point palm/thenar coverage; not a validated web-space landmark'
         corrected = {b.name: b.matrix.copy() for b in target.pose.bones}
         # User offsets remain a deliberate target change, not something the
         # automatic solver silently cancels to get a smaller error number.

@@ -183,7 +183,13 @@ def bake_sequence(rig, rf_meshes, cod, weapon_meshes, transform, factor, config,
     if config.get('contactFit', True):
         from ravenfield_contact import PalmContactFitter
         source_meshes = [o for o in scene.objects if o.type == 'MESH' and o.name.startswith('COD_ReferenceHands_')]
-        contact = PalmContactFitter(cod, rig, source_meshes, rf_meshes, transform)
+        if config.get('localHandFit',False):
+            from ravenfield_shape import prepare_grip
+            reference_pose = {n:transform@m for n,m in rf.armature_pose(cod).items()}
+            reference_rest = {n:transform@m for n,m in rf.armature_rest(cod).items()}
+            contact = prepare_grip(cod,rig,source_meshes,rf_meshes,transform,reference_pose,reference_rest,config,report)
+        else:
+            contact = PalmContactFitter(cod, rig, source_meshes, rf_meshes, transform)
     result, pairs, rf_names, remap = shared_output(rig, rf_meshes, cod, weapon_meshes, transform, factor, config)
     rest = {n: transform @ m for n, m in rf.armature_rest(cod).items()}
     result.animation_data_create()
@@ -210,7 +216,10 @@ def bake_sequence(rig, rf_meshes, cod, weapon_meshes, transform, factor, config,
         previous_source = None
         contact_summary = {'toleranceM': .005, 'framesExceeded': 0, 'maxErrorM': 0., 'maxBeforeErrorM': 0.,
                            'maxCorrectionStepDegrees': 0., 'maxCorrectionStepM': 0., 'frames': []}
+        if config.get('localHandFit',False):
+            contact_summary.update(webFramesExceeded=0,maxWebErrorM=0.,maxWebControlShiftM=0.,maxWebControlStepM=0.,webControlLimitedFrames=0)
         previous_corrections = {}
+        previous_web_controls = {}
         for frame in range(1, count + 1):
             scene.frame_set(frame)
             for bone in rig.pose.bones:
@@ -225,6 +234,16 @@ def bake_sequence(rig, rf_meshes, cod, weapon_meshes, transform, factor, config,
                 contact_summary['frames'].append({'frame': frame, 'leftErrorM': detail['left']['maxErrorM'],
                                                    'rightErrorM': detail['right']['maxErrorM'],
                                                    'maxBeforeErrorM': max(detail[s]['beforeMaxErrorM'] for s in ('left', 'right'))})
+                if config.get('localHandFit',False):
+                    web_error=max(detail[s]['webMaxErrorM'] for s in ('left','right'))
+                    contact_summary['webFramesExceeded']+=int(web_error>.005)
+                    contact_summary['webControlLimitedFrames']+=int(any(detail[s]['webCorrectionLimited'] for s in ('left','right')))
+                    contact_summary['maxWebControlShiftM']=max(contact_summary['maxWebControlShiftM'],*[detail[s]['maxWebControlShiftM'] for s in ('left','right')])
+                    if web_error>=contact_summary['maxWebErrorM']:
+                        contact_summary.update(maxWebErrorM=web_error,worstWebFrame=frame,worstWebFrameDetail=detail)
+                    contact_summary['frames'][-1].update(leftWebErrorM=detail['left']['webMaxErrorM'],rightWebErrorM=detail['right']['webMaxErrorM'],
+                                                         leftPalmErrorM=detail['left']['palmMaxErrorM'],rightPalmErrorM=detail['right']['palmMaxErrorM'],
+                                                         maxWebControlShiftM=max(detail[s]['maxWebControlShiftM'] for s in ('left','right')))
                 contact_summary['maxBeforeErrorM'] = max(contact_summary['maxBeforeErrorM'],
                                                         *[detail[s]['beforeMaxErrorM'] for s in ('left', 'right')])
                 if error >= contact_summary['maxErrorM']:
@@ -235,6 +254,12 @@ def bake_sequence(rig, rf_meshes, cod, weapon_meshes, transform, factor, config,
                                       cod_pose[f'j_pinky_{cod_side}_1'].translation)
                     local_shift = q.inverted() @ Vector(detail[side]['shiftM'])
                     local_rotation = q.inverted() @ Quaternion(detail[side]['rotationQuaternion']) @ q
+                    if config.get('localHandFit',False):
+                        controls=np.array([q.inverted()@Vector(v) for v in detail[side]['webControlShiftsM']])
+                        if side in previous_web_controls:
+                            step=float(np.linalg.norm(controls-previous_web_controls[side],axis=1).max())
+                            contact_summary['maxWebControlStepM']=max(contact_summary['maxWebControlStepM'],step)
+                        previous_web_controls[side]=controls
                     if side in previous_corrections:
                         last_shift, last_rotation = previous_corrections[side]
                         contact_summary['maxCorrectionStepM'] = max(contact_summary['maxCorrectionStepM'],
@@ -285,7 +310,7 @@ def bake_sequence(rig, rf_meshes, cod, weapon_meshes, transform, factor, config,
         if contact:
             clip['palmContact'] = contact_summary
             if contact_summary['framesExceeded']:
-                report['warnings'].append(f"{definition['name']}: 掌面贴合未达标 / Palm fit exceeds 5 mm in "
+                report['warnings'].append(f"{definition['name']}: 握持贴合未达标 / Grip fit exceeds 5 mm in "
                                           f"{contact_summary['framesExceeded']} frames; maximum "
                                           f"{contact_summary['maxErrorM']*1000:.2f} mm at local frame {contact_summary['worstFrame']}")
         actions.append(action)
@@ -297,6 +322,12 @@ def bake_sequence(rig, rf_meshes, cod, weapon_meshes, transform, factor, config,
                                  'framesExceeded': sum(c['palmContact']['framesExceeded'] for c in clips),
                                  'maxErrorM': max(c['palmContact']['maxErrorM'] for c in clips),
                                  'scope': 'Four central/ulnar palm samples; not fingers, thenar or collision-free geometry'}
+        if config.get('localHandFit',False):
+            report['palmContact']['scope']='Four central/ulnar palm points and three fixed first-web saddle points; not all-surface collision'
+            report['palmContact'].update(method='reference-bind-shape-and-local-web-skin-controls',
+                                         webPassed=all(c['palmContact']['webFramesExceeded']==0 for c in clips),
+                                         webFramesExceeded=sum(c['palmContact']['webFramesExceeded'] for c in clips),
+                                         maxWebErrorM=max(c['palmContact']['maxWebErrorM'] for c in clips))
     keep_actions = {*actions, timeline}
     keep_objects = {result, *[mesh for _, mesh, _ in pairs]}
     for obj in list(scene.objects):

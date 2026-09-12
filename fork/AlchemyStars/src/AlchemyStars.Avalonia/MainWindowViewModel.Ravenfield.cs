@@ -9,6 +9,11 @@ public sealed partial class MainWindowViewModel
     public IReadOnlyList<string> RavenfieldUnits { get; } = ["cm", "ft", "m"];
     public IReadOnlyList<string> RavenfieldUntaggedAxes { get; } = ["hands", "x", "y", "z"];
     public bool HasRavenfieldResult => ravenfieldResult is not null;
+    public bool RavenfieldLocalHandFit
+    {
+        get => Workspace.Ravenfield.LocalHandFit;
+        set => Workspace.Ravenfield.LocalHandFit = value;
+    }
     public bool RavenfieldContactFit
     {
         get => Workspace.Ravenfield.ContactFit;
@@ -58,12 +63,14 @@ public sealed partial class MainWindowViewModel
         if (e.PropertyName == nameof(RavenfieldAdaptationOptions.ReferenceAnimationId)) RaiseRavenfieldReference();
         if (e.PropertyName == nameof(RavenfieldAdaptationOptions.Mode)) RaiseRavenfieldMode();
         if (e.PropertyName == nameof(RavenfieldAdaptationOptions.ContactFit)) OnPropertyChanged(nameof(RavenfieldContactFit));
+        if (e.PropertyName == nameof(RavenfieldAdaptationOptions.LocalHandFit)) OnPropertyChanged(nameof(RavenfieldLocalHandFit));
     }
     private void RavenfieldAnimationsChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e) => RaiseRavenfieldReference();
     private void RaiseRavenfieldReference()
     {
         RaiseRavenfieldMode();
         OnPropertyChanged(nameof(RavenfieldContactFit));
+        OnPropertyChanged(nameof(RavenfieldLocalHandFit));
         OnPropertyChanged(nameof(SelectedRavenfieldAnimation));
         OnPropertyChanged(nameof(HasRavenfieldReference));
     }

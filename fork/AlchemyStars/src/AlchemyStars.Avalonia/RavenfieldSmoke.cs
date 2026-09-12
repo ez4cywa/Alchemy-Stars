@@ -32,6 +32,8 @@ internal static class RavenfieldSmoke
         File.WriteAllText(rf, "validation fixture");
         var doc = new WorkspaceDocument();
         Require(doc.Ravenfield.ContactFit, "New RF workspace did not enable contact fit.");
+        Require(!doc.Ravenfield.LocalHandFit, "New RF workspace enabled local reshaping without opt-in.");
+        doc.Ravenfield.LocalHandFit = true;
         doc.Ravenfield.ContactFit = false;
         doc.Ravenfield.RfSourcePath = rf;
         doc.Ravenfield.IdleFrame = 7;
@@ -49,6 +51,24 @@ internal static class RavenfieldSmoke
         store.Save(doc, project);
         var loaded = store.Load(project);
         Require(!loaded.Ravenfield.ContactFit && !WorkspaceProjectStore.Snapshot(loaded).Ravenfield.ContactFit, "Disabled contact fit was lost on save/load/snapshot.");
+        Require(loaded.Ravenfield.LocalHandFit && WorkspaceProjectStore.Snapshot(loaded).Ravenfield.LocalHandFit, "Local hand-fit preference was lost on save/load/snapshot with contact fit disabled.");
+        foreach (var contact in new[] { false, true })
+        foreach (var local in new[] { false, true })
+        {
+            loaded.Ravenfield.ContactFit = contact;
+            loaded.Ravenfield.LocalHandFit = local;
+            using var stream = new MemoryStream();
+            using (var writer = new System.Text.Json.Utf8JsonWriter(stream))
+            {
+                writer.WriteStartObject();
+                RavenfieldAdaptationEngine.WriteFittingConfiguration(writer, loaded.Ravenfield);
+                writer.WriteEndObject();
+            }
+            using var config = System.Text.Json.JsonDocument.Parse(stream.ToArray());
+            Require(config.RootElement.GetProperty("contactFit").GetBoolean() == contact
+                && config.RootElement.GetProperty("localHandFit").GetBoolean() == (contact && local)
+                && loaded.Ravenfield.LocalHandFit == local, "Exported RF fitting config lost the prerequisite or changed the saved preference.");
+        }
         loaded.Ravenfield.ContactFit = true;
         store.Save(loaded, project);
         loaded = store.Load(project);
@@ -110,7 +130,7 @@ internal static class RavenfieldSmoke
             File.WriteAllText(nullableProject, json);
             var empty = store.Load(nullableProject);
             Require(empty.Ravenfield is not null && empty.Ravenfield.Left is not null && empty.Ravenfield.Right is not null
-                && empty.Ravenfield.SourceUnit == "cm" && empty.Ravenfield.Mode == "pose" && empty.Ravenfield.ContactFit, "Old/nullable RF project did not normalize.");
+                && empty.Ravenfield.SourceUnit == "cm" && empty.Ravenfield.Mode == "pose" && empty.Ravenfield.ContactFit && !empty.Ravenfield.LocalHandFit, "Old/nullable RF project did not normalize.");
         }
         TestPublication(folder);
         foreach (var (json, expected) in new (string, bool?)[] {

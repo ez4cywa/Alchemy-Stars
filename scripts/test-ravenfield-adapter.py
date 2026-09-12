@@ -210,6 +210,54 @@ class AdapterContracts(unittest.TestCase):
         self.assertEqual(curve.evaluate(15), 102)
         self.assertEqual(tuple(actions[1].frame_range), (1, 3))
 
+    def test_local_hand_fit_is_opt_in_and_requires_palm_fit(self):
+        config = self.config()
+        adapter.validate_config(config)
+        self.assertFalse(config['localHandFit'])
+        for value in ('yes', 1, None):
+            config = self.config() | {'localHandFit': value}
+            with self.assertRaises(ValueError): adapter.validate_config(config)
+        with self.assertRaises(ValueError):
+            adapter.validate_config(self.config() | {'localHandFit': True, 'contactFit': False})
+
+    def test_web_control_exact_small_moves_zero_and_hard_limit(self):
+        import numpy as np
+        from ravenfield_shape import bounded_control_offsets
+        a = np.array([[.7, .1, .1, .1], [.1, .7, .1, .1], [.1, .1, .7, .1]])
+        for desired in (np.zeros((3, 3)), np.eye(3)*.003):
+            offsets, limited = bounded_control_offsets(a, desired)
+            self.assertFalse(limited)
+            np.testing.assert_allclose(a@offsets, desired, atol=1e-9)
+        desired = np.eye(3)*.1
+        offsets, limited = bounded_control_offsets(a, desired)
+        self.assertTrue(limited)
+        self.assertLessEqual(np.linalg.norm(offsets, axis=1).max(), .030000001)
+        self.assertLess(np.linalg.norm(a@offsets-desired, axis=1).max(), .1)
+        for bad in (np.zeros((3, 4)), np.full((3, 4), np.nan), np.ones((2, 4))):
+            with self.assertRaises(ValueError): bounded_control_offsets(bad, desired)
+
+    def test_web_control_equivariant_to_world_rotation(self):
+        import numpy as np
+        from ravenfield_shape import bounded_control_offsets
+        a = np.array([[.7, .1, .1, .1], [.1, .7, .1, .1], [.1, .1, .7, .1]])
+        wanted = np.eye(3)*.05
+        rotation = np.array(Matrix.Rotation(.72, 3, 'Y'))
+        first, _ = bounded_control_offsets(a, wanted)
+        second, _ = bounded_control_offsets(a, wanted@rotation.T)
+        np.testing.assert_allclose(second, first@rotation.T, atol=1e-8)
+
+    def test_local_system_welds_seams_and_pins_exterior_and_non_hand(self):
+        import numpy as np
+        from ravenfield_shape import local_system
+        points = np.array([[0, 0, 0], [.01, 0, 0], [0, .01, 0], [0, 0, 0], [1, 0, 0]])
+        _, weld, active, lookup, h = local_system(points, [(0, 1, 2), (3, 2, 4)], [0, 0, 0], .05,
+                                                 [True, False, True, True, True])
+        self.assertEqual(weld[0], weld[3])
+        self.assertNotIn(int(weld[1]), lookup)
+        self.assertNotIn(int(weld[4]), lookup)
+        self.assertEqual(len(active), 2)
+        self.assertGreater(np.linalg.eigvalsh(h).min(), 0)
+
 
 if __name__ == "__main__":
     suite = unittest.defaultTestLoader.loadTestsFromTestCase(AdapterContracts)

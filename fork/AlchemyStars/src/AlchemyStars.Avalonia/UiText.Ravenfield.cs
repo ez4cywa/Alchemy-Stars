@@ -6,6 +6,8 @@ public sealed partial class UiText
     public string RfHelp => L("选择 RF 手臂与参考动画，使用已求值的动画层、手部姿势与 IK。生成 .blend、FBX、预览图和报告。", "Choose RF hands and a reference clip, using evaluated layers, hand poses and IK. Generates .blend, FBX, preview and report.");
     public string RfMode => L("输出模式", "Output mode");
     public string RfContactFit => L("自动对齐主掌面", "Align central palm surfaces");
+    public string RfLocalHandFit => L("局部虎口拟合（修改导出手型）", "Local web-space fit (reshape exported hands)");
+    public string RfLocalHandFitHelp => L("需开启主掌面对齐。仅修改导出副本的局部虎口网格，新增镜像辅助骨并重分配局部权重（总权重保持）；参考帧校准后用于全部动画。原指根、骨头绑定与长度、源素材及枪位置不变。不保证全程贴合或无穿模。", "Requires palm alignment. Reshapes the exported web-space mesh using mirrored helper bones and redistributed local weights, preserving total weight. Reference-frame calibration applies to all clips. Original finger roots, bone binds/lengths, source assets and weapon placement stay unchanged. Full-sequence fit and collision-free results are not guaranteed.");
     public string RfContactFitHelp => L("比较源手臂与 RF 手臂的稳定掌面点进行对齐，仍可使用手动微调。不保证手指贴合或无穿模；误差超过 5 mm 会在报告中提示。", "Aligns stable palm points on the source and RF hands; manual adjustments remain available. Finger contact and collision-free results are not guaranteed. Errors over 5 mm are reported.");
     public string RfPose => L("静态姿势", "Static pose");
     public string RfAnimation => L("完整动画", "Full animation");
@@ -33,7 +35,7 @@ public sealed partial class UiText
     public string RfAdapt => L("生成 RF 结果", "Generate RF output");
     public string RfWorking => L("正在适配 RF 手臂并生成预览…", "Adapting RF hands and rendering preview…");
     public string RfComplete => L("RF 手臂适配完成", "RF hands adaptation complete");
-    public string RfPalmFitReview => L("文件已生成，掌面贴合需检查", "Files generated; palm fit needs review");
+    public string RfPalmFitReview => L("文件已生成，握持贴合需检查", "Files generated; grip fit needs review");
     public string RfOpenBlend => L("打开结果 .blend", "Open result .blend");
     public string RfOpenPreview => L("打开预览图", "Open preview image");
     public string RfOpenFailed => L("结果不存在或无法打开。", "The result is missing or could not be opened.");
