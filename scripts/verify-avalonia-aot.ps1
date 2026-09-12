@@ -7,7 +7,7 @@ $ErrorActionPreference = 'Stop'
 $repositoryRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
 $project = Join-Path $repositoryRoot 'fork\AlchemyStars\src\AlchemyStars.Avalonia\AlchemyStars.Avalonia.csproj'
 $outputRoot = [System.IO.Path]::GetFullPath((Join-Path $repositoryRoot 'output'))
-$publishDirectory = [System.IO.Path]::GetFullPath((Join-Path $outputRoot 'avalonia-aot-preview25'))
+$publishDirectory = [System.IO.Path]::GetFullPath((Join-Path $outputRoot 'avalonia-aot-preview27'))
 $bundledDotnet = Join-Path $repositoryRoot 'output\dotnet-sdk\dotnet.exe'
 $dotnet = if (Test-Path -LiteralPath $bundledDotnet) { $bundledDotnet } else { 'dotnet' }
 function Assert-OutputChild([string]$Path) {

@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.3.0-preview.27 — 2026-09-12 (optional scene output-axis conversion)
+
+Chinese release notes: [更新日志](docs/releases/1.3.0-preview.27.zh-CN.md). Includes the internal preview.26 changes below.
+
+- Add Keep scene axis as the unspecified/default output choice. Resolve the scene basis from the primary model (arms first), keep existing explicit Y/Z choices, and persist the option in projects/defaults.
+- Keep original scene coordinates without an additional output-axis rotation; align mixed inputs to the primary scene basis. Apply consistently to selected/full exports, dual animations, companion models and previews.
+- Preserve X-up scenes in CAST and Blender FBX, and clarify Maya's Y/Z output limitation. Add unchanged-coordinate, mixed-order, dual, persistence and bilingual control regressions.
+
+## 1.3.0-preview.26 — Internal revision included in preview.27 (selectable output up axis)
+
+- Accept mixed X/Y/Z model inputs and normalize their bind transforms, mesh positions/directions and animation tracks in memory. Missing/unknown input metadata uses Y-up; inputs are never modified.
+- Add project/default-persisted Z-up (default) or Y-up output selection for normal/selected exports, previews, dual animations and companion models. Write the axis into animation-only CAST too.
+- Adapt preview cameras to file axes and cover both output choices, mixed models, quaternions, geometry, dual world motion, serialization and settings bindings.
+
 ## 1.3.0-preview.25 — 2026-09-11 (selected animation export and keyboard accessibility)
 
 Chinese release notes: [更新日志](docs/releases/1.3.0-preview.25.zh-CN.md).

@@ -61,7 +61,8 @@ public sealed record AnimationExportOptions(
     string OutputSuffix = "",
     bool CastAnimationOnly = false,
     bool BakeRelevantBonesOnly = false,
-    bool MatchOldCallOfDuty = false);
+    bool MatchOldCallOfDuty = false,
+    string OutputUpAxis = "source");
 
 public sealed record AnimationExportRequest(
     IReadOnlyList<ModelPartSpec> Parts,

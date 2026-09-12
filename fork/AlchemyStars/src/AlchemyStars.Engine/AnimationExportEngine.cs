@@ -11,11 +11,11 @@ namespace AlchemyStars.Engine;
 
 public sealed class AnimationExportEngine : IAnimationExportEngine
 {
-    public const string EngineVersion = "1.3.0-preview.25";
+    public const string EngineVersion = "1.3.0-preview.27";
 
     /// <summary>Creates an independent bind skeleton for previewing animation-only CAST data.</summary>
-    public static RedFox.Graphics3D.Skeletal.Skeleton CreatePreviewSkeleton(IReadOnlyList<ModelPartSpec> parts, bool legacy) =>
-        UiSkeletonMergePlan.Build(parts.Select(ToCompatibilityPart), legacy).Skeleton;
+    public static RedFox.Graphics3D.Skeletal.Skeleton CreatePreviewSkeleton(IReadOnlyList<ModelPartSpec> parts, bool legacy, string outputAxis = "source") =>
+        UiSkeletonMergePlan.Build(parts.Select(ToCompatibilityPart), legacy, outputAxis: outputAxis).Skeleton;
 
     public EngineCapabilities Capabilities { get; } = new(
         EngineVersion,
@@ -42,7 +42,7 @@ public sealed class AnimationExportEngine : IAnimationExportEngine
         Validate(request);
 
         var parts = request.Parts.Select(ToCompatibilityPart).ToArray();
-        var mergePlan = UiSkeletonMergePlan.Build(parts, request.Options.MatchOldCallOfDuty);
+        var mergePlan = UiSkeletonMergePlan.Build(parts, request.Options.MatchOldCallOfDuty, outputAxis: request.Options.OutputUpAxis);
         var outputs = new List<string>(request.Animations.Count);
 
         foreach (var job in request.Animations)

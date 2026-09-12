@@ -2,7 +2,7 @@
 
 # Alchemy Stars Avalonia preview quick guide
 
-This guide applies to `1.3.0-preview.25`. WPF v1.1.9 remains the supported release until .NET 11 GA.
+This guide applies to `1.3.0-preview.27`. WPF v1.1.9 remains the supported release until .NET 11 GA.
 
 The sidebar switches between Animation blend, Model parts, Dual merge, Settings and About. It shows icons and labels at normal widths and collapses to icons in narrow windows. The base-animation library sits on the left, a real CAST preview in the center, composition layers across the bottom, and collapsible properties on the right. Drag the dividers or focus them and use arrow keys to resize panels. Icon commands have localized tooltips and UI Automation names; the titlebar displays the current page, with window controls at the upper right.
 
@@ -24,13 +24,17 @@ Select an animation and choose **Export selected** or press `Ctrl+Shift+E` to ex
 
 Dialogs isolate the workspace and cycle `Tab` / `Shift+Tab` internally. Focus the message reader to use arrow keys or `Page Up` / `Page Down`; `Esc` closes the dialog and restores the previous focus. Dialog text and preview instructions are exposed to assistive technology. Show bones is a semantic toggle synchronized with the `B` key.
 
-## FBX up axis
+## Output up axis
 
-Full-model CAST packages and FBX exports retain the source model metadata's Y-up or Z-up axis. Missing metadata uses a fresh Maya scene's Y-up convention; it cannot reveal the asset's intended orientation. Model parts with different or unsupported axes are rejected before merging; normalize their coordinate systems first.
+Choose **Keep scene axis (unspecified, default)**, **Z-up** or **Y-up** in Settings → Output format → Output up axis. This controls the whole exported scene, not individual parts. It is persisted in the project and can be saved as the default for new projects. Existing explicit Y/Z selections remain unchanged.
 
-The Blender bridge converts the complete model/armature scene into Blender's basis, then explicitly exports the source axis. The Maya bridge explicitly sets both scene and export axes. Numeric units follow Maya's default centimetres. Maya automatically adapts imported FBX to its current scene axis, so use the same scene axis when comparing against a direct CAST import. Animation-only CAST output is unchanged by this fix.
+Keep scene axis follows the primary model: arms first, otherwise the first model in merge order. No extra output-axis rotation is applied; mixed inputs are still aligned to that scene basis. Full/selected exports, previews, dual animations and companion models share this rule.
 
-Developer regression: `mayapy scripts/verify-fbx-axis.py --blender <blender.exe>` checks FBX axis metadata and compares animated joint world matrices and skinned vertices against direct CAST import in Maya for both backends.
+Inputs may mix X/Y/Z-up without rejection. Before merging, bone translations/rotations/scale axes, mesh positions, normals and tangents are converted in memory; base animations, layers and hand poses use the same target basis. Missing/unknown metadata uses Y-up and cannot reveal an asset's intended orientation. Source files are never rewritten.
+
+Model CAST, animation-only CAST and FBX carry the resolved output axis explicitly. SMD/SEAnim numbers follow the same rule without a matching scene-axis field. The Blender/Maya bridges retain centimetre units and the preview camera follows the file axis. Preserving an X-up FBX requires Blender; the Maya backend supports explicit Y/Z-up output.
+
+Developer regression: `AlchemyStars.Avalonia.exe --axis-smoke <test-output-directory> --fbx`. The backend round-trip check remains `mayapy scripts/verify-fbx-axis.py --blender <blender.exe>`.
 
 ## Utilities: remember an arms model
 

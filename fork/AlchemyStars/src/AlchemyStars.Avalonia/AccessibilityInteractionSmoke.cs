@@ -95,6 +95,37 @@ internal static class AccessibilityInteractionSmoke
         await Task.Delay(50);
         Require(!selectedExport.IsEffectivelyEnabled && !shortcut.Command.CanExecute(null), "Single export is enabled without a selection.");
         vm.Animations.Remove(selected);
+        vm.SelectPage(WorkspacePage.Settings);
+        await Task.Delay(80);
+        var axisCombo = window.FindControl<ComboBox>("OutputUpAxisCombo")!;
+        var originalAxis = vm.OutputUpAxisIndex;
+        Require(axisCombo.IsEffectivelyVisible && axisCombo.Focus(NavigationMethod.Tab)
+            && AutomationProperties.GetName(axisCombo) == vm.Text.OutputUpAxis
+            && AutomationProperties.GetHelpText(axisCombo) == vm.Text.OutputUpAxisHelp, "Output axis control is inaccessible.");
+        foreach (var index in new[] { 2, 1, 0 })
+        {
+            axisCombo.SelectedIndex = index;
+            await Task.Delay(40);
+            Require(vm.OutputUpAxisIndex == index && vm.Workspace.OutputUpAxis == (index switch { 1 => "z", 2 => "y", _ => "source" }),
+                "Output axis selection did not update the export document.");
+        }
+        Require(axisCombo.Items[0]!.ToString() == vm.Text.KeepSceneAxis, "Keep-scene option is not localized.");
+        vm.ToggleLanguage();
+        await Task.Delay(50);
+        Require(vm.OutputUpAxisIndex == 0 && axisCombo.SelectedIndex == 0 && axisCombo.Items[0]!.ToString() == vm.Text.KeepSceneAxis,
+            "Changing language changed or lost the keep-scene selection.");
+        vm.ToggleLanguage();
+        await Task.Delay(50);
+        vm.OutputUpAxisIndex = originalAxis;
+        if (Program.RenderSmokePath is { } settingsImage)
+        {
+            using var bitmap = new global::Avalonia.Media.Imaging.RenderTargetBitmap(
+                new global::Avalonia.PixelSize((int)window.Width, (int)window.Height));
+            bitmap.Render(window);
+            bitmap.Save(Path.Combine(Path.GetDirectoryName(settingsImage)!, $"axis-settings-{(vm.IsChinese ? "zh" : "en")}.png"),
+                global::Avalonia.Media.Imaging.PngBitmapEncoderOptions.Default);
+        }
+        vm.SelectPage(WorkspacePage.Animations);
         Console.WriteLine("UI accessibility: modal Tab cycle, Escape/focus restore, background isolation, long-message scroll, help, preview toggle state and selected-export command PASS");
     }
 

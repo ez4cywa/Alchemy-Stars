@@ -75,7 +75,8 @@ public sealed class WorkspaceProjectStore
                 document.OutputSuffix,
                 document.CastAnimationOnly,
                 document.BakeRelevantBonesOnly,
-                document.MatchOldCallOfDuty));
+                document.MatchOldCallOfDuty,
+                document.OutputUpAxis));
     }
 
     private static void Normalize(WorkspaceDocument document)

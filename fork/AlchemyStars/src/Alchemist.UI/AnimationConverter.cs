@@ -24,12 +24,14 @@ namespace Alchemist.UI
         public static Graphics3DTranslatorFactory TranslatorFactory { get; set; } = new Graphics3DTranslatorFactory().WithDefaultTranslators();
 
         /// <summary>Loads an animation and converts its keyframe timeline to the canonical 30 FPS workspace rate.</summary>
-        internal static SkeletonAnimation LoadAtStandardFramerate(string path)
+        internal static SkeletonAnimation LoadAtStandardFramerate(string path, string outputAxis = "z")
         {
             var source = TranslatorFactory.Load<SkeletonAnimation>(path);
             if (Path.GetExtension(path).Equals(".cast", StringComparison.OrdinalIgnoreCase))
             {
-                var nodes = Cast.NET.CastReader.Load(path).RootNodes
+                var cast = Cast.NET.CastReader.Load(path);
+                CastCoordinateSystem.NormalizeAnimation(source, CastCoordinateSystem.ReadAxis(cast), outputAxis);
+                var nodes = cast.RootNodes
                     .SelectMany(root => root.EnumerateChildrenOfType<Cast.NET.Nodes.AnimationNode>()).ToArray();
                 if (nodes.Length != 1) throw new InvalidDataException("Expected one CAST animation: " + path);
                 source.Framerate = nodes[0].Framerate;
@@ -178,7 +180,7 @@ namespace Alchemist.UI
             AnimationSamplerSolver? lSolver = null;
             AnimationSamplerSolver? rSolver = null;
 
-            var mainAnimation = LoadAtStandardFramerate(animation.Name);
+            var mainAnimation = LoadAtStandardFramerate(animation.Name, mergePlan.UpAxis);
             mergePlan.BindAnimation(mainAnimation);
             var contributingAnimations = new List<SkeletonAnimation> { mainAnimation };
 
@@ -194,7 +196,7 @@ namespace Alchemist.UI
             if (!string.IsNullOrWhiteSpace(animation.LeftHandPoseFile))
             {
                 Logging.Logger.Info($"Loading left hand pose: {animation.LeftHandPoseFile}");
-                var leftHandPose = LoadAtStandardFramerate(animation.LeftHandPoseFile);
+                var leftHandPose = LoadAtStandardFramerate(animation.LeftHandPoseFile, mergePlan.UpAxis);
                 mergePlan.BindAnimation(leftHandPose);
                 contributingAnimations.Add(leftHandPose);
                 plSampler = new SkeletonAnimationSampler("PLLayer", leftHandPose, skeleton, player);
@@ -208,7 +210,7 @@ namespace Alchemist.UI
             if (!string.IsNullOrWhiteSpace(animation.RightHandPoseFile))
             {
                 Logging.Logger.Info($"Loading right hand pose: {animation.RightHandPoseFile}");
-                var rightHandPose = LoadAtStandardFramerate(animation.RightHandPoseFile);
+                var rightHandPose = LoadAtStandardFramerate(animation.RightHandPoseFile, mergePlan.UpAxis);
                 mergePlan.BindAnimation(rightHandPose);
                 contributingAnimations.Add(rightHandPose);
                 prSampler = new SkeletonAnimationSampler("PRLayer", rightHandPose, skeleton, player);
@@ -285,7 +287,7 @@ namespace Alchemist.UI
             foreach (var layer in animation.Layers)
             {
                 Logging.Logger.Info($"Loading layer: {layer.Name} of type: {layer.Type}");
-                var anim = LoadAtStandardFramerate(layer.Name);
+                var anim = LoadAtStandardFramerate(layer.Name, mergePlan.UpAxis);
                 mergePlan.BindAnimation(anim);
                 contributingAnimations.Add(anim);
 
@@ -586,7 +588,18 @@ namespace Alchemist.UI
             }
             else if (string.Equals(format, ".cast", StringComparison.OrdinalIgnoreCase))
             {
-                SaveAtomically(outputFull, temporaryPath => TranslatorFactory.Save(temporaryPath, newAnim));
+                SaveAtomically(outputFull, temporaryPath =>
+                {
+                    TranslatorFactory.Save(temporaryPath, newAnim);
+                    var cast = Cast.NET.CastReader.Load(temporaryPath);
+                    var root = cast.RootNodes.First();
+                    var hashes = cast.RootNodes.SelectMany(CastNodeTraversal.DescendantsAndSelf).Select(node => node.Hash).ToHashSet();
+                    ulong hash = 1;
+                    while (hashes.Contains(hash)) hash++;
+                    var metadata = new Cast.NET.CastNode(Cast.NET.CastNodeIdentifier.Metadata) { Hash = hash, Parent = root };
+                    metadata.AddString("up", mergePlan.UpAxis);
+                    Cast.NET.CastWriter.Save(temporaryPath, cast);
+                });
             }
             else if (string.Equals(format, ".smd", StringComparison.OrdinalIgnoreCase))
             {

@@ -26,6 +26,7 @@
   <ItemGroup>
     <Compile Include="..\Alchemist.UI\AnimationConverter.cs" Link="Shared\AnimationConverter.cs" />
     <Compile Include="..\Alchemist.UI\CastNodeTraversal.cs" Link="Shared\CastNodeTraversal.cs" />
+    <Compile Include="..\Alchemist.UI\CastCoordinateSystem.cs" Link="Shared\CastCoordinateSystem.cs" />
     <Compile Include="..\Alchemist.UI\MayaCastPackage.cs" Link="Shared\MayaCastPackage.cs" />
     <Compile Include="..\Alchemist.UI\MayaFbxExporter.cs" Link="Shared\MayaFbxExporter.cs" />
     <Compile Include="..\Alchemist.UI\DesktopFbxExporter.cs" Link="Shared\DesktopFbxExporter.cs" />

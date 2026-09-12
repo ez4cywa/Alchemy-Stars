@@ -38,6 +38,8 @@ def main() -> int:
         metadata = next((m for root in Cast.load(str(cast_path)).Roots()
                          for m in root.ChildrenOfType(Metadata)), None)
         source_up = (metadata.UpAxis() if metadata else None) or "y"
+        if source_up == "x":
+            raise ValueError("Maya cannot preserve an X-up scene. Use the Blender FBX backend or select Y-up/Z-up output.")
         if source_up not in ("y", "z"):
             raise ValueError("Unsupported CAST up axis: " + source_up)
 

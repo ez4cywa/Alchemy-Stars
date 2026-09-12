@@ -56,6 +56,8 @@ public sealed class WorkspaceDocument : ObservableModel
     public string OutputPrefix { get => outputPrefix; set => SetProperty(ref outputPrefix, value ?? string.Empty); }
     public string OutputSuffix { get => outputSuffix; set => SetProperty(ref outputSuffix, value ?? string.Empty); }
     public string OutputFormat { get => outputFormat; set => SetProperty(ref outputFormat, OutputFormats.Normalize(value)); }
+    private string outputUpAxis = "source";
+    public string OutputUpAxis { get => outputUpAxis; set => SetProperty(ref outputUpAxis, value?.Trim().ToLowerInvariant() switch { "y" => "y", "z" => "z", _ => "source" }); }
     public bool CastAnimationOnly { get => castAnimationOnly; set => SetProperty(ref castAnimationOnly, value); }
     public bool BakeRelevantBonesOnly { get => bakeRelevantBonesOnly; set => SetProperty(ref bakeRelevantBonesOnly, value); }
     public bool MatchOldCallOfDuty { get => matchOldCallOfDuty; set => SetProperty(ref matchOldCallOfDuty, value); }

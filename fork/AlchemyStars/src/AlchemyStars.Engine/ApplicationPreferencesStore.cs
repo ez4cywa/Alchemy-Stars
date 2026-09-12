@@ -52,6 +52,7 @@ public sealed class ApplicationPreferencesStore
     {
         var preferences = Snapshot();
         var document = WorkspaceDocument.Create(preferences.DefaultOutputFormat, preferences.DefaultCastAnimationOnly, preferences.DefaultBakeRelevantBonesOnly);
+        document.OutputUpAxis = preferences.DefaultOutputUpAxis;
         if (preferences.RememberArms && File.Exists(preferences.SavedArmsPath)
             && string.Equals(Path.GetExtension(preferences.SavedArmsPath), ".cast", StringComparison.OrdinalIgnoreCase))
             document.Parts.Add(new WorkspacePart { FilePath = preferences.SavedArmsPath, Type = ModelPartKind.ViewHands });
@@ -86,6 +87,7 @@ public sealed class ApplicationPreferencesStore
         {
             preferences.Language = string.IsNullOrWhiteSpace(language) ? "system" : language;
             preferences.DefaultOutputFormat = OutputFormats.Normalize(document.OutputFormat);
+            preferences.DefaultOutputUpAxis = document.OutputUpAxis;
             preferences.DefaultCastAnimationOnly = document.CastAnimationOnly;
             preferences.DefaultBakeRelevantBonesOnly = document.BakeRelevantBonesOnly;
         });
@@ -168,6 +170,7 @@ public sealed class AppPreferenceData
     public string ThemeMode { get; set; } = "light";
     public string Language { get; set; } = "system";
     public string DefaultOutputFormat { get; set; } = ".cast";
+    public string DefaultOutputUpAxis { get; set; } = "source";
     public bool DefaultCastAnimationOnly { get; set; }
     public bool DefaultBakeRelevantBonesOnly { get; set; }
     public Dictionary<string, string> LastDirectories { get; set; } = new(StringComparer.OrdinalIgnoreCase);
@@ -183,6 +186,7 @@ public sealed class AppPreferenceData
         ThemeStyle = ThemeStyle,
         ThemeMode = ThemeMode,
         DefaultOutputFormat = DefaultOutputFormat,
+        DefaultOutputUpAxis = DefaultOutputUpAxis,
         DefaultCastAnimationOnly = DefaultCastAnimationOnly,
         DefaultBakeRelevantBonesOnly = DefaultBakeRelevantBonesOnly,
         LastDirectories = new Dictionary<string, string>(LastDirectories, StringComparer.OrdinalIgnoreCase),

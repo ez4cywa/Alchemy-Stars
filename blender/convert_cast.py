@@ -43,7 +43,7 @@ def main():
     # CAST without an axis follows a fresh Maya scene (Y-up). Do not inherit
     # Blender's Z-up convention or a workstation's saved preferences.
     source_up = (metadata.UpAxis() if metadata else None) or "y"
-    if source_up not in ("y", "z"):
+    if source_up not in ("x", "y", "z"):
         raise ValueError("Unsupported CAST up axis: " + source_up)
     io_scene_cast.register()
     bpy.ops.wm.read_factory_settings(use_empty=True)
@@ -145,7 +145,9 @@ def main():
     # Convert the complete scene once, including skinned meshes. Keep bone
     # rest/pose/animation data in its source basis; the armature object carries
     # the change of basis for every frame. Never rotate bones independently.
-    source_to_blender = Matrix.Rotation(math.pi / 2, 4, "X") if source_up == "y" else Matrix.Identity(4)
+    source_to_blender = (Matrix.Rotation(math.pi / 2, 4, "X") if source_up == "y"
+                         else Matrix.Rotation(-math.pi / 2, 4, "Y") if source_up == "x"
+                         else Matrix.Identity(4))
     for obj in [rig, *meshes]:
         if obj.parent is None:
             obj.matrix_world = source_to_blender @ obj.matrix_world

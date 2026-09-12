@@ -166,9 +166,9 @@ internal static class CastPreviewRenderer
             var radians = MathF.PI / 180;
             var rotation = Matrix4x4.CreateRotationX(PreviewCamera.MayaRotationXDegrees * radians)
                 * Matrix4x4.CreateRotationZ(PreviewCamera.MayaRotationZDegrees * radians);
-            var forward = Vector3.Normalize(Vector3.TransformNormal(-Vector3.UnitZ, rotation));
-            var right = Vector3.Normalize(Vector3.TransformNormal(Vector3.UnitX, rotation));
-            var up = Vector3.Normalize(Vector3.TransformNormal(Vector3.UnitY, rotation));
+            var forward = scene.FromZUp(Vector3.Normalize(Vector3.TransformNormal(-Vector3.UnitZ, rotation)));
+            var right = scene.FromZUp(Vector3.Normalize(Vector3.TransformNormal(Vector3.UnitX, rotation)));
+            var up = scene.FromZUp(Vector3.Normalize(Vector3.TransformNormal(Vector3.UnitY, rotation)));
             var focal = width * 0.5f / MathF.Tan(PreviewCamera.FirstPersonHorizontalFovDegrees * radians * 0.5f);
             // Keep the requested Maya camera transform at the world origin. Apply a
             // preview-only scene translation so geometry crossing/behind the camera
@@ -180,13 +180,13 @@ internal static class CastPreviewRenderer
             return new PreviewView(Vector3.Zero, forward, right, up, focal, 0.1f, sceneOffset);
         }
 
-        var direction = new Vector3(MathF.Cos(camera.Yaw) * MathF.Cos(camera.Pitch), MathF.Sin(camera.Yaw) * MathF.Cos(camera.Pitch), MathF.Sin(camera.Pitch));
+        var direction = scene.FromZUp(new Vector3(MathF.Cos(camera.Yaw) * MathF.Cos(camera.Pitch), MathF.Sin(camera.Yaw) * MathF.Cos(camera.Pitch), MathF.Sin(camera.Pitch)));
         var radius = camera.AllGeometry ? scene.AllRadius : scene.Radius;
         var center = camera.AllGeometry ? scene.AllCenter : scene.Center;
         var distance = radius * 3.2f / camera.Zoom;
         var eye = center + direction * distance;
         var orbitForward = Vector3.Normalize(center - eye);
-        var orbitRight = Vector3.Normalize(Vector3.Cross(orbitForward, Vector3.UnitZ));
+        var orbitRight = Vector3.Normalize(Vector3.Cross(orbitForward, scene.FromZUp(Vector3.UnitZ)));
         var orbitUp = Vector3.Cross(orbitRight, orbitForward);
         return new PreviewView(eye, orbitForward, orbitRight, orbitUp, Math.Min(width, height) * 1.15f,
             Math.Max(0.001f, scene.Radius * 0.001f), Vector3.Zero);

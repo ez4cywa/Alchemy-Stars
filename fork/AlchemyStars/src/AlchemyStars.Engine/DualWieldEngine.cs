@@ -89,9 +89,9 @@ public sealed class DualWieldEngine
         }
         var h = new Part { FilePath = hands.FilePath, Type = PartType.ViewHands };
         var w = new Part { FilePath = weapon.FilePath, Type = PartType.Weapon, ParentBoneTag = task.SourceMount };
-        var leftPlan = SkeletonMergePlan.Build([h, w], false, split?.Left);
-        var rightPlan = SkeletonMergePlan.Build([h, w], false, split?.Right);
-        var finalPlan = SkeletonMergePlan.BuildAttachedDual(h, w, task.LeftMount, task.RightMount, split?.Left, split?.Right);
+        var leftPlan = SkeletonMergePlan.Build([h, w], false, split?.Left, document.OutputUpAxis);
+        var rightPlan = SkeletonMergePlan.Build([h, w], false, split?.Right, document.OutputUpAxis);
+        var finalPlan = SkeletonMergePlan.BuildAttachedDual(h, w, task.LeftMount, task.RightMount, split?.Left, split?.Right, document.OutputUpAxis);
         if (task.LeftMount.Equals(task.RightMount, StringComparison.OrdinalIgnoreCase))
             throw new InvalidDataException("左右挂点必须不同 / Left and right mounts must differ.");
         foreach (var bone in finalPlan.Skeleton.Bones)
@@ -105,7 +105,7 @@ public sealed class DualWieldEngine
             // All source clips are resampled into the shared 30 FPS timeline before binding.
             foreach (var path in new[] { job.SourceFile }.Concat((job.Layers ?? []).Select(l => l.FilePath)))
             {
-                var clip = AnimationConverter.LoadAtStandardFramerate(path);
+                var clip = AnimationConverter.LoadAtStandardFramerate(path, plan.UpAxis);
                 plan.BindAnimation(clip);
                 var known = plan.Skeleton.Bones.Select(b => b.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
                 foreach (var target in clip.Targets.Where(t => !known.Contains(t.BoneName))) unknown.Add(target.BoneName);

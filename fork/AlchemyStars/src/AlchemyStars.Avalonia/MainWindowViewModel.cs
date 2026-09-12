@@ -111,6 +111,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
             OnPropertyChanged(nameof(Animations));
             OnPropertyChanged(nameof(Parts));
             OnPropertyChanged(nameof(OutputFormatIndex));
+            OnPropertyChanged(nameof(OutputUpAxisIndex));
             OnPropertyChanged(nameof(IsCastOutput));
             SelectedDual = workspace.DualAnimations.FirstOrDefault();
         }
@@ -216,6 +217,16 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
     public bool DialogIsError { get => dialogIsError; private set { dialogIsError = value; OnPropertyChanged(); } }
     public string FooterStatus { get => footerStatus; private set { footerStatus = value; OnPropertyChanged(); } }
     public IReadOnlyList<string> OutputFormats => AlchemyStars.Engine.OutputFormats.All;
+    public int OutputUpAxisIndex
+    {
+        get => Workspace.OutputUpAxis switch { "z" => 1, "y" => 2, _ => 0 };
+        set
+        {
+            if (value is < 0 or > 2) return;
+            Workspace.OutputUpAxis = value switch { 1 => "z", 2 => "y", _ => "source" };
+            OnPropertyChanged();
+        }
+    }
     public int OutputFormatIndex
     {
         get => Math.Max(0, AlchemyStars.Engine.OutputFormats.All.ToList().FindIndex(format => string.Equals(format, Workspace.OutputFormat, StringComparison.OrdinalIgnoreCase)));
@@ -1084,6 +1095,9 @@ public sealed partial class UiText
     public string OutputSettings => L("输出设置", "Output settings");
     public string OutputSettingsHelp => L("项目保留自己的设置；“保存为默认值”会用于以后新建的项目。", "Each project keeps its own settings; Save as defaults applies them to future projects.");
     public string DefaultOutputFormat => L("输出格式", "Output format");
+    public string OutputUpAxis => L("输出向上轴", "Output up axis");
+    public string KeepSceneAxis => L("保持原场景（不指定）", "Keep scene axis (unspecified)");
+    public string OutputUpAxisHelp => L("未指定时保留主模型的场景轴（优先手臂）；选择 Y/Z 时整体转换。输入轴可不同，缺少标记按 Y-up 读取，源文件不变。", "Unspecified keeps the primary model's axis (arms first); Y/Z converts the whole scene. Mixed inputs are aligned; untagged inputs use Y-up. Source files stay unchanged.");
     public string FormatHelp => L("为当前项目选择目标管线和烘焙策略。", "Choose the target pipeline and bake strategy for this project.");
     public string AnimationOnlyCast => L("仅输出合并动画 CAST", "Animation-only merged CAST");
     public string AnimationOnlyHelp => L("只保留唯一的合并动画；导入或预览时需要匹配的骨架。", "Retains one merged animation; importing or previewing requires a matching skeleton.");

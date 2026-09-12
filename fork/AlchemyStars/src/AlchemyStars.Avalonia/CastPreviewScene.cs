@@ -24,6 +24,14 @@ internal sealed class CastPreviewScene
     public Vector3 AllCenter { get; private set; }
     public float AllRadius { get; private set; }
     public bool UsesProjectSkeleton { get; private init; }
+    public string UpAxis { get; private init; } = "z";
+
+    internal Vector3 FromZUp(Vector3 value) => UpAxis switch
+    {
+        "y" => new(value.X, value.Z, -value.Y),
+        "x" => new(value.Z, value.Y, -value.X),
+        _ => value,
+    };
 
     public static CastPreviewScene Load(string path, IReadOnlyList<ModelPartSpec>? parts = null, bool legacy = false)
     {
@@ -52,7 +60,8 @@ internal sealed class CastPreviewScene
                     scene.Objects.Add(ReadSkeleton(node));
                 else if (parts is { Count: > 0 })
                 {
-                    var skeleton = AnimationExportEngine.CreatePreviewSkeleton(parts, legacy);
+                    var axis = cast.RootNodes.SelectMany(root => root.Children).OfType<MetadataNode>().FirstOrDefault()?.UpAxis;
+                    var skeleton = AnimationExportEngine.CreatePreviewSkeleton(parts, legacy, axis is "x" or "z" ? axis : "y");
                     if (animation.Targets.Any(target => !skeleton.ContainsBone(target.BoneName)))
                         throw new InvalidDataException("The project skeleton does not contain all animation targets.");
                     scene.Objects.Add(skeleton);
@@ -65,6 +74,8 @@ internal sealed class CastPreviewScene
         {
             Skeletons = skeletons,
             UsesProjectSkeleton = usesProjectSkeleton,
+            UpAxis = cast.RootNodes.SelectMany(root => root.Children).OfType<MetadataNode>().FirstOrDefault()?.UpAxis?.Trim().ToLowerInvariant() switch
+            { "z" => "z", "x" => "x", _ => "y" },
             FrameCount = Math.Max(1, (int)(animation?.GetAnimationFrameCount() ?? 1)),
             Framerate = animation is { Framerate: > 0 } ? animation.Framerate : 30,
         };

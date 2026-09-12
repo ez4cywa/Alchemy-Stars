@@ -47,6 +47,11 @@ internal static class Program
 
         if (args.Contains("--self-test", StringComparer.OrdinalIgnoreCase))
             return SelfTest.Run();
+        if (GetOption(args, "--axis-smoke") is { } axisDirectory)
+        {
+            try { CastAxisSmoke.Run(axisDirectory, args.Contains("--fbx")); return 0; }
+            catch (Exception error) { Console.Error.WriteLine(error); return 1; }
+        }
         var gripIndex = Array.IndexOf(args, "--grip-smoke");
         if (gripIndex >= 0) return GripSmoke.Run(args.Skip(gripIndex + 1).ToArray());
         var combinedIndex = Array.IndexOf(args, "--combined-dual-smoke");
