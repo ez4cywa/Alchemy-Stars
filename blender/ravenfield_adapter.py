@@ -44,6 +44,8 @@ def vector3(value, name):
 def validate_config(config):
     require(config.get("mode", "pose") in ("pose", "animation", "library"), "Mode must be pose, animation or library")
     config.setdefault("mode", "pose")
+    config.setdefault("contactFit", True)
+    require(type(config['contactFit']) is bool, 'contactFit must be a boolean')
     require(config.get("sourceUnit", "cm") in UNIT_FACTORS, "Source unit must be cm, m or ft")
     config.setdefault("sourceUnit", "cm")
     frame = config.get("idleFrame", 0)
@@ -292,7 +294,7 @@ def source_transform(rest, pose, factor):
     return yaw @ Matrix.Scale(factor, 4) @ Matrix.Translation(-origin.translation)
 
 
-def fit_hands(rf, cod_pose, cod_rest, config, report, continuity=None):
+def fit_hands(rf, cod_pose, cod_rest, config, report, continuity=None, corrections=None):
     rest = armature_rest(rf)
     for side, suffix, cod_side in (("left", "L", "le"), ("right", "R", "ri")):
         setting = config[side]
@@ -307,6 +309,11 @@ def fit_hands(rf, cod_pose, cod_rest, config, report, continuity=None):
                                      cod_rest[f"j_pinky_{cod_side}_1"].translation)
         rest_alignment = source_rest_palm @ rf_palm.inverted()
         user_rotation = Euler([math.radians(x) for x in setting["rotation"]], "XYZ").to_quaternion()
+        finger_rotation = user_rotation.copy()
+        if corrections:
+            rotation, shift = corrections[side]
+            target_wrist += shift
+            user_rotation = rotation @ user_rotation
         palm_alignment = user_rotation @ source_palm @ rf_palm.inverted()
         arm, elbow_part, forearm, hand = f"Arm.{suffix}", f"Arm.{suffix}.001", f"Wrist.{suffix}", f"Hand.{suffix}"
         upper = rf.data.bones[arm].length
@@ -342,8 +349,8 @@ def fit_hands(rf, cod_pose, cod_rest, config, report, continuity=None):
                     # Extrapolate the anatomical distal axis, not Blender's arbitrary display tail.
                     rest_direction = cod_rest[cod_name].translation - cod_rest[source_names[i - 1]].translation
                     direction = cod_pose[cod_name].to_quaternion() @ cod_rest[cod_name].to_quaternion().inverted() @ rest_direction
-                direction = user_rotation @ direction
-                curl = Quaternion(user_rotation @ source_palm @ Vector((1, 0, 0)), math.radians(setting["fingerCurl"]) * (i + 1))
+                direction = finger_rotation @ direction
+                curl = Quaternion(finger_rotation @ source_palm @ Vector((1, 0, 0)), math.radians(setting["fingerCurl"]) * (i + 1))
                 direction = curl @ direction
                 # Keep the original RF knuckle offsets and segment lengths; do not move fingers to COD joints.
                 position = rf.pose.bones[rf_name].matrix.translation.copy() if i == 0 else rf.pose.bones[rf_names[i - 1]].tail.copy()
@@ -352,7 +359,7 @@ def fit_hands(rf, cod_pose, cod_rest, config, report, continuity=None):
                 # can flip the distal finger's roll near a 180-degree opposition.
                 rest_rotation = aim_rotation(rest_alignment @ rest[rf_name].to_quaternion(), rest_direction)
                 transported = cod_pose[cod_name].to_quaternion() @ cod_rest[cod_name].to_quaternion().inverted() @ rest_rotation
-                rotation = aim_rotation(curl @ user_rotation @ transported, direction)
+                rotation = aim_rotation(curl @ finger_rotation @ transported, direction)
                 set_pose(rf, rf_name, position, rotation)
                 mapping[rf_name] = cod_name
         wrist_error = (rf.pose.bones[hand].matrix.translation - target_wrist).length
@@ -607,7 +614,17 @@ def main():
                       viewTransform=[list(row) for row in transform], outputFrames=[1, 2],
                       warningScope="A fitted idle pose, not a full animation retarget or an in-game validation")
         if config["mode"] == "pose":
-            fit_hands(rf, cod_pose, cod_rest, config, report)
+            if config['contactFit']:
+                sys.path.insert(0, str(Path(__file__).resolve().parent))
+                from ravenfield_contact import PalmContactFitter, contact_warning
+                source_meshes = [o for o in bpy.context.scene.objects if o.type == 'MESH'
+                                 and o.name.startswith('COD_ReferenceHands_')]
+                contact = PalmContactFitter(cod, rf, source_meshes, rf_meshes, transform)
+                detail = contact.fit(cod_pose, cod_rest, config, report)
+                warning = contact_warning(detail)
+                if warning: report['warnings'].append(warning)
+            else:
+                fit_hands(rf, cod_pose, cod_rest, config, report)
             rig, meshes, verification = combine_rigs(rf, rf_meshes, cod, weapon_meshes, transform, factor, config)
         else:
             sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -619,7 +636,8 @@ def main():
         export(rig, meshes, args.output.resolve(), report)
     require(all(p.is_file() and p.stat().st_size for p in destinations), "Output package is incomplete")
     require(all(hashlib.sha256(Path(p).read_bytes()).hexdigest() == digest for p, digest in hashes.items()), "An input was modified")
-    print("RAVENFIELD_ADAPTER_PASS " + json.dumps(report, ensure_ascii=False))
+    status = 'RAVENFIELD_ADAPTER_REVIEW_REQUIRED' if report.get('palmContact', {}).get('passed') is False else 'RAVENFIELD_ADAPTER_PASS'
+    print(status + ' ' + json.dumps(report, ensure_ascii=False))
 
 
 if __name__ == "__main__":

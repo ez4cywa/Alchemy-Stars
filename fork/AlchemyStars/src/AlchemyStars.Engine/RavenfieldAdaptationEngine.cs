@@ -7,7 +7,10 @@ using static Alchemist.UI.CastNodeTraversal;
 
 namespace AlchemyStars.Engine;
 
-public sealed record RavenfieldAdaptationResult(string BlendPath, string FbxPath, string ReportPath, string PreviewPath, IReadOnlyList<string> Warnings);
+public sealed record RavenfieldAdaptationResult(string BlendPath, string FbxPath, string ReportPath, string PreviewPath, IReadOnlyList<string> Warnings)
+{
+    public bool? PalmFitPassed { get; init; }
+}
 
 /// <summary>Owns processed CAST generation, RF input protection and the isolated Blender run.</summary>
 public sealed class RavenfieldAdaptationEngine
@@ -106,6 +109,7 @@ public sealed class RavenfieldAdaptationEngine
             {
                 json.WriteStartObject();
                 json.WriteString("mode", options.Mode);
+                json.WriteBoolean("contactFit", options.ContactFit);
                 json.WriteString("clipName", request.Animations[animationIndex].OutputName);
                 json.WriteNumber("referenceClip", referenceClip);
                 json.WriteStartArray("clips");
@@ -152,10 +156,18 @@ public sealed class RavenfieldAdaptationEngine
             var warnings = report.RootElement.TryGetProperty("warnings", out var values) && values.ValueKind == JsonValueKind.Array
                 ? values.EnumerateArray().Select(v => v.ToString()).ToArray() : [];
             var publishWarnings = PublishOutputs(staged, outputs);
-            return new(outputs[0], outputs[1], outputs[2], outputs[3], warnings.Concat(publishWarnings).ToArray());
+            return new(outputs[0], outputs[1], outputs[2], outputs[3], warnings.Concat(publishWarnings).ToArray())
+            {
+                PalmFitPassed = ReadPalmFitPassed(report.RootElement)
+            };
         }
         finally { Directory.Delete(temporary, recursive: true); }
     }
+
+    internal static bool? ReadPalmFitPassed(JsonElement report)
+        => report.TryGetProperty("palmContact", out var contact) && contact.ValueKind == JsonValueKind.Object
+            && contact.TryGetProperty("passed", out var passed) && passed.ValueKind is JsonValueKind.True or JsonValueKind.False
+            ? passed.GetBoolean() : null;
 
     // The internal move seam makes a mid-publication failure reproducible without Blender.
     // Backups live beside the final files, outside Adapt's disposable processing directory.

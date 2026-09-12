@@ -9,6 +9,11 @@ public sealed partial class MainWindowViewModel
     public IReadOnlyList<string> RavenfieldUnits { get; } = ["cm", "ft", "m"];
     public IReadOnlyList<string> RavenfieldUntaggedAxes { get; } = ["hands", "x", "y", "z"];
     public bool HasRavenfieldResult => ravenfieldResult is not null;
+    public bool RavenfieldContactFit
+    {
+        get => Workspace.Ravenfield.ContactFit;
+        set => Workspace.Ravenfield.ContactFit = value;
+    }
     public int RavenfieldModeIndex
     {
         get => Workspace.Ravenfield.Mode switch { "pose" => 0, "animation" => 1, "library" => 2, _ => -1 };
@@ -52,11 +57,13 @@ public sealed partial class MainWindowViewModel
     {
         if (e.PropertyName == nameof(RavenfieldAdaptationOptions.ReferenceAnimationId)) RaiseRavenfieldReference();
         if (e.PropertyName == nameof(RavenfieldAdaptationOptions.Mode)) RaiseRavenfieldMode();
+        if (e.PropertyName == nameof(RavenfieldAdaptationOptions.ContactFit)) OnPropertyChanged(nameof(RavenfieldContactFit));
     }
     private void RavenfieldAnimationsChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e) => RaiseRavenfieldReference();
     private void RaiseRavenfieldReference()
     {
         RaiseRavenfieldMode();
+        OnPropertyChanged(nameof(RavenfieldContactFit));
         OnPropertyChanged(nameof(SelectedRavenfieldAnimation));
         OnPropertyChanged(nameof(HasRavenfieldReference));
     }
@@ -90,8 +97,9 @@ public sealed partial class MainWindowViewModel
             var result = await RavenfieldRunner(request, index, snapshot.Ravenfield, projectPath);
             if (!ReferenceEquals(Workspace, selectedWorkspace)) return;
             ravenfieldResult = result; OnPropertyChanged(nameof(HasRavenfieldResult));
-            FooterStatus = Text.RfComplete;
-            ShowDialog(Text.RfComplete, string.Join(Environment.NewLine,
+            var completion = result.PalmFitPassed == false ? Text.RfPalmFitReview : Text.RfComplete;
+            FooterStatus = completion;
+            ShowDialog(completion, string.Join(Environment.NewLine,
                 new[] { result.BlendPath, result.FbxPath, result.ReportPath, result.PreviewPath }.Concat(result.Warnings)), false);
         }
         catch (Exception exception)

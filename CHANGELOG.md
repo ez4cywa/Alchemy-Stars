@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.3.0-rf.3 — Local experimental branch (measured central-palm alignment)
+
+- Track four anatomical bind-surface samples by barycentrics, fit bounded palm corrections and measure actual skin rather than wrist positions alone.
+- Preserve source finger directions, manual target adjustments, original RF mesh/bone lengths/weights and weapon motion. Retain only corrections that improve the same-frame baseline.
+- Add a persisted toggle and independent palm-quality status: generated files can require review when correspondence error exceeds 5 mm.
+- Real Hawk idle reaches the 5 mm target; sprint/reload/inspect retain explicitly reported out-of-tolerance frames. Whole-hand contact, thenar/finger fitting and collision-free geometry remain unfinished.
+
 ## 1.3.0-rf.2 — Local experimental branch (full clips and one-file RF library)
 
 - Bake complete evaluated clips on the shared RF/weapon bind skeleton; keep static pose as the backward-compatible default.

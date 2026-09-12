@@ -11,7 +11,7 @@ from pathlib import Path
 
 import bpy
 import numpy as np
-from mathutils import Matrix
+from mathutils import Matrix, Quaternion, Vector
 
 import ravenfield_adapter as rf
 
@@ -179,6 +179,11 @@ def bake_sequence(rig, rf_meshes, cod, weapon_meshes, transform, factor, config,
     scene = bpy.context.scene
     _, signature = read_clip(source)
     definitions = config["clips"] if config["mode"] == "library" else [{"name": config.get("clipName", source.stem), "path": str(source)}]
+    contact = None
+    if config.get('contactFit', True):
+        from ravenfield_contact import PalmContactFitter
+        source_meshes = [o for o in scene.objects if o.type == 'MESH' and o.name.startswith('COD_ReferenceHands_')]
+        contact = PalmContactFitter(cod, rig, source_meshes, rf_meshes, transform)
     result, pairs, rf_names, remap = shared_output(rig, rf_meshes, cod, weapon_meshes, transform, factor, config)
     rest = {n: transform @ m for n, m in rf.armature_rest(cod).items()}
     result.animation_data_create()
@@ -203,6 +208,9 @@ def bake_sequence(rig, rf_meshes, cod, weapon_meshes, transform, factor, config,
         diagnostics = {"maxBoneStepDegrees": 0.0, "maxElbowStepM": 0.0, "maxWristErrorM": 0.0, "maxShoulderCorrectionM": 0.0,
                        "maxSourceHandBoneStepDegrees": 0.0}
         previous_source = None
+        contact_summary = {'toleranceM': .005, 'framesExceeded': 0, 'maxErrorM': 0., 'maxBeforeErrorM': 0.,
+                           'maxCorrectionStepDegrees': 0., 'maxCorrectionStepM': 0., 'frames': []}
+        previous_corrections = {}
         for frame in range(1, count + 1):
             scene.frame_set(frame)
             for bone in rig.pose.bones:
@@ -210,7 +218,34 @@ def bake_sequence(rig, rf_meshes, cod, weapon_meshes, transform, factor, config,
             bpy.context.view_layer.update()
             cod_pose = {n: transform @ m for n, m in rf.armature_pose(cod).items()}
             fitted = {"warnings": []}
-            rf.fit_hands(rig, cod_pose, rest, config, fitted, continuity)
+            if contact:
+                detail = contact.fit(cod_pose, rest, config, fitted, continuity)
+                error = max(detail[s]['maxErrorM'] for s in ('left', 'right'))
+                contact_summary['framesExceeded'] += int(error > .005)
+                contact_summary['frames'].append({'frame': frame, 'leftErrorM': detail['left']['maxErrorM'],
+                                                   'rightErrorM': detail['right']['maxErrorM'],
+                                                   'maxBeforeErrorM': max(detail[s]['beforeMaxErrorM'] for s in ('left', 'right'))})
+                contact_summary['maxBeforeErrorM'] = max(contact_summary['maxBeforeErrorM'],
+                                                        *[detail[s]['beforeMaxErrorM'] for s in ('left', 'right')])
+                if error >= contact_summary['maxErrorM']:
+                    contact_summary.update(maxErrorM=error, worstFrame=frame, worstFrameDetail=detail)
+                for side, cod_side in (('left', 'le'), ('right', 'ri')):
+                    q = rf.palm_frame(cod_pose[f'j_wrist_{cod_side}'].translation,
+                                      cod_pose[f'j_index_{cod_side}_1'].translation,
+                                      cod_pose[f'j_pinky_{cod_side}_1'].translation)
+                    local_shift = q.inverted() @ Vector(detail[side]['shiftM'])
+                    local_rotation = q.inverted() @ Quaternion(detail[side]['rotationQuaternion']) @ q
+                    if side in previous_corrections:
+                        last_shift, last_rotation = previous_corrections[side]
+                        contact_summary['maxCorrectionStepM'] = max(contact_summary['maxCorrectionStepM'],
+                                                                    (local_shift-last_shift).length)
+                        current, prior = np.array(local_rotation, dtype=float), np.array(last_rotation, dtype=float)
+                        dot = abs(np.dot(current, prior)/(np.linalg.norm(current)*np.linalg.norm(prior)))
+                        contact_summary['maxCorrectionStepDegrees'] = max(contact_summary['maxCorrectionStepDegrees'],
+                                                                          math.degrees(2*math.acos(min(1., dot))))
+                    previous_corrections[side] = (local_shift, local_rotation)
+            else:
+                rf.fit_hands(rig, cod_pose, rest, config, fitted, continuity)
             expected = {"RF_Root": Matrix.Identity(4)}
             rf_pose = rf.armature_pose(rig)
             expected.update((n, rf_pose[n]) for n in rf_names)
@@ -247,9 +282,21 @@ def bake_sequence(rig, rf_meshes, cod, weapon_meshes, transform, factor, config,
         clip = {"name": definition["name"], "actionName": action.name, "firstFrame": cursor, "lastFrame": cursor + count - 1,
                 "takeName": "Scene", "frameCount": count, "sourceFrames": [start, end], "loopTime": False, **diagnostics}
         clips.append(clip)
+        if contact:
+            clip['palmContact'] = contact_summary
+            if contact_summary['framesExceeded']:
+                report['warnings'].append(f"{definition['name']}: 掌面贴合未达标 / Palm fit exceeds 5 mm in "
+                                          f"{contact_summary['framesExceeded']} frames; maximum "
+                                          f"{contact_summary['maxErrorM']*1000:.2f} mm at local frame {contact_summary['worstFrame']}")
         actions.append(action)
         cursor += count + 10
     timeline = compose_timeline(actions, clips) if config["mode"] == "library" else actions[0]
+    if contact:
+        report['palmContact'] = {'method': 'bind-surface-barycentric-rigid', 'toleranceM': .005,
+                                 'passed': all(c['palmContact']['framesExceeded'] == 0 for c in clips),
+                                 'framesExceeded': sum(c['palmContact']['framesExceeded'] for c in clips),
+                                 'maxErrorM': max(c['palmContact']['maxErrorM'] for c in clips),
+                                 'scope': 'Four central/ulnar palm samples; not fingers, thenar or collision-free geometry'}
     keep_actions = {*actions, timeline}
     keep_objects = {result, *[mesh for _, mesh, _ in pairs]}
     for obj in list(scene.objects):

@@ -31,6 +31,8 @@ internal static class RavenfieldSmoke
         var rf = Path.Combine(folder, "hands.blend");
         File.WriteAllText(rf, "validation fixture");
         var doc = new WorkspaceDocument();
+        Require(doc.Ravenfield.ContactFit, "New RF workspace did not enable contact fit.");
+        doc.Ravenfield.ContactFit = false;
         doc.Ravenfield.RfSourcePath = rf;
         doc.Ravenfield.IdleFrame = 7;
         doc.Ravenfield.UntaggedModelUpAxis = "y";
@@ -46,6 +48,11 @@ internal static class RavenfieldSmoke
         var project = Path.Combine(folder, "rf.aprj");
         store.Save(doc, project);
         var loaded = store.Load(project);
+        Require(!loaded.Ravenfield.ContactFit && !WorkspaceProjectStore.Snapshot(loaded).Ravenfield.ContactFit, "Disabled contact fit was lost on save/load/snapshot.");
+        loaded.Ravenfield.ContactFit = true;
+        store.Save(loaded, project);
+        loaded = store.Load(project);
+        Require(loaded.Ravenfield.ContactFit, "Enabled contact fit was lost on save/load.");
         Require(loaded.Ravenfield.SourceUnit == "cm" && loaded.Ravenfield.UntaggedModelUpAxis == "y" && loaded.Ravenfield.IdleFrame == 7 && loaded.Ravenfield.HandScale == 1.1
             && loaded.Ravenfield.Left.PositionX == .012 && loaded.Ravenfield.Right.RotationZ == 12
             && loaded.Ravenfield.Right.ElbowSwivel == -25 && loaded.Ravenfield.Left.FingerCurl == 5, "RF persistence lost fields.");
@@ -98,14 +105,21 @@ internal static class RavenfieldSmoke
             Reject(() => RavenfieldAdaptationEngine.Validate(request, 0, loaded.Ravenfield, output), "Project overwrite allowed.");
         }
         var nullableProject = Path.Combine(folder, "null-rf.aprj");
-        foreach (var json in new[] { "{}", "{\"Ravenfield\":null}", "{\"Ravenfield\":{\"Left\":null,\"Right\":null,\"SourceUnit\":null,\"Mode\":null}}", "{\"Ravenfield\":{\"IdleFrame\":5}}" })
+        foreach (var json in new[] { "{}", "{\"Ravenfield\":null}", "{\"Ravenfield\":{\"Left\":null,\"Right\":null,\"SourceUnit\":null,\"Mode\":null,\"ContactFit\":null}}", "{\"Ravenfield\":{\"IdleFrame\":5}}" })
         {
             File.WriteAllText(nullableProject, json);
             var empty = store.Load(nullableProject);
             Require(empty.Ravenfield is not null && empty.Ravenfield.Left is not null && empty.Ravenfield.Right is not null
-                && empty.Ravenfield.SourceUnit == "cm" && empty.Ravenfield.Mode == "pose", "Old/nullable RF project did not normalize.");
+                && empty.Ravenfield.SourceUnit == "cm" && empty.Ravenfield.Mode == "pose" && empty.Ravenfield.ContactFit, "Old/nullable RF project did not normalize.");
         }
         TestPublication(folder);
+        foreach (var (json, expected) in new (string, bool?)[] {
+            ("{}", null), ("{\"palmContact\":null}", null), ("{\"palmContact\":{\"passed\":null}}", null),
+            ("{\"palmContact\":{\"passed\":true}}", true), ("{\"palmContact\":{\"passed\":false}}", false) })
+        {
+            using var report = System.Text.Json.JsonDocument.Parse(json);
+            Require(RavenfieldAdaptationEngine.ReadPalmFitPassed(report.RootElement) == expected, "RF palm-fit report status lost.");
+        }
         TestModelAxes(folder, request);
         TestReferencePersistence(folder);
         TestWorkspaceSwitchAsync(folder).GetAwaiter().GetResult();
@@ -212,6 +226,20 @@ internal static class RavenfieldSmoke
         await vm.AdaptRavenfieldAsync();
         Require(vm.HasRavenfieldResult, "Successful RF result did not enable open actions.");
         vm.CloseDialog();
+        foreach (var chinese in new[] { true, false })
+        {
+            if (vm.IsChinese != chinese) vm.ToggleLanguage();
+            foreach (var passed in new bool?[] { false, true, null })
+            {
+                vm.RavenfieldRunner = (_, _, _, _) => Task.FromResult(result with { PalmFitPassed = passed });
+                await vm.AdaptRavenfieldAsync();
+                var expected = passed == false ? vm.Text.RfPalmFitReview : vm.Text.RfComplete;
+                Require(vm.FooterStatus == expected && vm.DialogTitle == expected && vm.HasRavenfieldResult
+                    && vm.DialogMessage.Contains(result.BlendPath) && vm.DialogMessage.Contains(result.FbxPath),
+                    "RF fit-review completion status hid outputs or claimed a fit pass.");
+                vm.CloseDialog();
+            }
+        }
         vm.NewProject();
         Require(!vm.HasRavenfieldResult, "New workspace kept previous result buttons.");
         vm.Animations.Add(new() { Name = "idle.cast" });

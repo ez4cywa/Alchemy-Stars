@@ -153,6 +153,44 @@ class AdapterContracts(unittest.TestCase):
                 self.assertGreater(current.dot(last), 0.99)
             last = current
 
+    def test_palm_rigid_fit_recovers_motion_without_scale(self):
+        from ravenfield_contact import rigid_fit
+        from mathutils import Quaternion
+        points = [Vector(v) for v in ((0, 0, 0), (.025, 0, 0), (0, .035, .003), (.025, .035, 0))]
+        pivot = Vector((-.03, -.02, .01))
+        expected = Quaternion((0, 1, 0), math.radians(12))
+        translation = Vector((.007, -.003, .004))
+        targets = [pivot + expected @ (p-pivot) + translation for p in points]
+        rotation, shift, limited = rigid_fit(points, targets, pivot)
+        self.assertFalse(limited)
+        for point, target in zip(points, targets):
+            self.assertVector(pivot + rotation @ (point-pivot) + shift, target)
+        self.assertAlmostEqual(rotation.to_matrix().determinant(), 1, places=5)
+
+    def test_palm_limits_and_invalid_samples(self):
+        from ravenfield_contact import rigid_fit, MAX_ROTATION_DEG, MAX_SHIFT_M
+        from mathutils import Quaternion
+        points = [Vector(v) for v in ((0, 0, 0), (.02, 0, 0), (0, .03, 0), (.02, .03, .002))]
+        targets = [Quaternion((0, 1, 0), 1.2) @ p + Vector((.5, 0, 0)) for p in points]
+        rotation, shift, limited = rigid_fit(points, targets, Vector())
+        self.assertTrue(limited)
+        self.assertLessEqual(math.degrees(rotation.angle), MAX_ROTATION_DEG + .001)
+        self.assertLessEqual(shift.length, MAX_SHIFT_M + 1e-7)
+        for actual, wanted in (([(0, 0, 0)]*4, [(0, 0, 0)]*4),
+                               ([(math.nan, 0, 0)]*4, points)):
+            with self.assertRaises(ValueError): rigid_fit(actual, wanted, Vector())
+        with self.assertRaises(ValueError): rigid_fit(points, points, Vector(), [1, -1, 1, 1])
+        config = self.config()
+        config['contactFit'] = 'yes'
+        with self.assertRaises(ValueError): adapter.validate_config(config)
+
+    def test_palm_side_is_anatomical_and_mirrors(self):
+        from ravenfield_contact import palm_side
+        wrist, index, pinky = Vector(), Vector((.03, .08, 0)), Vector((-.03, .08, 0))
+        self.assertEqual(palm_side(wrist, index, pinky, Vector((.04, .02, -.012))), -1)
+        self.assertEqual(palm_side(wrist, index, pinky, Vector((.04, .02, .012))), 1)
+        with self.assertRaises(ValueError): palm_side(wrist, index, pinky, Vector((.04, .02, 0)))
+
     def test_library_ranges_hold_gaps_and_preserve_actions(self):
         import bpy
         from ravenfield_animation import compose_timeline

@@ -28,6 +28,20 @@ internal static class RavenfieldUiSmoke
             if (vm.IsChinese != chinese) vm.ToggleLanguage();
             var mode = view.FindControl<ComboBox>("RfMode")!;
             var help = view.FindControl<TextBlock>("RfModeHelp")!;
+            var contact = view.FindControl<CheckBox>("RfContactFit")!;
+            foreach (var enabled in new[] { false, true })
+            {
+                contact.IsChecked = enabled;
+                await Task.Delay(50);
+                if (vm.Workspace.Ravenfield.ContactFit != enabled || vm.RavenfieldContactFit != enabled
+                    || !Equals(contact.Content, vm.Text.RfContactFit)
+                    || view.FindControl<TextBlock>("RfContactFitHelp")!.Text != vm.Text.RfContactFitHelp)
+                    throw new InvalidOperationException("RF contact fit binding or localized label/help mismatch.");
+            }
+            view.FindControl<TextBlock>("RfContactFitHelp")!.BringIntoView();
+            await Task.Delay(80);
+            window.UpdateLayout();
+            Save(window, Path.Combine(directory, "rf-900-" + (chinese ? "zh" : "en") + "-contact.png"));
             foreach (var index in new[] { 0, 1, 2, 0, 2 })
             {
                 mode.SelectedIndex = index;
@@ -54,7 +68,7 @@ internal static class RavenfieldUiSmoke
             Save(window, Path.Combine(directory, "rf-900-" + (chinese ? "zh" : "en") + "-advanced.png"));
         }
         if (vm.IsChinese != originalLanguage) vm.ToggleLanguage();
-        Console.WriteLine("RF 900px UI: bilingual live mode switches/labels/help, expanded layout, numeric widths, scale binding and bounds PASS");
+        Console.WriteLine("RF 900px UI: bilingual contact-fit binding/help and live mode switches, expanded layout, numeric widths, scale binding and bounds PASS");
     }
 
     private static async Task VerifyReferenceAsync(MainWindow window, MainWindowViewModel vm, RavenfieldView view)
@@ -71,18 +85,22 @@ internal static class RavenfieldUiSmoke
             workspace.Animations.Add(new() { Name = "weapon-fire.cast" });
             workspace.Ravenfield.ReferenceAnimationId = workspace.Animations[1].Id;
             workspace.Ravenfield.Mode = "library";
+            workspace.Ravenfield.ContactFit = false;
             var project = Path.Combine(temporary.FullName, "two-clips.aprj");
             store.Save(workspace, project);
             vm.LoadProject(project);
             vm.SelectPage(WorkspacePage.Settings);
             var combo = view.FindControl<ComboBox>("RfReference")!;
             var mode = view.FindControl<ComboBox>("RfMode")!;
+            var contact = view.FindControl<CheckBox>("RfContactFit")!;
             async Task CheckSelected()
             {
                 await Task.Delay(80);
                 window.UpdateLayout();
                 if (mode.SelectedIndex != 2 || vm.Workspace.Ravenfield.Mode != "library")
                     throw new InvalidOperationException("RF saved mode was not restored or changed with language/normal selection.");
+                if (contact.IsChecked != false || vm.RavenfieldContactFit)
+                    throw new InvalidOperationException("RF saved disabled contact fit was not restored.");
                 if (!ReferenceEquals(combo.SelectedItem, vm.Animations[1]) || combo.SelectedIndex != 1
                     || !combo.GetVisualDescendants().OfType<TextBlock>().Any(t => t.Text == "weapon-fire" && t.IsEffectivelyVisible))
                     throw new InvalidOperationException("RF saved reference is not visibly selected in ComboBox: index=" + combo.SelectedIndex
@@ -101,14 +119,14 @@ internal static class RavenfieldUiSmoke
             var pending = new TaskCompletionSource<RavenfieldAdaptationResult>();
             vm.RavenfieldRunner = (_, index, options, _) =>
             {
-                if (index != 1 || options.Mode != "library") throw new InvalidOperationException("RF UI lost library mode/reference in export snapshot.");
+                if (index != 1 || options.Mode != "library" || options.ContactFit) throw new InvalidOperationException("RF UI lost library mode/reference/contact fit in export snapshot.");
                 return pending.Task;
             };
             try
             {
                 var run = vm.AdaptRavenfieldAsync();
                 await Task.Delay(80);
-                if (!vm.IsBusy || mode.IsEffectivelyEnabled || adapt.IsEffectivelyEnabled || string.IsNullOrWhiteSpace(vm.BusyMessage))
+                if (!vm.IsBusy || mode.IsEffectivelyEnabled || contact.IsEffectivelyEnabled || adapt.IsEffectivelyEnabled || string.IsNullOrWhiteSpace(vm.BusyMessage))
                     throw new InvalidOperationException("RF busy state did not disable inputs or provide feedback.");
                 pending.SetResult(new("result.blend", "result.fbx", "result.report.json", "result.preview.png", []));
                 await run;
@@ -121,7 +139,18 @@ internal static class RavenfieldUiSmoke
             await Task.Delay(80);
             if (combo.SelectedItem is not null || vm.HasRavenfieldReference || adapt.IsEffectivelyEnabled)
                 throw new InvalidOperationException("Removed RF reference stayed selected in ComboBox.");
-            Console.WriteLine("RF live ComboBox: saved non-idle reference/library mode, visible label, language switch, independent selection, busy/completion states and removal PASS");
+            contact.IsChecked = true;
+            store.Save(vm.Workspace, project);
+            vm.LoadProject(project);
+            await Task.Delay(80);
+            if (contact.IsChecked != true || !vm.RavenfieldContactFit)
+                throw new InvalidOperationException("RF enabled contact fit did not survive save/reload in UI.");
+            File.WriteAllText(project, "{\"Ravenfield\":{\"ContactFit\":null}}");
+            vm.LoadProject(project);
+            await Task.Delay(80);
+            if (contact.IsChecked != true || !vm.RavenfieldContactFit)
+                throw new InvalidOperationException("RF null contact fit did not restore the enabled UI default.");
+            Console.WriteLine("RF live UI: contact-fit false/true/null persistence, saved non-idle reference/library mode, language switch, independent selection, busy/completion states and removal PASS");
         }
         finally
         {

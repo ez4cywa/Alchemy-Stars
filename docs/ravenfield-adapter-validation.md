@@ -1,4 +1,18 @@
-# RF adapter validation — 1.3.0-rf.2
+# RF adapter validation — 1.3.0-rf.3
+
+## RF.3 palm-fit addition
+
+- Thirteen Blender contracts pass: added proper/bounded rigid fitting, invalid/degenerate samples, and anatomical palm-side classification. Source and RF palms are sampled in bind pose and tracked with triangle barycentrics, never rematched to nearest vertices every frame.
+- A real-mesh red/green check is provided by `scripts/verify-ravenfield-palm.py`. With `--baseline-only --require-pass`, the original wrist-only fit fails at 13.253 mm; without `--baseline-only`, the same source and tolerance pass at 4.852 mm left / 3.908 mm right. The script also checks that manual position offsets remain target changes and produces before/after/source views and actual weapon-clearance measurements.
+- The 5 mm gate is **corresponding sample position error**, not absolute weapon clearance or all-surface collision. Four stable central/ulnar palm samples intentionally exclude the independently shaped thenar/finger regions. First-person render inspection confirms residual thumb/finger differences; full-hand fitting remains unfinished.
+- The initial six-point fit included thenar shape differences and demanded about 40 degrees of hand rotation. The central-palm fit limits rotation to 25 degrees and wrist shift to 40 mm, preserves source finger directions, iterates against actual skin and retains the best measured candidate including the unchanged baseline.
+- Baseline/candidates share identical elbow-continuity history; only the final fit advances it. A runtime assertion rejects worsening relative to that same-frame baseline. Palm side is derived from the bind thumb-root offset, independent of reference-frame weapon orientation.
+- Full source library: Idle has zero exceeded frames; Sprint 1, Reload 27, Inspect 248. Worst errors approximately 4.85 / 5.00 / 6.45 / 11.00 mm. The latter three clips are not marked as palm-quality passes. Contact rotation/translation steps and every frame's errors are reported.
+- Managed build/self-test and real bilingual UI checks pass, including nullable/default opt-in, explicit disable persistence, manual settings retention, busy disable, and a synthetic failed-quality result that retains files while displaying a review-required title. Native checks and interchange results are recorded with the local release artifacts.
+- Final RF.3 Native AOT publish/self-test, bilingual UI and full-library export pass. Independent reimport of its 481 timeline frames, 101 bones and 19 meshes finds maximum skin error 1.933e-6 m, bone-head error 1.468e-6 m, deformation matrix error 3.666e-6 and parent/child endpoint error 1.393e-6 m. Separate Actions equal their Scene intervals exactly. These checks certify interchange fidelity, not grip quality; 276 of 451 clip frames still exceed the four-point palm target.
+- Follow-up to the user's remaining thumb/index-web gap: a diagnostic six-point run adds radial samples at normalized coordinates (.25, .4) and (.25, .7) without changing the 25-degree/40-mm bounds. Its actual-skin maximum errors decrease from 26.600/28.127 mm to 14.346/14.131 mm (left/right), still fail, and the left correction reaches the rotation cap. First-person and close-up renders still show the gap. The added points sample the thenar side, not a separately validated web-space landmark. This rejected experiment is not enabled in the release. A true web-space correspondence and local thumb/finger fit remain required before claiming that symptom fixed.
+
+Reproduce the geometric gate with Blender `--background --factory-startup --disable-autoexec --python-exit-code 1 --python scripts/verify-ravenfield-palm.py -- --input <prepared.cast> --config <engine-config.json> --rf <RFTools.unitypackage> --output <inspection-directory> --require-pass`. Use the engine-prepared full Z-up CAST; source material files are local user assets, not redistributed.
 
 ## RF.2 full-animation/library addition
 

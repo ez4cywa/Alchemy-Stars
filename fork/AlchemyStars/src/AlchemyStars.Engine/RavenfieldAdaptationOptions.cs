@@ -1,3 +1,6 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
+
 namespace AlchemyStars.Engine;
 
 /// <summary>RF calibration is independent from normal animation export settings.</summary>
@@ -6,6 +9,9 @@ public sealed class RavenfieldAdaptationOptions : ObservableModel
     private string rfSourcePath = "";
     private string referenceAnimationId = "";
     private string mode = "pose";
+    private bool contactFit = true;
+    [JsonConverter(typeof(RavenfieldContactFitConverter))]
+    public bool ContactFit { get => contactFit; set => SetProperty(ref contactFit, value); }
     public string Mode { get => mode; set => SetProperty(ref mode, value ?? "pose"); }
     public string ReferenceAnimationId { get => referenceAnimationId; set => SetProperty(ref referenceAnimationId, value ?? ""); }
     private string sourceUnit = "cm";
@@ -19,6 +25,15 @@ public sealed class RavenfieldAdaptationOptions : ObservableModel
     public double HandScale { get => handScale; set => SetProperty(ref handScale, value); }
     public RavenfieldHandAdjustment Left { get; set; } = new();
     public RavenfieldHandAdjustment Right { get; set; } = new();
+}
+
+// Old or explicitly null settings retain the enabled default; false stays false.
+public sealed class RavenfieldContactFitConverter : JsonConverter<bool>
+{
+    public override bool HandleNull => true;
+    public override bool Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        => reader.TokenType == JsonTokenType.Null || reader.GetBoolean();
+    public override void Write(Utf8JsonWriter writer, bool value, JsonSerializerOptions options) => writer.WriteBooleanValue(value);
 }
 
 public sealed class RavenfieldHandAdjustment : ObservableModel

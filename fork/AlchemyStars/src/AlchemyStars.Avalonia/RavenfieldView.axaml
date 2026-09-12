@@ -15,6 +15,8 @@
 <StackPanel Grid.Column="2"><TextBlock Text="{Binding Text.RfScale}" Classes="field-label" TextWrapping="Wrap" /><NumericUpDown x:Name="RfScale" Value="{Binding Workspace.Ravenfield.HandScale}" Minimum="0.1" Maximum="10" Increment="0.01" FormatString="0.000" AutomationProperties.Name="{Binding Text.RfScale}" /></StackPanel>
 </Grid>
 <TextBlock Text="{Binding Text.RfAxesHelp}" Classes="muted" TextWrapping="Wrap" />
+<CheckBox x:Name="RfContactFit" IsChecked="{Binding RavenfieldContactFit}" Content="{Binding Text.RfContactFit}" AutomationProperties.Name="{Binding Text.RfContactFit}" />
+<TextBlock x:Name="RfContactFitHelp" Text="{Binding Text.RfContactFitHelp}" Classes="muted" TextWrapping="Wrap" />
 <TextBlock Text="{Binding Text.RfUntaggedAxis}" Classes="field-label" TextWrapping="Wrap" /><ComboBox ItemsSource="{Binding RavenfieldUntaggedAxes}" SelectedItem="{Binding Workspace.Ravenfield.UntaggedModelUpAxis}" AutomationProperties.Name="{Binding Text.RfUntaggedAxis}" /><TextBlock Text="{Binding Text.RfUntaggedAxisHelp}" Classes="muted" TextWrapping="Wrap" />
 <Expander x:Name="RfAdvanced" Header="{Binding Text.RfAdvanced}" HorizontalAlignment="Stretch"><Grid ColumnDefinitions="*,24,*" Margin="0,12,0,0"><StackPanel Spacing="8">
 <TextBlock Text="{Binding Text.RfLeft}" Classes="eyebrow" />
