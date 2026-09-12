@@ -277,6 +277,9 @@ def verify_animation(args):
     }
     marker = "RAVENFIELD_FBX_TIMELINE_VERIFICATION_PASS " if args.library else "RAVENFIELD_FBX_VERIFICATION_PASS "
     print(marker + json.dumps(report, ensure_ascii=False), flush=True)
+    if args.output and not args.library:
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding='utf-8')
     return report
 
 
@@ -333,6 +336,9 @@ def verify_library(args):
     rig.animation_data.action = timeline
     report = verify_animation(args)
     report.update(clips=reports, clipCount=len(reports))
+    if args.output:
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding='utf-8')
     print("RAVENFIELD_FBX_VERIFICATION_PASS " + json.dumps(report, ensure_ascii=False), flush=True)
 
 
@@ -390,6 +396,7 @@ def main():
     parser.add_argument("--reference", type=Path, required=True)
     parser.add_argument("--fbx", type=Path, required=True)
     parser.add_argument("--blender", default="D:/blender/blender.exe")
+    parser.add_argument("--output", type=Path, help="Persist animation/library verification JSON after successful checks")
     modes = parser.add_mutually_exclusive_group()
     modes.add_argument("--animation", action="store_true", help="Compare every integer frame in reference action/scene range 1..N")
     modes.add_argument("--library", action="store_true", help="Compare clip actions against Scene ranges, then round-trip the entire Scene take")
@@ -397,6 +404,8 @@ def main():
     parser.add_argument("--rotation-tolerance", type=float, default=0.1)
     argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else sys.argv[1:]
     args = parser.parse_args(argv)
+    require(args.output is None or args.output.resolve() not in (args.reference.resolve(), args.fbx.resolve()),
+            "Output report must not overwrite the reference blend or FBX input")
     require(args.reference.is_file() and args.fbx.is_file(), "Reference or FBX file is missing")
     require(args.position_tolerance > 0 and args.rotation_tolerance > 0, "Tolerances must be positive")
     try:

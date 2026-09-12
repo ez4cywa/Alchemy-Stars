@@ -1,4 +1,21 @@
-# RF adapter validation — 1.3.0-rf.4
+# RF adapter validation — 1.3.0-rf.5
+
+## RF.5 joint grip targets and reference weapon contact
+
+- Joint local-skin fitting covers four palm and three web-space samples. Each control is projected separately to a 30 mm displacement bound. The current seven-point regression passes all 563 original frames, maximum 4.278 mm against the 5 mm threshold; repeating Idle for export produces 564 clip frames.
+- Reference weapon triangles provide stable left-palm anchors with a 0.7 mm contact offset. Contact releases smoothly as source-hand separation grows from 6 to 24 mm; no per-frame nearest-triangle chasing is used. Manual offsets and rotations are applied after target construction.
+- The seven-point metric measures configured fit targets. Left-palm targets can incorporate weapon contact rather than raw source-hand positions; these are distinct error definitions and should not be compared as though unchanged from RF.4.
+- Local fitting remains off by default and depends on `ContactFit`. Source assets, original bone binds/lengths and weapon placement are preserved. The exported hand mesh, helper bones and local skin weights can change.
+- Five-clip ranges remain Idle 1–2, Sprint 13–79, Reload 90–180, reload_empty 191–303 and Inspect 314–604. The 40 gap frames are excluded from the 564 clip-frame count.
+- Twenty-one Blender contracts pass, including independent per-control limits, cardinal control centers, smooth contact release and explicit no-weapon fallback. The real-skin worst-frame gate goes red on RF.4 at 11 mm and green on the compact RF.5 control representation at 4.278 mm. Manual target offsets remain effective in the static mesh regression.
+- Independent weapon BVH checks find the four left-palm contacts on the handguard lower shell/bottom rail exterior, with 0.7000–0.7022 mm separation. Contact triangles are not sight or inner-barrel geometry. Neutral previews and this four-point measurement are not full-surface penetration tests.
+- The first joint-control representation increased skin influences (up to 77 per vertex); an independent top-four truncation probe exposed a 10.83 mm Idle deviation. The final representation transfers each original influence to a mirrored per-material-vertex bone instead of multiplying per-vertex influences. It restores the RF baseline counts (146 vertices above four, maximum seven) and does not claim that a four-weight importer preserves this seven-weight source asset.
+- Native AOT publish/self-test and real 900×600 bilingual light/dark settings tests pass. Interface help now names the seven-point and reference-weapon targets explicitly.
+- Final Native export passes all 564 clip frames with zero exceeded frames: Idle <0.001 mm, Sprint <0.001 mm, Reload 2.183 mm, reload_empty 2.374 mm and Inspect 4.278 mm. All 604 timeline frames (including holds), 331 bones and 19 meshes pass independent FBX reimport: maximum skin error 2.033e-6 m, bone-head error 1.611e-6 m and deformation-matrix error 5.276e-6. Independent Actions match their Scene intervals.
+- Independent structure checks preserve all 101 original bind bones within 6.007e-8 m, every weapon bind vertex exactly, every mesh topology and every per-vertex influence count. Aggregating the 230 helper bones back to their original parents recovers original weights exactly; total weight difference is <=2.23e-16. This verifies the compact representation rather than accepting the earlier high-influence prototype.
+- These measurements do not establish full-surface collision freedom, all-finger contact, Unity/RFTools compatibility or game acceptance. RF.5 build/interchange results should be recorded independently when completed; earlier-version results below do not certify the new module.
+
+RF.4 and earlier sections retain their historical metrics and validation scope.
 
 ## RF.4 local web-space fitting
 

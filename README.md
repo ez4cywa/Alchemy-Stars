@@ -2,7 +2,7 @@
 
 # Alchemy Stars
 
-> **RF experimental branch:** `EZ4/ravenfield-arms-adapter`, version `1.3.0-rf.4`, independently based on Avalonia AOT preview.27 (.NET 11 Preview 7, Avalonia 12.1.2). Adds optional local web-space reshaping in exported copies and a five-clip library. Source assets, original bone binds/lengths and weapon placement are preserved. The current grip test still exceeds 5 mm in 317 of 564 clip frames; Unity compatibility of the added helper bones remains unverified. Production remains v1.1.9 on `main`. [RF usage guide (Chinese)](docs/ravenfield-adapter.zh-CN.md), [RF.4 release notes (Chinese)](docs/releases/1.3.0-rf.4.zh-CN.md).
+> **RF experimental branch:** `EZ4/ravenfield-arms-adapter`, version `1.3.0-rf.5`, independently based on Avalonia AOT preview.27 (.NET 11 Preview 7, Avalonia 12.1.2). Optional local grip fitting jointly measures four palm and three web-space points; reference weapon contact supports the left palm. Source assets, original bone binds/lengths and weapon placement remain unchanged. The seven-point gate measures configured fit targets, not raw source error or full-surface collision; Unity remains unverified. Production remains v1.1.9 on `main`. [RF usage guide (Chinese)](docs/ravenfield-adapter.zh-CN.md), [RF.5 release notes (Chinese)](docs/releases/1.3.0-rf.5.zh-CN.md).
 
 
 Latest preview release: [preview.27 notes (Chinese)](docs/releases/1.3.0-preview.27.zh-CN.md): keep the original scene axis by default or choose Z-up/Y-up for the whole output scene. Includes mixed input-axis conversion, selected export and accessibility improvements.
@@ -112,7 +112,7 @@ This preview branch requires .NET SDK `11.0.100-preview.7.26381.103` to build. `
 
 `run-tests.ps1` builds the stable WPF baseline and runs the Maya-backed conversion regressions. `verify-avalonia-aot.ps1` publishes the trimmed native application, runs its AOT contract/project export checks, starts a real Win32 window, validates Windows UI Automation names/focus/target bounds, and renders all four pages plus a centered dialog at the 900 × 600 minimum size.
 
-Every functional preview change increments the prerelease revision; this independent RF test version is `1.3.0-rf.4`. The stable release remains `1.1.9`.
+Every functional preview change increments the prerelease revision; this independent RF test version is `1.3.0-rf.5`. The stable release remains `1.1.9`.
 
 The 1.1.9 UI audit fixes the clipped About icon, toolbar overflow, cramped layer paths, and low-contrast controls. See the [UI audit and validation notes](design-system/alchemy-stars/pages/ui-audit-1.1.9.md) for coverage and limitations.
 

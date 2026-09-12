@@ -244,6 +244,11 @@ def bake_sequence(rig, rf_meshes, cod, weapon_meshes, transform, factor, config,
                     contact_summary['frames'][-1].update(leftWebErrorM=detail['left']['webMaxErrorM'],rightWebErrorM=detail['right']['webMaxErrorM'],
                                                          leftPalmErrorM=detail['left']['palmMaxErrorM'],rightPalmErrorM=detail['right']['palmMaxErrorM'],
                                                          maxWebControlShiftM=max(detail[s]['maxWebControlShiftM'] for s in ('left','right')))
+                    support=detail['left']['weaponContact']
+                    contact_summary['frames'][-1]['leftWeaponContactWeight']=support['weight']
+                    if support['active']:
+                        distances=np.linalg.norm(np.array(detail['left']['afterPointsM'][:4])-np.array(support['weaponAnchorPointsM']),axis=1)
+                        contact_summary['frames'][-1]['leftWeaponAnchorDistancesM']=distances.tolist()
                 contact_summary['maxBeforeErrorM'] = max(contact_summary['maxBeforeErrorM'],
                                                         *[detail[s]['beforeMaxErrorM'] for s in ('left', 'right')])
                 if error >= contact_summary['maxErrorM']:
@@ -323,8 +328,8 @@ def bake_sequence(rig, rf_meshes, cod, weapon_meshes, transform, factor, config,
                                  'maxErrorM': max(c['palmContact']['maxErrorM'] for c in clips),
                                  'scope': 'Four central/ulnar palm samples; not fingers, thenar or collision-free geometry'}
         if config.get('localHandFit',False):
-            report['palmContact']['scope']='Four central/ulnar palm points and three fixed first-web saddle points; not all-surface collision'
-            report['palmContact'].update(method='reference-bind-shape-and-local-web-skin-controls',
+            report['palmContact']['scope']='Four palm and three web targets; left support follows fixed reference weapon contacts with authored release; not all-surface collision'
+            report['palmContact'].update(method='reference-bind-shape-joint-grip-controls-with-authored-release',
                                          webPassed=all(c['palmContact']['webFramesExceeded']==0 for c in clips),
                                          webFramesExceeded=sum(c['palmContact']['webFramesExceeded'] for c in clips),
                                          maxWebErrorM=max(c['palmContact']['maxWebErrorM'] for c in clips))

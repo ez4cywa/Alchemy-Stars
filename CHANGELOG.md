@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.3.0-rf.5 — Local experimental branch (joint grip targets and reference weapon contact)
+
+- Jointly fit four palm and three web-space skin samples, projecting each local control to a 30 mm bound. The current seven-point regression passes all 563 original frames (564 output clip frames after repeating Idle), maximum 4.278 mm against the 5 mm gate.
+- Anchor left-palm targets to reference weapon triangles with a 0.7 mm contact offset; release smoothly as source-hand separation increases from 6 to 24 mm. Do not chase nearest weapon triangles each frame. Apply manual position/rotation adjustments last.
+- Keep local grip fitting opt-in and dependent on palm alignment. Modify exported copies only, preserving original bind bones/lengths, source assets and weapon placement.
+- Distinguish configured seven-point target error from raw source-hand error: left-palm targets can include reference weapon contact. Full-surface collision, Unity helper-bone compatibility and game acceptance remain unverified.
+
 ## 1.3.0-rf.4 — Local experimental branch (export-copy web-space fitting)
 
 - Add `LocalHandFit`, off by default and effective only with `ContactFit`; disabling palm alignment retains the saved local-fit preference.

@@ -9,10 +9,10 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <ApplicationIcon>Assets\AlchemyStarsIcon.ico</ApplicationIcon>
-    <Version>1.3.0-rf.4</Version>
+    <Version>1.3.0-rf.5</Version>
     <FileVersion>1.3.0.0</FileVersion>
     <AssemblyVersion>1.3.0.0</AssemblyVersion>
-    <InformationalVersion>1.3.0-rf.4</InformationalVersion>
+    <InformationalVersion>1.3.0-rf.5</InformationalVersion>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <PublishAot>true</PublishAot>
     <PublishTrimmed>true</PublishTrimmed>
@@ -48,6 +48,7 @@
     <Content Include="..\..\..\..\blender\ravenfield_animation.py" Link="Converters\ravenfield_animation.py" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="..\..\..\..\blender\ravenfield_contact.py" Link="Converters\ravenfield_contact.py" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="..\..\..\..\blender\ravenfield_shape.py" Link="Converters\ravenfield_shape.py" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="..\..\..\..\blender\ravenfield_weapon_contact.py" Link="Converters\ravenfield_weapon_contact.py" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="..\..\..\..\third_party\cast\blender\io_scene_cast\*.py" Link="BlenderPlugin\io_scene_cast\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="..\..\..\..\third_party\cast\LICENSE" Link="BlenderPlugin\LICENSE" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="..\..\..\..\third_party\cast\blender\UPSTREAM.md" Link="BlenderPlugin\UPSTREAM.md" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />

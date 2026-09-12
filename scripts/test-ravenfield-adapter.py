@@ -246,6 +246,49 @@ class AdapterContracts(unittest.TestCase):
         second, _ = bounded_control_offsets(a, wanted@rotation.T)
         np.testing.assert_allclose(second, first@rotation.T, atol=1e-8)
 
+    def test_local_control_centers_do_not_blur_each_other(self):
+        import numpy as np
+        from ravenfield_shape import cardinal_control_weights
+        centers = np.array([[0, 0, 0], [.002, 0, 0], [0, .002, 0], [.002, .002, 0]])
+        np.testing.assert_allclose(cardinal_control_weights(centers, centers), np.eye(4), atol=1e-10)
+        weights = cardinal_control_weights(np.array([[.001, .001, 0], [.01, 0, 0]]), centers)
+        np.testing.assert_allclose(weights.sum(axis=1), 1)
+        self.assertTrue((weights >= 0).all())
+
+    def test_one_limited_control_does_not_shrink_unrelated_corrections(self):
+        import numpy as np
+        from ravenfield_shape import bounded_control_offsets
+        desired = np.diag([.1, .002, .003])
+        actual, limited = bounded_control_offsets(np.eye(3), desired)
+        self.assertTrue(limited)
+        np.testing.assert_allclose(actual, np.diag([.03, .002, .003]), atol=1e-8)
+
+    def test_weapon_contact_releases_smoothly_and_does_not_pull_distant_hands(self):
+        from ravenfield_weapon_contact import release_weight
+        self.assertEqual(release_weight(0), 1)
+        self.assertEqual(release_weight(.006), 1)
+        self.assertAlmostEqual(release_weight(.015), .5)
+        self.assertEqual(release_weight(.024), 0)
+        self.assertEqual(release_weight(1), 0)
+        values=[release_weight(n*.001) for n in range(31)]
+        self.assertTrue(all(a>=b for a,b in zip(values,values[1:])))
+        self.assertLess(1-release_weight(.006001), 1e-7)
+        self.assertLess(release_weight(.023999), 1e-7)
+
+    def test_missing_weapon_contact_is_explicit_and_leaves_authored_target(self):
+        import bpy
+        import numpy as np
+        from types import SimpleNamespace
+        from ravenfield_weapon_contact import SupportContacts
+        bpy.ops.wm.read_factory_settings(use_empty=True)
+        points=np.zeros((7,3))
+        support=SupportContacts(SimpleNamespace(points=lambda kind:{'le':points}),Matrix.Identity(4))
+        self.assertFalse(support.describe()['enabled'])
+        self.assertEqual(support.describe()['reason'],'no-weapon-surface')
+        actual, detail=support.targets(points)
+        np.testing.assert_array_equal(actual,points)
+        self.assertEqual(detail['weight'],0)
+
     def test_local_system_welds_seams_and_pins_exterior_and_non_hand(self):
         import numpy as np
         from ravenfield_shape import local_system

@@ -1,7 +1,7 @@
 """Local web shape and baked skin controls on an exported RF hand copy.
 
-Original bones and topology stay unchanged. Local weights are split across
-mirrored auxiliary bones; the calibrated bind is shared by every clip.
+Original bones and topology stay unchanged. Local weights are reassigned to
+mirrored auxiliary bones without increasing per-vertex influence counts.
 """
 from __future__ import annotations
 
@@ -36,24 +36,27 @@ class GripContactFitter(PalmContactFitter):
         detail = super().fit(pose,rest,config,report,continuity)
         if self.dynamic is not None:
             web = self.dynamic.apply(pose,config)
-            final_palms = super().points('rf')
             for side,setting in (('le','left'),('ri','right')):
                 item=detail[setting]
-                item['afterPointsM']=final_palms[side].tolist()+web[setting]['afterPointsM']
-                item['sourcePointsM']+=web[setting]['sourcePointsM']
+                item['afterPointsM']=web[setting]['afterPointsM']
+                item['sourcePointsM']=web[setting]['sourcePointsM']
                 item['beforePointsM']+=baseline_web[side].tolist()
-                item['webAfterPalmPointsM']=web[setting]['beforePointsM']
+                item['gripAfterPalmPointsM']=web[setting]['beforePointsM']
+                item['webAfterPalmPointsM']=web[setting]['beforePointsM'][-3:]
                 item['webCorrectionM']=web[setting]['shiftM']
                 item['webControlShiftsM']=web[setting]['controlShiftsM']
                 item['maxWebControlShiftM']=float(np.linalg.norm(web[setting]['controlShiftsM'],axis=1).max())
                 item['webCorrectionLimited']=web[setting]['limited']
+                item['authoredPointsM']=web[setting]['authoredPointsM']
+                item['weaponContact']=web[setting]['weaponContact']
+                item['targetPointsM']=item['sourcePointsM']
                 errors=np.linalg.norm(np.array(item['afterPointsM'])-np.array(item['sourcePointsM']),axis=1)
                 item.update(maxErrorM=float(errors.max()),rmsErrorM=float(np.sqrt(np.mean(errors**2))),passed=bool(errors.max()<=.005))
                 item['beforeMaxErrorM']=float(np.linalg.norm(np.array(item['beforePointsM'])-np.array(item['sourcePointsM']),axis=1).max())
                 rf.require(item['maxErrorM']<=item['beforeMaxErrorM']+1e-5,f'{setting} local grip correction worsened the same-frame baseline')
             detail['passed']=all(detail[s]['passed'] for s in ('left','right'))
-            detail['method']='reference-bind-shape-and-local-web-skin-controls'
-        detail['scope'] = 'Four central/ulnar palm points and three fixed first-web saddle points'
+            detail['method']='reference-bind-shape-joint-grip-controls-with-authored-release'
+        detail['scope'] = 'Four palm and three fixed web points; left support targets close reference weapon contacts, with authored release'
         for side in ('left','right'):
             errors = np.linalg.norm(np.array(detail[side]['afterPointsM'])-np.array(detail[side]['sourcePointsM']),axis=1)
             detail[side]['webMaxErrorM'] = float(errors[-3:].max())
@@ -73,6 +76,12 @@ def prepare_grip(source,target,source_meshes,target_meshes,transform,pose,rest,c
     calibration['referenceRefinement']=refine_web_reference(fitter,pose,rest,config,palm_first=True)
     fitter.dynamic=DynamicWebCorrection(fitter)
     calibration['dynamicWeb']=fitter.dynamic.description
+    calibration['leftSupportReference']=fitter.dynamic.support_contacts.describe()
+    calibration['contract']={'version':1,'targetToleranceM':.005,'maximumControlShiftM':.03,
+                             'preserveOriginalBones':True,'preservePerVertexInfluenceCounts':True}
+    if not calibration['leftSupportReference']['enabled']:
+        report.setdefault('warnings',[]).append('参考帧未建立左掌武器接触，请选择靠近武器的持枪姿势；仍执行手型拟合 / '
+                                                'No left-palm weapon contact captured; choose a holding reference pose. Hand-shape fitting remains enabled.')
     calibration['maxBindVertexShiftM']=max(float(np.linalg.norm(np.array([v.co for v in obj.data.vertices])-before,axis=1).max()) for obj,before in original_vertices.items())
     for name,(head,tail) in original_bones.items():
         bone=target.data.bones[name]
@@ -85,37 +94,41 @@ def prepare_grip(source,target,source_meshes,target_meshes,transform,pose,rest,c
 class DynamicWebCorrection:
     """Localized translation baked as standard auxiliary skin bones.
 
-    Each auxiliary bone mirrors one original bind/pose. Splitting that original
-    weight preserves uncorrected skin exactly; a shared world translation adds a
-    smooth local displacement without attaching a releasing hand to the weapon.
+    Each auxiliary bone mirrors one original bind/pose at a welded skin vertex.
+    Transferring the entire original weight preserves neutral skin and influence
+    counts. The smooth control field becomes that bone's world-space translation.
     """
     def __init__(self,fitter):
         self.fitter,self.target=fitter,fitter.target
+        self.samples=GripSurfaceSamples(fitter)
+        from ravenfield_weapon_contact import SupportContacts
+        self.support_contacts=SupportContacts(self.samples,fitter.transform)
         self.helpers,self.influence={},{}
         baseline={obj:evaluated_mesh(obj,Matrix.Identity(4)) for obj in fitter.meshes['rf']}
+        original_counts={obj:[sum(g.weight>1e-8 for g in v.groups) for v in obj.data.vertices] for obj in fitter.meshes['rf']}
         rig=self.target
         for side in ('le','ri'):
             additions={}
             masks={}
+            bindings={}
             centers=[]
-            for obj,triangle,_ in fitter.web_samples.anchors['rf',side]:
+            for obj,triangle,_ in self.samples.anchors['rf',side]:
                 centers.extend([list(obj.data.vertices[i].co) for i in triangle])
             centers=np.unique(np.round(centers,6),axis=0)
             count=len(centers)
-            radius=max(float(np.linalg.norm(centers[:,None]-centers[None],axis=2).max())*.25,.004)
-            for obj in fitter.meshes['rf']:
+            for mesh_index,obj in enumerate(fitter.meshes['rf']):
                 points=np.array([v.co for v in obj.data.vertices])
                 constraints=[]
                 desired=[]
                 selected=[]
-                for mesh,triangle,bary in fitter.anchors['rf',side]:
-                    if mesh==obj:constraints.append((triangle,bary));desired.append(0.)
-                for mesh,triangle,bary in fitter.web_samples.anchors['rf',side]:
+                for mesh,triangle,bary in self.samples.anchors['rf',side]:
                     if mesh==obj:
                         constraints.append((triangle,bary));desired.append(1.)
                         selected.append(sum((points[i]*w for i,w in zip(triangle,bary)),np.zeros(3)))
                 if not selected:continue
-                unique,weld,active,lookup,h=local_system(points,[tuple(p.vertices) for p in obj.data.polygons],np.mean(selected,axis=0),.045,hand_vertices(obj,rig,side))
+                center=np.mean(selected,axis=0)
+                support=max(float(np.linalg.norm(np.array(selected)-center,axis=1).max())+.025,.045)
+                unique,weld,active,lookup,h=local_system(points,[tuple(p.vertices) for p in obj.data.polygons],center,support,hand_vertices(obj,rig,side))
                 a=np.zeros((len(constraints),len(active)))
                 for row,(triangle,bary) in enumerate(constraints):
                     for i,w in zip(triangle,bary):
@@ -125,109 +138,144 @@ class DynamicWebCorrection:
                 mask[active]=np.clip(basis@np.linalg.pinv(a@basis,rcond=1e-8)@np.array(desired),0,1)
                 mask=mask[weld]
                 mask[mask<1e-5]=0
-                blend=np.exp(-np.linalg.norm(points[:,None]-centers[None],axis=2)**2/radius**2)
-                blend/=np.maximum(blend.sum(axis=1,keepdims=True),1e-100)
+                blend=cardinal_control_weights(unique[weld],centers)
                 masks[obj]=mask[:,None]*blend
-                for mesh,triangle,bary in fitter.anchors['rf',side]:
-                    if mesh==obj:
-                        rf.require(sum(mask[i]*w for i,w in zip(triangle,bary))<1e-6,'Web weight field leaks into a pinned palm sample')
+                bindings[obj]={}
                 groups={g.index:g.name for g in obj.vertex_groups}
                 for vertex,amount in zip(obj.data.vertices,mask):
                     if amount<=0:continue
                     for group in vertex.groups:
                         name=groups[group.group]
                         if name in rig.data.bones and group.weight>1e-8:
-                            additions[name]=[f'RF_Web_{side}_{k}_{name}' for k in range(count)]
+                            helper=f'RF_Web_{side}_{mesh_index}_{weld[vertex.index]}_{name}'
+                            additions[helper]=(name,masks[obj][vertex.index])
+                            bindings[obj][vertex.index,name]=helper
             rf.activate(rig)
             bpy.ops.object.mode_set(mode='EDIT')
             try:
-                for original,helpers in additions.items():
+                for helper,(original,field) in additions.items():
                     parent=rig.data.edit_bones[original]
-                    for helper in helpers:
-                        rf.require(helper not in rig.data.edit_bones, f'Web helper bone already exists: {helper}')
-                        bone=rig.data.edit_bones.new(helper)
-                        bone.head,bone.tail=parent.head.copy(),parent.tail.copy()
-                        bone.roll=parent.roll
-                        bone.parent=parent
-                        bone.use_connect=False
-                        bone.use_deform=True
+                    rf.require(helper not in rig.data.edit_bones, f'Grip helper bone already exists: {helper}')
+                    bone=rig.data.edit_bones.new(helper)
+                    bone.head,bone.tail=parent.head.copy(),parent.tail.copy()
+                    bone.roll=parent.roll
+                    bone.parent=parent
+                    bone.use_connect=False
+                    bone.use_deform=True
             finally:bpy.ops.object.mode_set(mode='OBJECT')
             self.helpers[side]=additions
             for obj,mask in masks.items():
                 groups={g.index:g.name for g in obj.vertex_groups}
                 data=[[(groups[g.group],g.weight) for g in v.groups] for v in obj.data.vertices]
-                for helpers in additions.values():
-                    for helper in helpers:
-                        if obj.vertex_groups.get(helper) is None:obj.vertex_groups.new(name=helper)
+                for helper in set(bindings[obj].values()):
+                    if obj.vertex_groups.get(helper) is None:obj.vertex_groups.new(name=helper)
                 for vertex,control_weights,weights in zip(obj.data.vertices,mask,data):
                     amount=float(control_weights.sum())
                     if amount<=0:continue
                     for original,weight in weights:
-                        if original in additions:
-                            obj.vertex_groups[original].add([vertex.index],weight*(1-amount),'REPLACE')
-                            for helper,control_weight in zip(additions[original],control_weights):
-                                obj.vertex_groups[helper].add([vertex.index],weight*float(control_weight),'REPLACE')
-            self.influence[side]=np.array([sum((masks[obj][i]*w for i,w in zip(triangle,bary)),np.zeros(count)) for obj,triangle,bary in fitter.web_samples.anchors['rf',side]])
-            rf.require(self.influence[side].sum(axis=1).min()>.5 and np.linalg.matrix_rank(self.influence[side])==3,'Insufficient independent web control influence')
+                        helper=bindings[obj].get((vertex.index,original))
+                        if helper:
+                            obj.vertex_groups[original].remove([vertex.index])
+                            obj.vertex_groups[helper].add([vertex.index],weight,'REPLACE')
+            self.influence[side]=np.array([sum((masks[obj][i]*w for i,w in zip(triangle,bary)),np.zeros(count)) for obj,triangle,bary in self.samples.anchors['rf',side]])
+            rf.require(self.influence[side].sum(axis=1).min()>.5 and np.linalg.matrix_rank(self.influence[side])>=3,'Insufficient independent grip control influence')
         self.reset()
         bpy.context.view_layer.update()
         maximum=max(float(np.linalg.norm(evaluated_mesh(obj,Matrix.Identity(4))-before,axis=1).max()) for obj,before in baseline.items())
         rf.require(maximum<1e-5,'Neutral web helper bones changed the original skin')
-        self.description={'method':'mirrored-skin-weight-local-translation','maxShiftM':.03,
-                          'helperBones':sum(len(names) for h in self.helpers.values() for names in h.values()),'neutralSkinErrorM':maximum,
+        for obj,counts in original_counts.items():
+            rf.require(all(sum(g.weight>1e-8 for g in vertex.groups)<=count for vertex,count in zip(obj.data.vertices,counts)),
+                       'Local grip correction increased per-vertex skin influences')
+        self.description={'method':'joint-palm-web-mirrored-skin-controls','maxShiftM':.03,
+                          'leftSupportContact':'fixed-reference-weapon-triangles-with-authored-release',
+                          'helperBones':sum(len(h) for h in self.helpers.values()),'neutralSkinErrorM':maximum,
+                          'perVertexInfluenceCountPreserved':True,
                           'influence':{s:v.tolist() for s,v in self.influence.items()}}
 
     def reset(self):
         for mapping in self.helpers.values():
-            for helpers in mapping.values():
-                for helper in helpers:self.target.pose.bones[helper].matrix_basis.identity()
+            for helper in mapping:self.target.pose.bones[helper].matrix_basis.identity()
         bpy.context.view_layer.update()
 
     def apply(self,pose,config):
         from mathutils import Euler
         import math
-        source=self.fitter.web_samples.points('source')
-        actual=self.fitter.web_samples.points('rf')
+        source=self.samples.points('source')
+        actual=self.samples.points('rf')
         result={}
         for side,setting in (('le','left'),('ri','right')):
             wrist=pose[f'j_wrist_{side}'].translation
             rotation=Euler([math.radians(v) for v in config[setting]['rotation']],'XYZ').to_quaternion()
             offset=Vector(config[setting]['position'])
             wanted=np.array([wrist+offset+rotation@(Vector(p)-wrist) for p in source[side]])
+            authored=wanted.copy()
+            contact={'active':False,'weight':0.}
+            if side=='le':
+                supported,contact=self.support_contacts.targets(source[side])
+                wanted=np.array([wrist+offset+rotation@(Vector(p)-wrist) for p in supported])
             influence=self.influence[side]
             shifts,limited=bounded_control_offsets(influence,wanted-actual[side])
-            for original,helpers in self.helpers[side].items():
-                for helper,shift in zip(helpers,shifts):
-                    matrix=self.target.pose.bones[original].matrix.copy()
-                    matrix.translation+=Vector(shift)
-                    self.target.pose.bones[helper].matrix=matrix
+            for helper,(original,field) in self.helpers[side].items():
+                matrix=self.target.pose.bones[original].matrix.copy()
+                matrix.translation+=Vector(field@shifts)
+                self.target.pose.bones[helper].matrix=matrix
             result[setting]={'sourcePointsM':wanted.tolist(),'beforePointsM':actual[side].tolist(),'shiftM':shifts.mean(axis=0).tolist(),
-                             'controlShiftsM':shifts.tolist(),'limited':limited}
+                             'controlShiftsM':shifts.tolist(),'limited':limited,'authoredPointsM':authored.tolist(),'weaponContact':contact}
         bpy.context.view_layer.update()
-        after=self.fitter.web_samples.points('rf')
+        after=self.samples.points('rf')
         for side,setting in (('le','left'),('ri','right')):result[setting]['afterPointsM']=after[side].tolist()
         return result
 
 
+def cardinal_control_weights(points, centers):
+    """Smooth positive partition, interpolating each fixed material center."""
+    distances=np.linalg.norm(np.asarray(points)[:,None]-np.asarray(centers)[None],axis=2)
+    weights=1/np.maximum(distances,1e-12)**4
+    weights/=weights.sum(axis=1,keepdims=True)
+    return weights
+
+
 def bounded_control_offsets(influence,desired,limit=.03):
-    """Minimize the largest auxiliary displacement before applying a hard bound."""
+    """Bound each control independently; minimize actual sample residuals.
+
+    Uniformly shrinking an exact solution sacrifices every independent sample
+    when only one control is limited. Projected accelerated least squares keeps
+    the same displacement bounds without coupling those unrelated residuals.
+    """
     a,desired=np.asarray(influence,dtype=float),np.asarray(desired,dtype=float)
-    rf.require(a.ndim==2 and a.shape[0]==3 and desired.shape==(3,3)
+    rf.require(a.ndim==2 and a.shape[0]>=3 and desired.shape==(a.shape[0],3)
                and np.isfinite(a).all() and np.isfinite(desired).all()
-               and np.linalg.matrix_rank(a)==3 and np.isfinite(limit) and limit>0,'Invalid local web control system')
+               and np.linalg.matrix_rank(a)>=3 and np.isfinite(limit) and limit>0,'Invalid local web control system')
     offsets=np.linalg.pinv(a,rcond=1e-8)@desired
-    best=offsets.copy()
-    for _ in range(15):
-        weights=1/(1+(np.linalg.norm(offsets,axis=1)/limit)**6)
-        basis=weights[:,None]*a.T
-        proposed=basis@np.linalg.pinv(a@basis,rcond=1e-10)@desired
-        offsets=.5*(offsets+proposed)
-        if np.linalg.norm(offsets,axis=1).max()<np.linalg.norm(best,axis=1).max():best=offsets.copy()
-    length=float(np.linalg.norm(best,axis=1).max())
-    limited=length>limit
-    if limited:best*=limit/length
-    rf.require(np.isfinite(best).all(),'Nonfinite local web control correction')
-    return best,limited
+    if np.linalg.norm(offsets,axis=1).max()<=limit:
+        return offsets,False
+    offsets*=np.minimum(1,limit/np.maximum(np.linalg.norm(offsets,axis=1),1e-20))[:,None]
+    extrapolated=offsets.copy()
+    momentum=1.
+    step=1/np.linalg.norm(a,2)**2
+    for _ in range(1000):
+        proposed=extrapolated-step*(a.T@(a@extrapolated-desired))
+        proposed*=np.minimum(1,limit/np.maximum(np.linalg.norm(proposed,axis=1),1e-20))[:,None]
+        next_momentum=(1+np.sqrt(1+4*momentum*momentum))/2
+        extrapolated=proposed+(momentum-1)/next_momentum*(proposed-offsets)
+        change=float(np.linalg.norm(proposed-offsets))
+        offsets,momentum=proposed,next_momentum
+        if change<1e-11:break
+    rf.require(np.isfinite(offsets).all(),'Nonfinite local grip control correction')
+    return offsets,True
+
+
+class GripSurfaceSamples:
+    """Fixed palm and web material points, with no per-frame rematching."""
+    def __init__(self, fitter):
+        self.fitter = fitter
+        self.anchors = {(kind, side): fitter.anchors[kind,side] + fitter.web_samples.anchors[kind,side]
+                        for kind in ('source','rf') for side in ('le','ri')}
+
+    def points(self, kind):
+        palms=super(GripContactFitter,self.fitter).points(kind)
+        webs=self.fitter.web_samples.points(kind)
+        return {side:np.concatenate((palms[side],webs[side])) for side in ('le','ri')}
 
 
 class WebContactSamples:

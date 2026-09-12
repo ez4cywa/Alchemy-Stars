@@ -6,8 +6,8 @@ public sealed partial class UiText
     public string RfHelp => L("选择 RF 手臂与参考动画，使用已求值的动画层、手部姿势与 IK。生成 .blend、FBX、预览图和报告。", "Choose RF hands and a reference clip, using evaluated layers, hand poses and IK. Generates .blend, FBX, preview and report.");
     public string RfMode => L("输出模式", "Output mode");
     public string RfContactFit => L("自动对齐主掌面", "Align central palm surfaces");
-    public string RfLocalHandFit => L("局部虎口拟合（修改导出手型）", "Local web-space fit (reshape exported hands)");
-    public string RfLocalHandFitHelp => L("需开启主掌面对齐。仅修改导出副本的局部虎口网格，新增镜像辅助骨并重分配局部权重（总权重保持）；参考帧校准后用于全部动画。原指根、骨头绑定与长度、源素材及枪位置不变。不保证全程贴合或无穿模。", "Requires palm alignment. Reshapes the exported web-space mesh using mirrored helper bones and redistributed local weights, preserving total weight. Reference-frame calibration applies to all clips. Original finger roots, bone binds/lengths, source assets and weapon placement stay unchanged. Full-sequence fit and collision-free results are not guaranteed.");
+    public string RfLocalHandFit => L("局部握持拟合（修改导出手型）", "Local grip fit (reshape exported hands)");
+    public string RfLocalHandFitHelp => L("需开启主掌面对齐。以四个掌面点和三个虎口点拟合导出手型；左掌参考握持可贴合武器，离枪时平滑释放。仅修改导出副本，保留源素材、原骨绑定与长度及枪位置；手动微调仍有效。5 mm 判定针对拟合目标，不代表全表面无穿模或 Unity 已验证。", "Requires palm alignment. Fits four palm and three web-space points in exported hands. Left-palm reference contact follows the weapon and releases smoothly as the source hand moves away. Source assets, original bone binds/lengths and weapon placement stay unchanged; manual adjustments remain effective. The 5 mm gate measures fit targets, not full-surface collision or Unity validation.");
     public string RfContactFitHelp => L("比较源手臂与 RF 手臂的稳定掌面点进行对齐，仍可使用手动微调。不保证手指贴合或无穿模；误差超过 5 mm 会在报告中提示。", "Aligns stable palm points on the source and RF hands; manual adjustments remain available. Finger contact and collision-free results are not guaranteed. Errors over 5 mm are reported.");
     public string RfPose => L("静态姿势", "Static pose");
     public string RfAnimation => L("完整动画", "Full animation");
