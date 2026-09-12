@@ -12,6 +12,7 @@ public enum WorkspacePage
     Settings,
     About,
     DualAnimations,
+    Ravenfield,
 }
 
 public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDisposable
@@ -108,7 +109,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
             automaticHandDefaults.Clear();
             manualHandFields.Clear();
             workspace = value;
-            ravenfieldResult = null;
+            ClearRavenfieldResult();
             OnPropertyChanged(nameof(HasRavenfieldResult));
             selectedDual = null;
             WatchDualSources();
@@ -142,6 +143,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
     {
         WorkspacePage.ModelParts => Text.ModelParts,
         WorkspacePage.Settings => Text.Settings,
+        WorkspacePage.Ravenfield => Text.RfNavigation,
         WorkspacePage.About => Text.About,
         WorkspacePage.DualAnimations => Text.DualAnimations,
         _ => Text.AnimationBlend,
@@ -213,7 +215,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
         }
     }
     public bool HasSelectedLayer => SelectedLayer is not null;
-    public WorkspacePage SelectedPage { get => selectedPage; private set { selectedPage = value; if (value is WorkspacePage.Settings or WorkspacePage.About) Preview.Pause(); OnPropertyChanged(); RaisePageState(); } }
+    public WorkspacePage SelectedPage { get => selectedPage; private set { selectedPage = value; if (value is WorkspacePage.Settings or WorkspacePage.About or WorkspacePage.Ravenfield) Preview.Pause(); OnPropertyChanged(); RaisePageState(); } }
     public bool IsAnimationsPage => SelectedPage == WorkspacePage.Animations;
     public bool IsModelPartsPage => SelectedPage == WorkspacePage.ModelParts;
     public bool IsSettingsPage => SelectedPage == WorkspacePage.Settings;
@@ -255,7 +257,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
     public void SelectPage(WorkspacePage page)
     {
         if ((page == WorkspacePage.DualAnimations) != IsDualPage) Preview.Clear();
-        if (page == WorkspacePage.Settings) SuggestRavenfieldIdle();
+        if (page == WorkspacePage.Ravenfield) SuggestRavenfieldIdle();
         SelectedPage = page;
     }
 
@@ -589,6 +591,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
 
     public async Task ExportAsync()
     {
+        if (IsRavenfieldPage) { await AdaptRavenfieldAsync(); return; }
         if (IsDualPage) { await ProcessDualAsync(false); return; }
         await ExportAnimationsAsync(selectedOnly: false);
     }
@@ -646,6 +649,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
 
     public async Task BuildPreviewAsync()
     {
+        if (IsRavenfieldPage) { await OpenRavenfieldAsync(true); return; }
         if (IsDualPage) { await ProcessDualAsync(true); return; }
         if (IsBusy || SelectedAnimation is null) return;
         // Each invocation owns a unique cache, never a source/output asset directory.
@@ -685,6 +689,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
             selectedPart.PropertyChanged -= SelectedPartChanged;
         Timeline.Dispose();
         Preview.Dispose();
+        ravenfieldPreview?.Dispose();
     }
 
     public void ToggleLanguage()
@@ -907,6 +912,8 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
         OnPropertyChanged(nameof(CanExportSelectedAnimation));
         OnPropertyChanged(nameof(CurrentExportLabel));
         OnPropertyChanged(nameof(IsDualPage));
+        OnPropertyChanged(nameof(IsRavenfieldPage));
+        RaiseRavenfieldPresentation();
         OnPropertyChanged(nameof(CurrentPageTitle));
         OnPropertyChanged(nameof(IsAnimationsPage));
         OnPropertyChanged(nameof(IsModelPartsPage));

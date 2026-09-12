@@ -243,6 +243,7 @@ internal static class RavenfieldSmoke
         vm.Animations.Add(new() { Name = "idle.cast" });
         vm.SelectedAnimation = vm.Animations[0];
         vm.SelectedRavenfieldAnimation = vm.Animations[0];
+        vm.Workspace.Ravenfield.RfSourcePath = "fixture-rf.blend";
         await vm.AdaptRavenfieldAsync();
         Require(vm.HasRavenfieldResult, "Successful RF result did not enable open actions.");
         vm.CloseDialog();
@@ -254,8 +255,8 @@ internal static class RavenfieldSmoke
                 vm.RavenfieldRunner = (_, _, _, _) => Task.FromResult(result with { PalmFitPassed = passed });
                 await vm.AdaptRavenfieldAsync();
                 var expected = passed == false ? vm.Text.RfPalmFitReview : vm.Text.RfComplete;
-                Require(vm.FooterStatus == expected && vm.DialogTitle == expected && vm.HasRavenfieldResult
-                    && vm.DialogMessage.Contains(result.BlendPath) && vm.DialogMessage.Contains(result.FbxPath),
+                Require(vm.FooterStatus == expected && vm.RavenfieldResultStatus == expected && vm.HasRavenfieldResult
+                    && vm.RavenfieldOutputPath == result.FbxPath && !vm.IsDialogOpen,
                     "RF fit-review completion status hid outputs or claimed a fit pass.");
                 vm.CloseDialog();
             }
@@ -265,6 +266,7 @@ internal static class RavenfieldSmoke
         vm.Animations.Add(new() { Name = "idle.cast" });
         vm.SelectedAnimation = vm.Animations[0];
         vm.SelectedRavenfieldAnimation = vm.Animations[0];
+        vm.Workspace.Ravenfield.RfSourcePath = "fixture-rf.blend";
         var pending = new TaskCompletionSource<RavenfieldAdaptationResult>();
         vm.RavenfieldRunner = (_, _, _, _) => pending.Task;
         var run = vm.AdaptRavenfieldAsync();
@@ -281,7 +283,7 @@ internal static class RavenfieldSmoke
             new ApplicationPreferencesStore(Path.Combine(folder, "reference-preferences.json")), new EmptyPicker());
         vm.Animations.Add(new() { Name = "idle-first.cast" });
         vm.Animations.Add(new() { Name = "idle-second.cast" });
-        vm.SelectPage(WorkspacePage.Settings);
+        vm.SelectPage(WorkspacePage.Ravenfield);
         Require(!vm.HasRavenfieldReference, "Multiple clips silently chose an RF reference.");
         vm.SelectedRavenfieldAnimation = vm.Animations[1];
         vm.SelectedAnimation = vm.Animations[0];
@@ -300,16 +302,16 @@ internal static class RavenfieldSmoke
             "Removed reference fell back or lost its saved ID.");
         store.Save(vm.Workspace, project);
         vm.LoadProject(project);
-        vm.SelectPage(WorkspacePage.Settings);
+        vm.SelectPage(WorkspacePage.Ravenfield);
         Require(!vm.HasRavenfieldReference && vm.SelectedRavenfieldAnimation is null,
             "Missing persisted reference silently selected another animation.");
         vm.NewProject();
         vm.Animations.Add(new() { Name = "weapon_fire.cast" });
         vm.Animations.Add(new() { Name = "weapon_IDLE.cast" });
-        vm.SelectPage(WorkspacePage.Settings);
+        vm.SelectPage(WorkspacePage.Ravenfield);
         Require(vm.SelectedRavenfieldAnimation == vm.Animations[1], "Unique idle was not suggested.");
         vm.SelectedAnimation = vm.Animations[0];
-        vm.SelectPage(WorkspacePage.Settings);
+        vm.SelectPage(WorkspacePage.Ravenfield);
         Require(vm.SelectedRavenfieldAnimation == vm.Animations[1], "Normal selection overrode the RF idle suggestion.");
     }
 

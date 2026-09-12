@@ -12,7 +12,7 @@ public sealed partial class MainWindowViewModel
     private readonly List<INotifyCollectionChanged> dualCollections = [];
     public ObservableCollection<WorkspaceDualAnimation> DualAnimations => Workspace.DualAnimations;
     public bool IsDualPage => SelectedPage == WorkspacePage.DualAnimations;
-    public string CurrentExportLabel => IsDualPage ? Text.DualExportSelected : Text.Export;
+    public string CurrentExportLabel => IsRavenfieldPage ? Text.RfAdapt : IsDualPage ? Text.DualExportSelected : Text.Export;
     public bool HasSelectedDual => SelectedDual is not null;
     public int DualLeftIndex => DualLeftSource is { } a ? Animations.IndexOf(a) : -1;
     public int DualRightIndex => DualRightSource is { } a ? Animations.IndexOf(a) : -1;

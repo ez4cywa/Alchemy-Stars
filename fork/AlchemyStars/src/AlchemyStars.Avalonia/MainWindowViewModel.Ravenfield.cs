@@ -1,8 +1,48 @@
+using Avalonia.Media.Imaging;
+
 namespace AlchemyStars.Avalonia;
 
 public sealed partial class MainWindowViewModel
 {
     private RavenfieldAdaptationResult? ravenfieldResult;
+    private Bitmap? ravenfieldPreview;
+    private string ravenfieldError = "";
+    public bool IsRavenfieldPage => SelectedPage == WorkspacePage.Ravenfield;
+    public Bitmap? RavenfieldPreview => ravenfieldPreview;
+    public bool HasRavenfieldPreview => ravenfieldPreview is not null;
+    public bool CanGenerateRavenfield => HasRavenfieldReference && !string.IsNullOrWhiteSpace(Workspace.Ravenfield.RfSourcePath);
+    public string RavenfieldReadiness => !HasRavenfieldReference ? Text.RfNeedReference
+        : string.IsNullOrWhiteSpace(Workspace.Ravenfield.RfSourcePath) ? Text.RfNeedSource : Text.RfReady;
+    public string RavenfieldResultStatus => !string.IsNullOrEmpty(ravenfieldError) ? Text.ExportFailedTitle
+        : ravenfieldResult is null ? Text.RfNoResult
+        : ravenfieldResult.PalmFitPassed == false ? Text.RfPalmFitReview : Text.RfComplete;
+    public string RavenfieldResultDetail => !string.IsNullOrEmpty(ravenfieldError) ? ravenfieldError
+        : ravenfieldResult is null ? Text.RfPreviewEmpty
+        : Text.RfSnapshotHelp + (ravenfieldResult.Warnings.Count > 0 ? Environment.NewLine + string.Join(Environment.NewLine, ravenfieldResult.Warnings) : "");
+    public string RavenfieldOutputPath => ravenfieldResult?.FbxPath ?? "";
+    private void RaiseRavenfieldPresentation()
+    {
+        foreach (var name in new[] { nameof(CanGenerateRavenfield), nameof(RavenfieldReadiness), nameof(RavenfieldResultStatus),
+            nameof(RavenfieldResultDetail), nameof(RavenfieldOutputPath), nameof(RavenfieldPreview), nameof(HasRavenfieldPreview), nameof(HasRavenfieldResult) })
+            OnPropertyChanged(name);
+    }
+    private void ClearRavenfieldResult()
+    {
+        ravenfieldResult = null;
+        ravenfieldError = "";
+        var previous = ravenfieldPreview;
+        ravenfieldPreview = null;
+        RaiseRavenfieldPresentation();
+        previous?.Dispose();
+    }
+    internal void SetRavenfieldResult(RavenfieldAdaptationResult result)
+    {
+        ClearRavenfieldResult();
+        ravenfieldResult = result;
+        try { if (File.Exists(result.PreviewPath)) ravenfieldPreview = new Bitmap(result.PreviewPath); }
+        catch (Exception) { /* Output files remain available when a preview cannot be decoded. */ }
+        RaiseRavenfieldPresentation();
+    }
     private bool replacingRavenfieldWorkspace;
     internal Func<AnimationExportRequest, int, RavenfieldAdaptationOptions, string?, Task<RavenfieldAdaptationResult>> RavenfieldRunner { get; set; } =
         (request, index, options, project) => Task.Run(() => new RavenfieldAdaptationEngine().Adapt(request, index, options, project));
@@ -60,6 +100,7 @@ public sealed partial class MainWindowViewModel
     }
     private void RavenfieldReferenceChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
+        RaiseRavenfieldPresentation();
         if (e.PropertyName == nameof(RavenfieldAdaptationOptions.ReferenceAnimationId)) RaiseRavenfieldReference();
         if (e.PropertyName == nameof(RavenfieldAdaptationOptions.Mode)) RaiseRavenfieldMode();
         if (e.PropertyName == nameof(RavenfieldAdaptationOptions.ContactFit)) OnPropertyChanged(nameof(RavenfieldContactFit));
@@ -68,6 +109,7 @@ public sealed partial class MainWindowViewModel
     private void RavenfieldAnimationsChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e) => RaiseRavenfieldReference();
     private void RaiseRavenfieldReference()
     {
+        RaiseRavenfieldPresentation();
         RaiseRavenfieldMode();
         OnPropertyChanged(nameof(RavenfieldContactFit));
         OnPropertyChanged(nameof(RavenfieldLocalHandFit));
@@ -89,7 +131,7 @@ public sealed partial class MainWindowViewModel
 
     public async Task AdaptRavenfieldAsync()
     {
-        if (!CanInteract || SelectedRavenfieldAnimation is null) return;
+        if (!CanInteract || !CanGenerateRavenfield || SelectedRavenfieldAnimation is not { } reference) return;
         var selectedWorkspace = Workspace;
         try
         {
@@ -98,30 +140,37 @@ public sealed partial class MainWindowViewModel
             FooterStatus = Text.RfWorking;
             var snapshot = WorkspaceProjectStore.Snapshot(Workspace);
             var request = ApplyUnifiedOutputDirectory(projectStore.CreateExportRequest(snapshot));
-            var index = Animations.IndexOf(SelectedRavenfieldAnimation);
+            var index = Animations.IndexOf(reference);
             var projectPath = CurrentProjectPath;
-            ravenfieldResult = null; OnPropertyChanged(nameof(HasRavenfieldResult));
+            ClearRavenfieldResult();
             var result = await RavenfieldRunner(request, index, snapshot.Ravenfield, projectPath);
             if (!ReferenceEquals(Workspace, selectedWorkspace)) return;
-            ravenfieldResult = result; OnPropertyChanged(nameof(HasRavenfieldResult));
+            SetRavenfieldResult(result);
             var completion = result.PalmFitPassed == false ? Text.RfPalmFitReview : Text.RfComplete;
             FooterStatus = completion;
-            ShowDialog(completion, string.Join(Environment.NewLine,
-                new[] { result.BlendPath, result.FbxPath, result.ReportPath, result.PreviewPath }.Concat(result.Warnings)), false);
+            // The workspace owns completion feedback and file actions; leave
+            // the actual preview visible instead of covering it with a dialog.
         }
         catch (Exception exception)
         {
             if (!ReferenceEquals(Workspace, selectedWorkspace)) return;
             FooterStatus = Text.ExportFailed;
+            ravenfieldError = LocalizeExportError(exception);
+            RaiseRavenfieldPresentation();
             ShowDialog(Text.ExportFailedTitle, LocalizeExportError(exception), true);
         }
         finally { IsBusy = false; BusyMessage = ""; }
     }
 
     public async Task OpenRavenfieldAsync(bool preview)
+        => await OpenRavenfieldArtifactAsync(preview ? "preview" : "blend");
+
+    public async Task OpenRavenfieldArtifactAsync(string kind)
     {
         if (!CanInteract || ravenfieldResult is null) return;
-        var path = preview ? ravenfieldResult.PreviewPath : ravenfieldResult.BlendPath;
+        var path = kind switch { "preview" => ravenfieldResult.PreviewPath, "fbx" => ravenfieldResult.FbxPath,
+            "report" => ravenfieldResult.ReportPath, "blend" => ravenfieldResult.BlendPath, _ => null };
+        if (path is null) return;
         try
         {
             if (!File.Exists(path) || !await picker.OpenUriAsync(new Uri(path)))

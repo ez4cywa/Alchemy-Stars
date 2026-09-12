@@ -2,6 +2,26 @@ namespace AlchemyStars.Avalonia;
 
 public sealed partial class UiText
 {
+    public string RfNavigation => L("RF 手臂适配", "RF hands");
+    public string RfFitDetails => L("贴合规则", "Fitting details");
+    public string RfWorkspaceHelp => L("用参考握持姿势适配 RF 手臂，再导出完整动画。", "Fit RF hands from a reference grip, then export your animation.");
+    public string RfSetup => L("素材与参考", "Sources & reference");
+    public string RfGripSection => L("握持贴合", "Grip fitting");
+    public string RfOutputSection => L("输出范围", "Output scope");
+    public string RfPreviewTitle => L("生成结果", "Generated result");
+    public string RfNoResult => L("等待首次生成", "No result yet");
+    public string RfPreviewEmpty => L("生成后在这里检查真实预览图。预览不会随参数实时更新。", "Generate to inspect the actual output preview here. Parameter changes do not update it live.");
+    public string RfSnapshotHelp => L("上次生成的结果快照。修改参数后，请重新生成。", "Snapshot of the last generation. Generate again after changing settings.");
+    public string RfNeedReference => L("先导入动画并选择握持参考。", "Import an animation and select a grip reference.");
+    public string RfNeedSource => L("请选择 RF 手臂文件。", "Choose an RF hands file.");
+    public string RfReady => L("配置就绪，可生成 RF 结果。", "Ready to generate RF output.");
+    public string RfManageAnimations => L("管理源动画", "Manage animations");
+    public string RfManageParts => L("管理手臂与武器", "Manage model parts");
+    public string RfOpenFbx => L("打开 FBX", "Open FBX");
+    public string RfOpenReport => L("查看报告", "View report");
+    public string RfOutputFiles => L("输出文件", "Output files");
+    public string RfTechnical => L("单位与坐标轴", "Units & axes");
+    public string RfGripSummary => L("允许手掌穿模 · 目标内侧 1.5 mm · 离手时释放", "Penetration allowed · 1.5 mm inward targets · Authored release");
     public string RfTitle => L("Ravenfield 手臂适配", "Ravenfield hands adaptation");
     public string RfHelp => L("选择 RF 手臂与参考动画，使用已求值的动画层、手部姿势与 IK。生成 .blend、FBX、预览图和报告。", "Choose RF hands and a reference clip, using evaluated layers, hand poses and IK. Generates .blend, FBX, preview and report.");
     public string RfMode => L("输出模式", "Output mode");

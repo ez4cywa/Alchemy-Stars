@@ -23,6 +23,8 @@ internal static class ShortcutsSmoke
                 }
             control.RaiseEvent(input);
         }
+        Press(window, Key.D6, KeyModifiers.Control);
+        Require(vm.IsRavenfieldPage, "Ctrl+6 did not open RF adaptation.");
         Press(window, Key.D2, KeyModifiers.Control);
         Require(vm.IsModelPartsPage, "Ctrl+2 did not navigate through the key binding.");
         vm.AddPartPaths(["shortcuts-first.cast", "shortcuts-second.cast"]);

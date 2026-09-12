@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.3.0-rf.7 — Dedicated RF workspace
+
+- Promote RF hands adaptation from Settings to the left workspace navigation. Preserve project options and the RF.6 fitting algorithm.
+- Replace the long settings card with grouped, independently scrolling controls, an actual generated preview/result pane and a persistent Generate action.
+- Add FBX/report open actions, inline completion and input readiness; preserve inputs on failure and dispose prior previews on project replacement.
+- Route Ctrl+6 to RF, Ctrl+E to RF generation, Ctrl+I to animation import and F5 to the generated preview; preserve existing navigation shortcuts.
+
 ## 1.3.0-rf.6 — Local experimental branch (palm/web penetration and whole-hand seating)
 
 - Fix the remaining 24.3 mm web-to-weapon gap: capture all seven contact targets 1.5 mm inside reference weapon triangles, not only four palm points outside the surface.

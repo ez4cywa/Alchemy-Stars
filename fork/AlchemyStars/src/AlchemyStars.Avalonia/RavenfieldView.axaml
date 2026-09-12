@@ -1,26 +1,71 @@
-<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="using:AlchemyStars.Avalonia" xmlns:engine="using:AlchemyStars.Engine" x:Class="AlchemyStars.Avalonia.RavenfieldView" x:DataType="local:MainWindowViewModel">
-<Border Classes="card"><StackPanel Spacing="12" IsEnabled="{Binding CanInteract}">
-<TextBlock Text="{Binding Text.RfTitle}" Classes="card-title" /><TextBlock Text="{Binding Text.RfHelp}" TextWrapping="Wrap" Classes="muted" />
-<TextBlock Text="{Binding Text.RfMode}" Classes="field-label" TextWrapping="Wrap" />
-<ComboBox x:Name="RfMode" ItemsSource="{Binding RavenfieldModes}" SelectedIndex="{Binding RavenfieldModeIndex}" AutomationProperties.Name="{Binding Text.RfMode}"><ComboBox.ItemTemplate><DataTemplate x:DataType="local:LocalizedOption"><TextBlock Text="{Binding Label}" /></DataTemplate></ComboBox.ItemTemplate></ComboBox>
-<TextBlock x:Name="RfModeHelp" Text="{Binding RavenfieldModeHelp}" TextWrapping="Wrap" Classes="muted" />
-<TextBlock Text="{Binding Text.RfSource}" Classes="field-label" TextWrapping="Wrap" />
-<Grid ColumnDefinitions="*,12,Auto"><TextBox Text="{Binding Workspace.Ravenfield.RfSourcePath}" AutomationProperties.Name="{Binding Text.RfSource}" /><Button Grid.Column="2" Click="BrowseClick" Content="{Binding Text.RfBrowse}" /></Grid>
-<TextBlock Text="{Binding Text.RfIdle}" Classes="field-label" TextWrapping="Wrap" />
-<ComboBox x:Name="RfReference" ItemsSource="{Binding Animations}" SelectedItem="{Binding SelectedRavenfieldAnimation}" AutomationProperties.Name="{Binding Text.RfIdle}"><ComboBox.ItemTemplate><DataTemplate x:DataType="engine:WorkspaceAnimation"><TextBlock Text="{Binding DisplayName}" /></DataTemplate></ComboBox.ItemTemplate></ComboBox>
-<TextBlock Text="{Binding Text.RfUnit}" Classes="field-label" TextWrapping="Wrap" /><ComboBox ItemsSource="{Binding RavenfieldUnits}" SelectedItem="{Binding Workspace.Ravenfield.SourceUnit}" AutomationProperties.Name="{Binding Text.RfUnit}" /><TextBlock Text="{Binding Text.RfUnitHelp}" Classes="muted" TextWrapping="Wrap" />
-<Grid ColumnDefinitions="*,16,*">
-<StackPanel><TextBlock Text="{Binding Text.RfFrame}" Classes="field-label" TextWrapping="Wrap" /><NumericUpDown Value="{Binding Workspace.Ravenfield.IdleFrame}" Minimum="0" Increment="1" FormatString="0" AutomationProperties.Name="{Binding Text.RfFrame}" /></StackPanel>
-
-<StackPanel Grid.Column="2"><TextBlock Text="{Binding Text.RfScale}" Classes="field-label" TextWrapping="Wrap" /><NumericUpDown x:Name="RfScale" Value="{Binding Workspace.Ravenfield.HandScale}" Minimum="0.1" Maximum="10" Increment="0.01" FormatString="0.000" AutomationProperties.Name="{Binding Text.RfScale}" /></StackPanel>
-</Grid>
-<TextBlock Text="{Binding Text.RfAxesHelp}" Classes="muted" TextWrapping="Wrap" />
-<CheckBox x:Name="RfContactFit" IsChecked="{Binding RavenfieldContactFit}" Content="{Binding Text.RfContactFit}" AutomationProperties.Name="{Binding Text.RfContactFit}" />
-<TextBlock x:Name="RfContactFitHelp" Text="{Binding Text.RfContactFitHelp}" Classes="muted" TextWrapping="Wrap" />
-<CheckBox x:Name="RfLocalHandFit" IsChecked="{Binding RavenfieldLocalHandFit}" IsEnabled="{Binding RavenfieldContactFit}" AutomationProperties.Name="{Binding Text.RfLocalHandFit}"><TextBlock Text="{Binding Text.RfLocalHandFit}" TextWrapping="Wrap" /></CheckBox>
-<TextBlock x:Name="RfLocalHandFitHelp" Text="{Binding Text.RfLocalHandFitHelp}" Classes="muted" TextWrapping="Wrap" />
-<TextBlock Text="{Binding Text.RfUntaggedAxis}" Classes="field-label" TextWrapping="Wrap" /><ComboBox ItemsSource="{Binding RavenfieldUntaggedAxes}" SelectedItem="{Binding Workspace.Ravenfield.UntaggedModelUpAxis}" AutomationProperties.Name="{Binding Text.RfUntaggedAxis}" /><TextBlock Text="{Binding Text.RfUntaggedAxisHelp}" Classes="muted" TextWrapping="Wrap" />
-<Expander x:Name="RfAdvanced" Header="{Binding Text.RfAdvanced}" HorizontalAlignment="Stretch"><Grid ColumnDefinitions="*,24,*" Margin="0,12,0,0"><StackPanel Spacing="8">
+<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="using:AlchemyStars.Avalonia" xmlns:engine="using:AlchemyStars.Engine"
+             x:Class="AlchemyStars.Avalonia.RavenfieldView" x:DataType="local:MainWindowViewModel">
+  <UserControl.Styles>
+    <Style Selector="Border.rf-section"><Setter Property="Padding" Value="18,16" /><Setter Property="BorderBrush" Value="{DynamicResource AlchemyBorderBrush}" /><Setter Property="BorderThickness" Value="0,0,0,1" /></Style>
+    <Style Selector="TextBlock.rf-heading"><Setter Property="FontSize" Value="14" /><Setter Property="FontWeight" Value="SemiBold" /></Style>
+    <Style Selector="Button.rf-file"><Setter Property="HorizontalAlignment" Value="Stretch" /><Setter Property="HorizontalContentAlignment" Value="Left" /><Setter Property="MinHeight" Value="36" /></Style>
+  </UserControl.Styles>
+  <Grid RowDefinitions="Auto,*,Auto" IsEnabled="{Binding CanInteract}">
+    <Grid Margin="20,16,20,14" ColumnDefinitions="*,Auto">
+      <StackPanel Spacing="4">
+        <TextBlock Text="{Binding Text.RfNavigation}" FontSize="21" FontWeight="SemiBold" />
+        <TextBlock Text="{Binding Text.RfWorkspaceHelp}" Classes="muted" TextWrapping="Wrap" />
+      </StackPanel>
+    </Grid>
+    <Grid Grid.Row="1" ColumnDefinitions="420,*">
+      <Border Background="{DynamicResource AlchemySurfaceBrush}" BorderBrush="{DynamicResource AlchemyBorderBrush}" BorderThickness="0,1,1,1">
+        <ScrollViewer x:Name="RfSettingsScroll" HorizontalScrollBarVisibility="Disabled">
+          <StackPanel>
+            <Border Classes="rf-section">
+              <StackPanel Spacing="10">
+                <TextBlock Text="{Binding Text.RfSetup}" Classes="rf-heading" />
+                <TextBlock Text="{Binding Text.RfSource}" Classes="field-label" TextWrapping="Wrap" />
+                <TextBox x:Name="RfSourcePath" Text="{Binding Workspace.Ravenfield.RfSourcePath}" AutomationProperties.Name="{Binding Text.RfSource}" />
+                <Button Click="BrowseClick" Content="{Binding Text.RfBrowse}" HorizontalAlignment="Left" />
+                <TextBlock Text="{Binding Text.RfIdle}" Classes="field-label" TextWrapping="Wrap" />
+                <ComboBox x:Name="RfReference" ItemsSource="{Binding Animations}" SelectedItem="{Binding SelectedRavenfieldAnimation}" AutomationProperties.Name="{Binding Text.RfIdle}">
+                  <ComboBox.ItemTemplate><DataTemplate x:DataType="engine:WorkspaceAnimation"><TextBlock Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis" /></DataTemplate></ComboBox.ItemTemplate>
+                </ComboBox>
+                <Grid ColumnDefinitions="*,12,*">
+                  <StackPanel><TextBlock Text="{Binding Text.RfFrame}" Classes="field-label" TextWrapping="Wrap" /><NumericUpDown Value="{Binding Workspace.Ravenfield.IdleFrame}" Minimum="0" Increment="1" FormatString="0" AutomationProperties.Name="{Binding Text.RfFrame}" /></StackPanel>
+                  <StackPanel Grid.Column="2"><TextBlock Text="{Binding Text.RfScale}" Classes="field-label" TextWrapping="Wrap" /><NumericUpDown x:Name="RfScale" Value="{Binding Workspace.Ravenfield.HandScale}" Minimum="0.1" Maximum="10" Increment="0.01" FormatString="0.000" AutomationProperties.Name="{Binding Text.RfScale}" /></StackPanel>
+                </Grid>
+                <WrapPanel><Button Click="AnimationsClick" Content="{Binding Text.RfManageAnimations}" Margin="0,0,8,4" /><Button Click="PartsClick" Content="{Binding Text.RfManageParts}" Margin="0,0,0,4" /></WrapPanel>
+              </StackPanel>
+            </Border>
+            <Border Classes="rf-section">
+              <StackPanel Spacing="10">
+                <TextBlock Text="{Binding Text.RfGripSection}" Classes="rf-heading" />
+                <CheckBox x:Name="RfContactFit" IsChecked="{Binding RavenfieldContactFit}" Content="{Binding Text.RfContactFit}" AutomationProperties.Name="{Binding Text.RfContactFit}" />
+                <TextBlock x:Name="RfContactFitHelp" Text="{Binding Text.RfContactFitHelp}" Classes="muted" TextWrapping="Wrap" />
+                <CheckBox x:Name="RfLocalHandFit" IsChecked="{Binding RavenfieldLocalHandFit}" IsEnabled="{Binding RavenfieldContactFit}" AutomationProperties.Name="{Binding Text.RfLocalHandFit}"><TextBlock Text="{Binding Text.RfLocalHandFit}" TextWrapping="Wrap" /></CheckBox>
+                <TextBlock Text="{Binding Text.RfGripSummary}" TextWrapping="Wrap" FontSize="12" IsVisible="{Binding RavenfieldLocalHandFit}" />
+                <Expander x:Name="RfFitDetails" Header="{Binding Text.RfFitDetails}" HorizontalAlignment="Stretch"><TextBlock x:Name="RfLocalHandFitHelp" Text="{Binding Text.RfLocalHandFitHelp}" Classes="muted" TextWrapping="Wrap" Margin="0,8,0,0" /></Expander>
+              </StackPanel>
+            </Border>
+            <Border Classes="rf-section">
+              <StackPanel Spacing="10">
+                <TextBlock Text="{Binding Text.RfOutputSection}" Classes="rf-heading" />
+                <ComboBox x:Name="RfMode" ItemsSource="{Binding RavenfieldModes}" SelectedIndex="{Binding RavenfieldModeIndex}" AutomationProperties.Name="{Binding Text.RfMode}">
+                  <ComboBox.ItemTemplate><DataTemplate x:DataType="local:LocalizedOption"><TextBlock Text="{Binding Label}" TextTrimming="CharacterEllipsis" /></DataTemplate></ComboBox.ItemTemplate>
+                </ComboBox>
+                <TextBlock x:Name="RfModeHelp" Text="{Binding RavenfieldModeHelp}" TextWrapping="Wrap" Classes="muted" />
+              </StackPanel>
+            </Border>
+            <Border Classes="rf-section">
+              <Expander Header="{Binding Text.RfTechnical}" HorizontalAlignment="Stretch">
+                <StackPanel Spacing="10" Margin="0,10,0,0">
+                  <TextBlock Text="{Binding Text.RfUnit}" Classes="field-label" TextWrapping="Wrap" /><ComboBox ItemsSource="{Binding RavenfieldUnits}" SelectedItem="{Binding Workspace.Ravenfield.SourceUnit}" AutomationProperties.Name="{Binding Text.RfUnit}" />
+                  <TextBlock Text="{Binding Text.RfUnitHelp}" Classes="muted" TextWrapping="Wrap" />
+                  <TextBlock Text="{Binding Text.RfUntaggedAxis}" Classes="field-label" TextWrapping="Wrap" /><ComboBox ItemsSource="{Binding RavenfieldUntaggedAxes}" SelectedItem="{Binding Workspace.Ravenfield.UntaggedModelUpAxis}" AutomationProperties.Name="{Binding Text.RfUntaggedAxis}" />
+                  <TextBlock Text="{Binding Text.RfUntaggedAxisHelp}" Classes="muted" TextWrapping="Wrap" />
+                </StackPanel>
+              </Expander>
+            </Border>
+            <Border Classes="rf-section">
+              <StackPanel Spacing="10">
+                <Expander x:Name="RfAdvanced" Header="{Binding Text.RfAdvanced}" HorizontalAlignment="Stretch"><Grid ColumnDefinitions="*,24,*" Margin="0,12,0,0"><StackPanel Spacing="8">
 <TextBlock Text="{Binding Text.RfLeft}" Classes="eyebrow" />
 <TextBlock Text="{Binding Text.RfPosition}" Classes="field-label" TextWrapping="Wrap" />
 <Grid ColumnDefinitions="Auto,8,*" RowDefinitions="Auto,8,Auto,8,Auto"><TextBlock Grid.Row="0" Text="X" VerticalAlignment="Center" /><NumericUpDown Grid.Row="0" Grid.Column="2" Minimum="-10000" Maximum="10000" Value="{Binding Workspace.Ravenfield.Left.PositionX}" Increment="0.001" FormatString="0.000" AutomationProperties.Name="Left position X (m)" /><TextBlock Grid.Row="2" Text="Y" VerticalAlignment="Center" /><NumericUpDown Grid.Row="2" Grid.Column="2" Minimum="-10000" Maximum="10000" Value="{Binding Workspace.Ravenfield.Left.PositionY}" Increment="0.001" FormatString="0.000" AutomationProperties.Name="Left position Y (m)" /><TextBlock Grid.Row="4" Text="Z" VerticalAlignment="Center" /><NumericUpDown Grid.Row="4" Grid.Column="2" Minimum="-10000" Maximum="10000" Value="{Binding Workspace.Ravenfield.Left.PositionZ}" Increment="0.001" FormatString="0.000" AutomationProperties.Name="Left position Z (m)" /></Grid>
@@ -37,6 +82,39 @@
 <TextBlock Text="{Binding Text.RfElbow}" Classes="field-label" TextWrapping="Wrap" /><NumericUpDown Value="{Binding Workspace.Ravenfield.Right.ElbowSwivel}" Minimum="-180" Maximum="180" Increment="1" FormatString="0.0" AutomationProperties.Name="Right elbow swivel (degrees)" />
 <TextBlock Text="{Binding Text.RfFinger}" Classes="field-label" TextWrapping="Wrap" /><NumericUpDown Value="{Binding Workspace.Ravenfield.Right.FingerCurl}" Minimum="-90" Maximum="90" Increment="1" FormatString="0.0" AutomationProperties.Name="Right finger curl (degrees)" />
 </StackPanel></Grid></Expander>
-<WrapPanel><Button Classes="primary" Click="AdaptClick" Content="{Binding Text.RfAdapt}" IsEnabled="{Binding HasRavenfieldReference}" Margin="0,0,8,8" /><Button Click="BlendClick" Content="{Binding Text.RfOpenBlend}" IsVisible="{Binding HasRavenfieldResult}" Margin="0,0,8,8" /><Button Click="PreviewClick" Content="{Binding Text.RfOpenPreview}" IsVisible="{Binding HasRavenfieldResult}" Margin="0,0,8,8" /></WrapPanel>
-</StackPanel></Border>
+                <TextBlock Text="{Binding Text.RfAxesHelp}" Classes="muted" TextWrapping="Wrap" />
+              </StackPanel>
+            </Border>
+          </StackPanel>
+        </ScrollViewer>
+      </Border>
+      <Border Grid.Column="1" Background="{DynamicResource AlchemySubtleSurfaceBrush}" BorderBrush="{DynamicResource AlchemyBorderBrush}" BorderThickness="0,1,0,1">
+        <Grid RowDefinitions="44,*,Auto">
+          <Border Classes="dock-header"><TextBlock Text="{Binding Text.RfPreviewTitle}" Classes="dock-title" /></Border>
+          <Image Grid.Row="1" Source="{Binding RavenfieldPreview}" IsVisible="{Binding HasRavenfieldPreview}" Stretch="Uniform" Margin="12" AutomationProperties.Name="{Binding Text.RfPreviewTitle}" />
+          <StackPanel Grid.Row="1" IsVisible="{Binding !HasRavenfieldPreview}" VerticalAlignment="Center" HorizontalAlignment="Stretch" Margin="24" Spacing="12" MaxWidth="340">
+            <local:ThemedIcon Glyph="inverse-kinematics" Width="40" Height="40" HorizontalAlignment="Left" IsHitTestVisible="False" />
+            <TextBlock Text="{Binding RavenfieldResultStatus}" FontSize="17" FontWeight="SemiBold" TextWrapping="Wrap" />
+            <TextBlock Text="{Binding RavenfieldResultDetail}" Classes="muted" TextWrapping="Wrap" />
+          </StackPanel>
+          <ScrollViewer x:Name="RfOutputScroll" Grid.Row="2" MaxHeight="230" IsVisible="{Binding HasRavenfieldResult}" HorizontalScrollBarVisibility="Disabled">
+            <Border Padding="18,14" Background="{DynamicResource AlchemySurfaceBrush}" BorderBrush="{DynamicResource AlchemyBorderBrush}" BorderThickness="0,1,0,0">
+              <StackPanel Spacing="8">
+                <TextBlock Text="{Binding RavenfieldResultStatus}" Classes="rf-heading" TextWrapping="Wrap" />
+                <TextBlock Text="{Binding RavenfieldOutputPath}" Classes="muted" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding RavenfieldOutputPath}" />
+                <WrapPanel><Button Click="FbxClick" Content="{Binding Text.RfOpenFbx}" Margin="0,0,8,8" /><Button Click="BlendClick" Content="{Binding Text.RfOpenBlend}" Margin="0,0,8,8" /><Button Click="ReportClick" Content="{Binding Text.RfOpenReport}" Margin="0,0,8,8" /><Button Click="PreviewClick" Content="{Binding Text.RfOpenPreview}" Margin="0,0,0,8" /></WrapPanel>
+                <TextBlock Text="{Binding RavenfieldResultDetail}" Classes="muted" TextWrapping="Wrap" FontSize="12" />
+              </StackPanel>
+            </Border>
+          </ScrollViewer>
+        </Grid>
+      </Border>
+    </Grid>
+    <Border Grid.Row="2" Padding="20,12" Background="{DynamicResource AlchemySurfaceBrush}">
+      <Grid ColumnDefinitions="*,16,Auto">
+        <TextBlock Text="{Binding RavenfieldReadiness}" Classes="muted" TextWrapping="Wrap" VerticalAlignment="Center" />
+        <Button x:Name="RfGenerate" Grid.Column="2" Classes="primary" Click="AdaptClick" IsEnabled="{Binding CanGenerateRavenfield}" MinWidth="170" MinHeight="40" ToolTip.Tip="Ctrl+E" AutomationProperties.Name="{Binding Text.RfAdapt}"><TextBlock x:Name="RfGenerateLabel" Classes="command-action-text" Text="{Binding Text.RfAdapt}" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" /></Button>
+      </Grid>
+    </Border>
+  </Grid>
 </UserControl>

@@ -33,6 +33,7 @@
           <Button Classes="activity" Click="AnimationsPageClick" ToolTip.Tip="{Binding Text.AnimationBlend}" AutomationProperties.Name="{Binding Text.AnimationBlend}" Classes.selected="{Binding IsAnimationsPage}"><StackPanel Orientation="Horizontal"><local:ThemedIcon Classes="product-icon" Glyph="animation-library" IsHitTestVisible="False" /><TextBlock Classes="navigation-label" Text="{Binding Text.AnimationBlend}" /></StackPanel></Button>
           <Button Classes="activity" Click="PartsPageClick" ToolTip.Tip="{Binding Text.ModelParts}" AutomationProperties.Name="{Binding Text.ModelParts}" Classes.selected="{Binding IsModelPartsPage}"><StackPanel Orientation="Horizontal"><local:ThemedIcon Classes="product-icon" Glyph="model-parts" IsHitTestVisible="False" /><TextBlock Classes="navigation-label" Text="{Binding Text.ModelParts}" /></StackPanel></Button>
           <Button Classes="activity" Click="DualPageClick" ToolTip.Tip="{Binding Text.DualAnimations}" AutomationProperties.Name="{Binding Text.DualAnimations}" Classes.selected="{Binding IsDualPage}"><StackPanel Orientation="Horizontal"><local:ThemedIcon Classes="product-icon" Glyph="dual-wield" IsHitTestVisible="False" /><TextBlock Classes="navigation-label" Text="{Binding Text.DualAnimations}" /></StackPanel></Button>
+          <Button x:Name="RfNavigation" Classes="activity" Click="RavenfieldPageClick" ToolTip.Tip="{Binding Text.RfNavigation}" AutomationProperties.Name="{Binding Text.RfNavigation}" AutomationProperties.AcceleratorKey="Ctrl+6" Classes.selected="{Binding IsRavenfieldPage}"><StackPanel Orientation="Horizontal"><local:ThemedIcon Classes="product-icon" Glyph="inverse-kinematics" IsHitTestVisible="False" /><TextBlock Classes="navigation-label" Text="{Binding Text.RfNavigation}" /></StackPanel></Button>
         </StackPanel>
         <StackPanel Grid.Row="2" Spacing="2" Margin="0,0,0,8">
           <TextBlock Classes="navigation-section" Text="{Binding Text.DesktopPreferences}" />
@@ -72,7 +73,7 @@
               IsVisible="{Binding IsAnimationsPage}" IsEnabled="{Binding CanExportSelectedAnimation}"
               Content="{Binding Text.ExportSelectedAnimation}" ToolTip.Tip="{Binding Text.ExportSelectedAnimationShortcut}"
               AutomationProperties.Name="{Binding Text.ExportSelectedAnimation}" AutomationProperties.AcceleratorKey="Ctrl+Shift+E" />
-          <Button Classes="primary" Click="ExportClick" MinWidth="112" IsEnabled="{Binding !IsBusy}" AutomationProperties.Name="{Binding CurrentExportLabel}" ToolTip.Tip="Ctrl+E">
+          <Button Classes="primary" Click="ExportClick" IsVisible="{Binding !IsRavenfieldPage}" MinWidth="112" IsEnabled="{Binding !IsBusy}" AutomationProperties.Name="{Binding CurrentExportLabel}" ToolTip.Tip="Ctrl+E">
             <StackPanel Orientation="Horizontal" Spacing="8">
               <local:ThemedIcon Classes="product-icon" Glyph="export-animation" IsHitTestVisible="False" Width="18" Height="18" />
               <TextBlock Classes="command-action-text" Text="{Binding CurrentExportLabel}" VerticalAlignment="Center" />
@@ -181,10 +182,10 @@
       </Border>
     </Grid>
     <local:DualWieldView x:Name="DualWorkspace" Grid.Column="1" Grid.Row="1" IsVisible="{Binding IsDualPage}" />
+    <local:RavenfieldView x:Name="RfWorkspace" Grid.Column="1" Grid.Row="1" IsVisible="{Binding IsRavenfieldPage}" />
     <!-- Settings workspace -->
     <ScrollViewer Grid.Column="1" Grid.Row="1" IsVisible="{Binding IsSettingsPage}" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
       <StackPanel x:Name="SettingsContent" Margin="14,12,14,28" Spacing="14" MaxWidth="1080">
-        <local:RavenfieldView />
         <StackPanel Spacing="3"><TextBlock Text="{Binding Text.OutputSettings}" Classes="display-title" FontSize="21" FontWeight="SemiBold" /><TextBlock Text="{Binding Text.OutputSettingsHelp}" Classes="muted body-copy" TextWrapping="Wrap" /></StackPanel>
         <Grid ColumnDefinitions="*,16,*">
           <Border Classes="card"><StackPanel Spacing="14">

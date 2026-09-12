@@ -11,15 +11,26 @@ internal static class RavenfieldUiSmoke
     {
         // Core contracts run in --self-test. Their temporary view models apply a
         // light theme globally, so running them here would invalidate dark-mode QA.
-        vm.SelectPage(WorkspacePage.Settings);
+        vm.SelectPage(WorkspacePage.Ravenfield);
+        window.UpdateLayout();
         var view = window.GetVisualDescendants().OfType<RavenfieldView>().Single();
+        vm.SelectPage(WorkspacePage.Settings);
+        window.UpdateLayout();
+        if (view.IsEffectivelyVisible) throw new InvalidOperationException("RF is still visible inside settings.");
+        var navigation = window.FindControl<Button>("RfNavigation")!;
+        navigation.RaiseEvent(new global::Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        window.UpdateLayout();
+        if (!vm.IsRavenfieldPage || !view.IsEffectivelyVisible || !navigation.Classes.Contains("selected")
+            || vm.CurrentPageTitle != vm.Text.RfNavigation || vm.CurrentExportLabel != vm.Text.RfAdapt)
+            throw new InvalidOperationException("RF workspace navigation, title or contextual export failed.");
         await VerifyReferenceAsync(window, vm, view);
         var advanced = view.FindControl<Expander>("RfAdvanced")!;
         var scale = view.FindControl<NumericUpDown>("RfScale")!;
+        var originalScale = scale.Value;
         scale.Value = 1.25m;
         if (vm.Workspace.Ravenfield.HandScale != 1.25) throw new InvalidOperationException("RF scale did not update workspace.");
         if (scale.Minimum != 0.1m || scale.Maximum != 10) throw new InvalidOperationException("RF scale bounds mismatch.");
-        var scroll = view.GetVisualAncestors().OfType<ScrollViewer>().First();
+        var scroll = view.FindControl<ScrollViewer>("RfSettingsScroll")!;
         var originalLanguage = vm.IsChinese;
         var directory = Path.GetDirectoryName(Program.RenderSmokePath!)!;
         Directory.CreateDirectory(directory);
@@ -46,6 +57,7 @@ internal static class RavenfieldUiSmoke
             if (local.Content is not TextBlock label || label.Text != vm.Text.RfLocalHandFit
                 || view.FindControl<TextBlock>("RfLocalHandFitHelp")!.Text != vm.Text.RfLocalHandFitHelp)
                 throw new InvalidOperationException("RF local fit localized label/help mismatch.");
+            view.FindControl<Expander>("RfFitDetails")!.IsExpanded = true;
             view.FindControl<TextBlock>("RfLocalHandFitHelp")!.BringIntoView();
             await Task.Delay(80);
             window.UpdateLayout();
@@ -78,7 +90,7 @@ internal static class RavenfieldUiSmoke
             await Task.Delay(150);
             window.UpdateLayout();
             foreach (var number in view.GetVisualDescendants().OfType<NumericUpDown>())
-                if (number.Bounds.Width < 170) throw new InvalidOperationException("RF numeric field is too narrow: " + number.Bounds.Width);
+                if (number.IsEffectivelyVisible && number.Bounds.Width < 125) throw new InvalidOperationException("RF numeric field is too narrow: " + number.Bounds.Width);
             Save(window, Path.Combine(directory, "rf-900-" + (chinese ? "zh" : "en") + "-top.png"));
             advanced.BringIntoView();
             await Task.Delay(100);
@@ -86,6 +98,25 @@ internal static class RavenfieldUiSmoke
             Save(window, Path.Combine(directory, "rf-900-" + (chinese ? "zh" : "en") + "-advanced.png"));
         }
         if (vm.IsChinese != originalLanguage) vm.ToggleLanguage();
+        advanced.IsExpanded = false;
+        scale.Value = originalScale;
+        view.FindControl<Expander>("RfFitDetails")!.IsExpanded = false;
+        scroll.Offset = default;
+        if (Program.RavenfieldPreviewSmokePath is { } previewPath)
+        {
+            if (!File.Exists(previewPath)) throw new FileNotFoundException("RF preview fixture missing", previewPath);
+            var stem = previewPath.EndsWith(".preview.png", StringComparison.OrdinalIgnoreCase) ? previewPath[..^12] : Path.ChangeExtension(previewPath, null);
+            vm.SetRavenfieldResult(new(stem + ".blend", stem + ".fbx", stem + ".report.json", previewPath, []));
+            if (!vm.HasRavenfieldPreview) throw new InvalidOperationException("Real RF preview was not decoded.");
+            foreach (var dark in new[] { false, true })
+            {
+                vm.ThemeModeIndex = dark ? 1 : 0;
+                window.UpdateLayout();
+                await Task.Delay(120);
+                window.UpdateLayout();
+                Save(window, Path.Combine(directory, "rf-result-" + (dark ? "dark" : "light") + ".png"));
+            }
+        }
         Console.WriteLine("RF 900px UI: bilingual local/contact-fit bindings, prerequisite and preserved preference, mode switches, expanded layout and numeric bounds PASS");
     }
 
@@ -103,12 +134,13 @@ internal static class RavenfieldUiSmoke
             workspace.Animations.Add(new() { Name = "weapon-fire.cast" });
             workspace.Ravenfield.ReferenceAnimationId = workspace.Animations[1].Id;
             workspace.Ravenfield.Mode = "library";
+            workspace.Ravenfield.RfSourcePath = "fixture-rf.blend";
             workspace.Ravenfield.ContactFit = false;
             workspace.Ravenfield.LocalHandFit = true;
             var project = Path.Combine(temporary.FullName, "two-clips.aprj");
             store.Save(workspace, project);
             vm.LoadProject(project);
-            vm.SelectPage(WorkspacePage.Settings);
+            vm.SelectPage(WorkspacePage.Ravenfield);
             var combo = view.FindControl<ComboBox>("RfReference")!;
             var mode = view.FindControl<ComboBox>("RfMode")!;
             var contact = view.FindControl<CheckBox>("RfContactFit")!;
@@ -135,7 +167,7 @@ internal static class RavenfieldUiSmoke
             vm.ToggleLanguage();
             vm.SelectedAnimation = vm.Animations[0];
             await CheckSelected();
-            var adapt = view.GetVisualDescendants().OfType<Button>().Single(b => Equals(b.Content, vm.Text.RfAdapt));
+            var adapt = view.FindControl<Button>("RfGenerate")!;
             if (!adapt.IsEffectivelyEnabled) throw new InvalidOperationException("Valid RF reference did not enable adaptation.");
             contact.IsChecked = true;
             await Task.Delay(50);
@@ -149,7 +181,9 @@ internal static class RavenfieldUiSmoke
             };
             try
             {
-                var run = vm.AdaptRavenfieldAsync();
+                var exportKey = window.KeyBindings.Single(k => k.Gesture?.Key == global::Avalonia.Input.Key.E && k.Gesture.KeyModifiers == global::Avalonia.Input.KeyModifiers.Control);
+                if (exportKey.Command?.CanExecute(null) != true) throw new InvalidOperationException("RF Ctrl+E is unavailable despite a ready configuration.");
+                var run = vm.ExportAsync();
                 await Task.Delay(80);
                 if (!vm.IsBusy || mode.IsEffectivelyEnabled || contact.IsEffectivelyEnabled || local.IsEffectivelyEnabled || adapt.IsEffectivelyEnabled || string.IsNullOrWhiteSpace(vm.BusyMessage))
                     throw new InvalidOperationException("RF busy state did not disable inputs or provide feedback.");
@@ -158,6 +192,12 @@ internal static class RavenfieldUiSmoke
                 vm.CloseDialog();
                 if (vm.IsBusy || !vm.HasRavenfieldResult || !mode.IsEffectivelyEnabled)
                     throw new InvalidOperationException("RF completion state did not restore interaction/results.");
+                vm.RavenfieldRunner = (_, _, _, _) => Task.FromException<RavenfieldAdaptationResult>(new IOException("RF test failure: inputs retained"));
+                await vm.ExportAsync();
+                if (vm.IsBusy || vm.HasRavenfieldResult || vm.RavenfieldResultStatus != vm.Text.ExportFailedTitle
+                    || !vm.RavenfieldResultDetail.Contains("inputs retained") || combo.SelectedIndex != 1)
+                    throw new InvalidOperationException("RF failure state lost inputs or retained a misleading success preview.");
+                vm.CloseDialog();
             }
             finally { vm.RavenfieldRunner = runner; }
             vm.Animations.RemoveAt(1);
@@ -184,7 +224,7 @@ internal static class RavenfieldUiSmoke
         finally
         {
             vm.LoadProject(originalProject ?? original);
-            vm.SelectPage(WorkspacePage.Settings);
+            vm.SelectPage(WorkspacePage.Ravenfield);
             temporary.Delete(recursive: true);
         }
     }

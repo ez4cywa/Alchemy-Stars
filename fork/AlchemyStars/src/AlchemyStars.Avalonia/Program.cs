@@ -27,6 +27,7 @@ internal static class Program
     internal static bool TextMenuSmokeRequested { get; private set; }
     internal static bool InspectorSmokeRequested { get; private set; }
     internal static bool RavenfieldUiSmokeRequested { get; private set; }
+    internal static string? RavenfieldPreviewSmokePath { get; private set; }
     internal static bool WindowChromeSmokeRequested { get; private set; }
     internal static bool SharedBaseBatchSmokeRequested { get; private set; }
 
@@ -98,6 +99,7 @@ internal static class Program
         TextMenuSmokeRequested = args.Contains("--textmenu-smoke", StringComparer.OrdinalIgnoreCase);
         InspectorSmokeRequested = args.Contains("--inspector-smoke", StringComparer.OrdinalIgnoreCase);
         RavenfieldUiSmokeRequested = args.Contains("--rf-ui-smoke", StringComparer.OrdinalIgnoreCase);
+        RavenfieldPreviewSmokePath = GetOption(args, "--rf-result-preview");
         WindowChromeSmokeRequested = args.Contains("--window-chrome-smoke", StringComparer.OrdinalIgnoreCase);
         SharedBaseBatchSmokeRequested = args.Contains("--shared-base-batch-smoke", StringComparer.OrdinalIgnoreCase);
         StartupProjectPath = args
@@ -144,6 +146,7 @@ internal static class Program
         "parts" => WorkspacePage.ModelParts,
         "dual" => WorkspacePage.DualAnimations,
         "settings" => WorkspacePage.Settings,
+        "rf" or "ravenfield" => WorkspacePage.Ravenfield,
         "about" => WorkspacePage.About,
         _ => null,
     };

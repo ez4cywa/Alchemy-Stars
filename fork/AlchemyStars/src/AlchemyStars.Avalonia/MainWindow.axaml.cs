@@ -249,6 +249,7 @@ public sealed partial class MainWindow : Window
     private void AnimationsPageClick(object? sender, RoutedEventArgs e) => ViewModel.SelectPage(WorkspacePage.Animations);
     private void DualPageClick(object? sender, RoutedEventArgs e) => ViewModel.SelectPage(WorkspacePage.DualAnimations);
     private void PartsPageClick(object? sender, RoutedEventArgs e) => ViewModel.SelectPage(WorkspacePage.ModelParts);
+    private void RavenfieldPageClick(object? sender, RoutedEventArgs e) => ViewModel.SelectPage(WorkspacePage.Ravenfield);
     private void SettingsPageClick(object? sender, RoutedEventArgs e) => ViewModel.SelectPage(WorkspacePage.Settings);
     private void AboutPageClick(object? sender, RoutedEventArgs e) => ViewModel.SelectPage(WorkspacePage.About);
     private void LanguageClick(object? sender, RoutedEventArgs e) => ViewModel.ToggleLanguage();
