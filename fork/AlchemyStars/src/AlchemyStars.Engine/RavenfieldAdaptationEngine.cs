@@ -16,8 +16,10 @@ public sealed class RavenfieldAdaptationEngine
         RavenfieldAdaptationOptions options, string? projectPath = null)
     {
         ArgumentNullException.ThrowIfNull(options);
+        if (options.Mode is not ("pose" or "animation" or "library"))
+            throw new InvalidDataException("请选择有效的 RF 输出模式 / Select a valid RF output mode.");
         if (animationIndex < 0 || animationIndex >= request.Animations.Count)
-            throw new InvalidDataException("请选择一个 idle 动画 / Select an idle animation.");
+            throw new InvalidDataException("请选择参考动画 / Select a reference animation.");
         if (!File.Exists(options.RfSourcePath) || Path.GetExtension(options.RfSourcePath).ToLowerInvariant() is not (".blend" or ".unitypackage"))
             throw new InvalidDataException("请选择 RF .blend 或 .unitypackage / Select an RF .blend or .unitypackage.");
         if (options.SourceUnit is not ("ft" or "m" or "cm") || options.UntaggedModelUpAxis is not ("hands" or "x" or "y" or "z") || options.IdleFrame < 0 ||
@@ -32,7 +34,9 @@ public sealed class RavenfieldAdaptationEngine
         if (!request.Parts.Any(p => p.Kind == ModelPartKind.ViewHands) || !request.Parts.Any(p => p.Kind == ModelPartKind.Weapon))
             throw new InvalidDataException("需要 COD 手臂与武器模型 / COD hands and weapon model parts are required.");
         var job = request.Animations[animationIndex];
-        var name = request.Options.OutputPrefix + job.OutputName + request.Options.OutputSuffix + "_rf_idle";
+        if (options.Mode == "library") BuildClipNames(request.Animations.Select(a => a.OutputName));
+        var name = request.Options.OutputPrefix + job.OutputName + request.Options.OutputSuffix
+            + (options.Mode switch { "animation" => "_rf_anim", "library" => "_rf_library", _ => "_rf_idle" });
         if (string.IsNullOrWhiteSpace(job.OutputName) || name.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0 || Path.GetFileName(name) != name)
             throw new InvalidDataException("RF 输出名无效 / Invalid RF output name.");
         var stem = Path.GetFullPath(Path.Combine(WorkspacePaths.ResolveAnimationOutputFolder(job.SourceFile, job.OutputFolder), name));
@@ -83,16 +87,35 @@ public sealed class RavenfieldAdaptationEngine
             if (handIndices.Count == 0) throw new InvalidDataException("COD 手臂没有网格 / COD hands contain no mesh.");
             var weaponNames = plan.Sources.Where(s => s.Type != PartType.ViewHands).SelectMany(s => s.BoneMap)
                 .Distinct().Select(i => plan.Skeleton.Bones[i].Name!).ToArray();
-            var job = request.Animations[animationIndex] with { OutputFolder = temporary, OutputName = "processed" };
-            var prepared = axisRequest with { Animations = [job], Options = request.Options with {
-                Format = ExportFormat.Cast, OutputPrefix = "", OutputSuffix = "", OutputUpAxis = "z",
-                CastAnimationOnly = false, BakeRelevantBonesOnly = false } };
-            var cast = new AnimationExportEngine().Export(prepared).OutputFiles.Single();
+            var indices = options.Mode == "library" ? Enumerable.Range(0, request.Animations.Count).ToArray() : [animationIndex];
+            var clipNames = BuildClipNames(indices.Select(i => request.Animations[i].OutputName));
+            var clips = new List<(string Name, string Path)>();
+            foreach (var index in indices)
+            {
+                var job = request.Animations[index] with { OutputFolder = Path.Combine(temporary, "clip-" + index), OutputName = "processed", Framerate = 30 };
+                var prepared = axisRequest with { Animations = [job], Options = request.Options with {
+                    Format = ExportFormat.Cast, OutputPrefix = "", OutputSuffix = "", OutputUpAxis = "z",
+                    CastAnimationOnly = false, BakeRelevantBonesOnly = false } };
+                clips.Add((clipNames[clips.Count], new AnimationExportEngine().Export(prepared).OutputFiles.Single()));
+            }
+            var referenceClip = options.Mode == "library" ? animationIndex : 0;
+            var cast = clips[referenceClip].Path;
             var config = Path.Combine(temporary, "config.json");
             using (var stream = File.Create(config))
             using (var json = new Utf8JsonWriter(stream))
             {
                 json.WriteStartObject();
+                json.WriteString("mode", options.Mode);
+                json.WriteString("clipName", request.Animations[animationIndex].OutputName);
+                json.WriteNumber("referenceClip", referenceClip);
+                json.WriteStartArray("clips");
+                foreach (var clip in clips)
+                {
+                    json.WriteStartObject();
+                    json.WriteString("name", clip.Name); json.WriteString("path", Path.GetFullPath(clip.Path));
+                    json.WriteEndObject();
+                }
+                json.WriteEndArray();
                 json.WriteString("sourceUnit", options.SourceUnit);
                 json.WriteStartArray("sourceAxisAssumptions");
                 foreach (var assumption in axisAssumptions)
@@ -184,6 +207,22 @@ public sealed class RavenfieldAdaptationEngine
     }
 
     internal sealed record SourceAxisAssumption(string Path, string Axis);
+
+    internal static IReadOnlyList<string> BuildClipNames(IEnumerable<string> outputNames)
+    {
+        var used = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var names = new List<string>();
+        foreach (var outputName in outputNames)
+        {
+            if (string.IsNullOrWhiteSpace(outputName)) throw new InvalidDataException("动画输出名不能为空 / Animation output name cannot be empty.");
+            var name = string.Concat(outputName.Trim().Select(c => char.IsControl(c) || "/\\:*?\"<>|".Contains(c) ? '_' : c));
+            var unique = name;
+            var suffix = names.Count + 1;
+            while (!used.Add(unique)) unique = name + "_" + suffix++;
+            names.Add(unique);
+        }
+        return names;
+    }
 
     internal static (AnimationExportRequest Request, IReadOnlyList<SourceAxisAssumption> Assumptions)
         PrepareModelAxes(AnimationExportRequest request, string fallback, string temporary)

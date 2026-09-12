@@ -1,4 +1,19 @@
-# RF adapter validation — 1.3.0-rf.1
+# RF adapter validation — 1.3.0-rf.2
+
+## RF.2 full-animation/library addition
+
+- The supplied RFTools AR15 FBX metadata uses a single `Scene` take and named frame ranges, not independent FBX takes. The library follows that structure while retaining independent editable Blender Actions.
+- Ten Blender contracts pass, including complete world/local pose conversion, quaternion hemisphere continuity, a near-straight elbow-plane case and constant holds across library gaps.
+- Managed build/self-test and RF.2 Native AOT publish/self-test pass. Native 900×600 bilingual light/dark UI checks cover all three modes, help text, project persistence and busy states. Native full-library export and static-pose compatibility export pass. The final native-produced library passes the same 481-frame independent reimport check.
+- Real Hawk fixture: Idle 1–2, Sprint 13–79, Reload 90–180, Inspect 191–481; 451 authored/repeated frames plus 30 gap frames. Each source is separately evaluated at 30 FPS with its own layers and IK configuration.
+- Every baked frame verifies all output bone matrices and every skin vertex against the live fitted source rig. Maximum bake matrix error 1.133e-6, vertex error 2.332e-6 m.
+- Independent FBX reimport verifies all 481 frames, 101 bones and 19 meshes: maximum skin error 1.933e-6 m, bone-head error 1.502e-6 m, deformation-matrix error 3.517e-6. Every independent Action matches its Scene interval exactly (matrix/position/skin).
+- Sampled renders cover sprint, magazine exchange and both hands during inspect, including the former inspect finger-flip frames. A fixed rest-palm mapping now transports the complete source finger orientation; the remaining largest rotations (Reload 142.693°, Inspect 78.812°) match source rotations, rather than adapter-added twists. Render review is not a collision-free fitting guarantee.
+- The clip setup script compiles against installed Unity 2020.3 assemblies. Editor execution remains blocked by the previously recorded inactive license. No real melee fixture was exercised in this pass; arbitrary compatible clips use the same full-frame path.
+
+The earlier RF.1 record below remains as the baseline; its static-only scope applies to RF.1, not RF.2.
+
+## RF.1 baseline
 
 Local verification on 2026-09-12, Windows x64, Blender 4.0.2.
 

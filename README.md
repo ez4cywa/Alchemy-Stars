@@ -2,7 +2,7 @@
 
 # Alchemy Stars
 
-> **RF experimental branch:** `EZ4/ravenfield-arms-adapter`, version `1.3.0-rf.1`, independently based on Avalonia AOT preview.27 (.NET 11 Preview 7, Avalonia 12.1.2). Adds Ravenfield idle hand adaptation without changing ordinary exports. Production remains v1.1.9 on `main`. [RF usage guide (Chinese)](docs/ravenfield-adapter.zh-CN.md).
+> **RF experimental branch:** `EZ4/ravenfield-arms-adapter`, version `1.3.0-rf.2`, independently based on Avalonia AOT preview.27 (.NET 11 Preview 7, Avalonia 12.1.2). Adds Ravenfield pose/full-animation adaptation and a one-file animation library without changing ordinary exports. Production remains v1.1.9 on `main`. [RF usage guide (Chinese)](docs/ravenfield-adapter.zh-CN.md).
 
 
 Latest preview release: [preview.27 notes (Chinese)](docs/releases/1.3.0-preview.27.zh-CN.md): keep the original scene axis by default or choose Z-up/Y-up for the whole output scene. Includes mixed input-axis conversion, selected export and accessibility improvements.
@@ -112,7 +112,7 @@ This preview branch requires .NET SDK `11.0.100-preview.7.26381.103` to build. `
 
 `run-tests.ps1` builds the stable WPF baseline and runs the Maya-backed conversion regressions. `verify-avalonia-aot.ps1` publishes the trimmed native application, runs its AOT contract/project export checks, starts a real Win32 window, validates Windows UI Automation names/focus/target bounds, and renders all four pages plus a centered dialog at the 900 × 600 minimum size.
 
-Every functional preview change increments the prerelease revision; this independent RF test version is `1.3.0-rf.1`. The stable release remains `1.1.9`.
+Every functional preview change increments the prerelease revision; this independent RF test version is `1.3.0-rf.2`. The stable release remains `1.1.9`.
 
 The 1.1.9 UI audit fixes the clipped About icon, toolbar overflow, cramped layer paths, and low-contrast controls. See the [UI audit and validation notes](design-system/alchemy-stars/pages/ui-audit-1.1.9.md) for coverage and limitations.
 

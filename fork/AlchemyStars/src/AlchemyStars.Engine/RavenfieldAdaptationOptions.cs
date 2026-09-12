@@ -5,6 +5,8 @@ public sealed class RavenfieldAdaptationOptions : ObservableModel
 {
     private string rfSourcePath = "";
     private string referenceAnimationId = "";
+    private string mode = "pose";
+    public string Mode { get => mode; set => SetProperty(ref mode, value ?? "pose"); }
     public string ReferenceAnimationId { get => referenceAnimationId; set => SetProperty(ref referenceAnimationId, value ?? ""); }
     private string sourceUnit = "cm";
     private string untaggedModelUpAxis = "hands";

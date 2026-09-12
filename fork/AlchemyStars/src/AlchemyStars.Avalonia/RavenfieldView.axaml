@@ -1,6 +1,9 @@
 <UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="using:AlchemyStars.Avalonia" xmlns:engine="using:AlchemyStars.Engine" x:Class="AlchemyStars.Avalonia.RavenfieldView" x:DataType="local:MainWindowViewModel">
 <Border Classes="card"><StackPanel Spacing="12" IsEnabled="{Binding CanInteract}">
 <TextBlock Text="{Binding Text.RfTitle}" Classes="card-title" /><TextBlock Text="{Binding Text.RfHelp}" TextWrapping="Wrap" Classes="muted" />
+<TextBlock Text="{Binding Text.RfMode}" Classes="field-label" TextWrapping="Wrap" />
+<ComboBox x:Name="RfMode" ItemsSource="{Binding RavenfieldModes}" SelectedIndex="{Binding RavenfieldModeIndex}" AutomationProperties.Name="{Binding Text.RfMode}"><ComboBox.ItemTemplate><DataTemplate x:DataType="local:LocalizedOption"><TextBlock Text="{Binding Label}" /></DataTemplate></ComboBox.ItemTemplate></ComboBox>
+<TextBlock x:Name="RfModeHelp" Text="{Binding RavenfieldModeHelp}" TextWrapping="Wrap" Classes="muted" />
 <TextBlock Text="{Binding Text.RfSource}" Classes="field-label" TextWrapping="Wrap" />
 <Grid ColumnDefinitions="*,12,Auto"><TextBox Text="{Binding Workspace.Ravenfield.RfSourcePath}" AutomationProperties.Name="{Binding Text.RfSource}" /><Button Grid.Column="2" Click="BrowseClick" Content="{Binding Text.RfBrowse}" /></Grid>
 <TextBlock Text="{Binding Text.RfIdle}" Classes="field-label" TextWrapping="Wrap" />

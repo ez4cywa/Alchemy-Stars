@@ -26,6 +26,21 @@ internal static class RavenfieldUiSmoke
         foreach (var chinese in new[] { true, false })
         {
             if (vm.IsChinese != chinese) vm.ToggleLanguage();
+            var mode = view.FindControl<ComboBox>("RfMode")!;
+            var help = view.FindControl<TextBlock>("RfModeHelp")!;
+            foreach (var index in new[] { 0, 1, 2, 0, 2 })
+            {
+                mode.SelectedIndex = index;
+                await Task.Delay(80);
+                window.UpdateLayout();
+                var expectedLabel = index switch { 1 => vm.Text.RfAnimation, 2 => vm.Text.RfLibrary, _ => vm.Text.RfPose };
+                if (vm.Workspace.Ravenfield.Mode != (index switch { 1 => "animation", 2 => "library", _ => "pose" })
+                    || !mode.GetVisualDescendants().OfType<TextBlock>().Any(t => t.Text == expectedLabel && t.IsEffectivelyVisible)
+                    || help.Text != (index switch { 1 => vm.Text.RfAnimationHelp, 2 => vm.Text.RfLibraryHelp, _ => vm.Text.RfPoseHelp }))
+                    throw new InvalidOperationException("RF live mode selection/label/help mismatch.");
+                if (mode.Bounds.Width > view.Bounds.Width || help.Bounds.Width > view.Bounds.Width)
+                    throw new InvalidOperationException("RF mode layout overflows the view.");
+            }
             advanced.IsExpanded = true;
             scroll.Offset = default;
             await Task.Delay(150);
@@ -39,7 +54,7 @@ internal static class RavenfieldUiSmoke
             Save(window, Path.Combine(directory, "rf-900-" + (chinese ? "zh" : "en") + "-advanced.png"));
         }
         if (vm.IsChinese != originalLanguage) vm.ToggleLanguage();
-        Console.WriteLine("RF 900px UI: bilingual expanded layout, numeric widths, scale binding and bounds PASS");
+        Console.WriteLine("RF 900px UI: bilingual live mode switches/labels/help, expanded layout, numeric widths, scale binding and bounds PASS");
     }
 
     private static async Task VerifyReferenceAsync(MainWindow window, MainWindowViewModel vm, RavenfieldView view)
@@ -53,19 +68,23 @@ internal static class RavenfieldUiSmoke
         {
             var workspace = new WorkspaceDocument();
             workspace.Animations.Add(new() { Name = "idle-first.cast" });
-            workspace.Animations.Add(new() { Name = "idle-second.cast" });
+            workspace.Animations.Add(new() { Name = "weapon-fire.cast" });
             workspace.Ravenfield.ReferenceAnimationId = workspace.Animations[1].Id;
+            workspace.Ravenfield.Mode = "library";
             var project = Path.Combine(temporary.FullName, "two-clips.aprj");
             store.Save(workspace, project);
             vm.LoadProject(project);
             vm.SelectPage(WorkspacePage.Settings);
             var combo = view.FindControl<ComboBox>("RfReference")!;
+            var mode = view.FindControl<ComboBox>("RfMode")!;
             async Task CheckSelected()
             {
                 await Task.Delay(80);
                 window.UpdateLayout();
+                if (mode.SelectedIndex != 2 || vm.Workspace.Ravenfield.Mode != "library")
+                    throw new InvalidOperationException("RF saved mode was not restored or changed with language/normal selection.");
                 if (!ReferenceEquals(combo.SelectedItem, vm.Animations[1]) || combo.SelectedIndex != 1
-                    || !combo.GetVisualDescendants().OfType<TextBlock>().Any(t => t.Text == "idle-second" && t.IsEffectivelyVisible))
+                    || !combo.GetVisualDescendants().OfType<TextBlock>().Any(t => t.Text == "weapon-fire" && t.IsEffectivelyVisible))
                     throw new InvalidOperationException("RF saved reference is not visibly selected in ComboBox: index=" + combo.SelectedIndex
                         + ", selected=" + (combo.SelectedItem as WorkspaceAnimation)?.DisplayName + ", vm=" + vm.SelectedRavenfieldAnimation?.DisplayName
                         + ", labels=" + string.Join("|", combo.GetVisualDescendants().OfType<TextBlock>().Select(t => t.Text + ":" + t.IsEffectivelyVisible)));
@@ -76,11 +95,33 @@ internal static class RavenfieldUiSmoke
             vm.ToggleLanguage();
             vm.SelectedAnimation = vm.Animations[0];
             await CheckSelected();
+            var adapt = view.GetVisualDescendants().OfType<Button>().Single(b => Equals(b.Content, vm.Text.RfAdapt));
+            if (!adapt.IsEffectivelyEnabled) throw new InvalidOperationException("Valid RF reference did not enable adaptation.");
+            var runner = vm.RavenfieldRunner;
+            var pending = new TaskCompletionSource<RavenfieldAdaptationResult>();
+            vm.RavenfieldRunner = (_, index, options, _) =>
+            {
+                if (index != 1 || options.Mode != "library") throw new InvalidOperationException("RF UI lost library mode/reference in export snapshot.");
+                return pending.Task;
+            };
+            try
+            {
+                var run = vm.AdaptRavenfieldAsync();
+                await Task.Delay(80);
+                if (!vm.IsBusy || mode.IsEffectivelyEnabled || adapt.IsEffectivelyEnabled || string.IsNullOrWhiteSpace(vm.BusyMessage))
+                    throw new InvalidOperationException("RF busy state did not disable inputs or provide feedback.");
+                pending.SetResult(new("result.blend", "result.fbx", "result.report.json", "result.preview.png", []));
+                await run;
+                vm.CloseDialog();
+                if (vm.IsBusy || !vm.HasRavenfieldResult || !mode.IsEffectivelyEnabled)
+                    throw new InvalidOperationException("RF completion state did not restore interaction/results.");
+            }
+            finally { vm.RavenfieldRunner = runner; }
             vm.Animations.RemoveAt(1);
             await Task.Delay(80);
-            if (combo.SelectedItem is not null || vm.HasRavenfieldReference)
+            if (combo.SelectedItem is not null || vm.HasRavenfieldReference || adapt.IsEffectivelyEnabled)
                 throw new InvalidOperationException("Removed RF reference stayed selected in ComboBox.");
-            Console.WriteLine("RF live ComboBox: saved second reference, visible label, language switch, independent normal selection and removal PASS");
+            Console.WriteLine("RF live ComboBox: saved non-idle reference/library mode, visible label, language switch, independent selection, busy/completion states and removal PASS");
         }
         finally
         {

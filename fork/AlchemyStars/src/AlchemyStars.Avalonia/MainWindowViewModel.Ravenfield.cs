@@ -9,6 +9,15 @@ public sealed partial class MainWindowViewModel
     public IReadOnlyList<string> RavenfieldUnits { get; } = ["cm", "ft", "m"];
     public IReadOnlyList<string> RavenfieldUntaggedAxes { get; } = ["hands", "x", "y", "z"];
     public bool HasRavenfieldResult => ravenfieldResult is not null;
+    public int RavenfieldModeIndex
+    {
+        get => Workspace.Ravenfield.Mode switch { "pose" => 0, "animation" => 1, "library" => 2, _ => -1 };
+        set
+        {
+            if (value is 0 or 1 or 2) Workspace.Ravenfield.Mode = value switch { 1 => "animation", 2 => "library", _ => "pose" };
+        }
+    }
+    public string RavenfieldModeHelp => Workspace.Ravenfield.Mode switch { "animation" => Text.RfAnimationHelp, "library" => Text.RfLibraryHelp, _ => Text.RfPoseHelp };
     public WorkspaceAnimation? SelectedRavenfieldAnimation
     {
         get => replacingRavenfieldWorkspace ? null : Animations.FirstOrDefault(a => a.Id == Workspace.Ravenfield.ReferenceAnimationId);
@@ -42,12 +51,19 @@ public sealed partial class MainWindowViewModel
     private void RavenfieldReferenceChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(RavenfieldAdaptationOptions.ReferenceAnimationId)) RaiseRavenfieldReference();
+        if (e.PropertyName == nameof(RavenfieldAdaptationOptions.Mode)) RaiseRavenfieldMode();
     }
     private void RavenfieldAnimationsChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e) => RaiseRavenfieldReference();
     private void RaiseRavenfieldReference()
     {
+        RaiseRavenfieldMode();
         OnPropertyChanged(nameof(SelectedRavenfieldAnimation));
         OnPropertyChanged(nameof(HasRavenfieldReference));
+    }
+    private void RaiseRavenfieldMode()
+    {
+        OnPropertyChanged(nameof(RavenfieldModeIndex));
+        OnPropertyChanged(nameof(RavenfieldModeHelp));
     }
     public async Task ChooseRavenfieldAsync()
     {

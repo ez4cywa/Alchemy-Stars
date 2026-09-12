@@ -1,10 +1,10 @@
-# Ravenfield 手臂 idle 适配
+# Ravenfield 手臂与动画适配
 
-`1.3.0-rf.1` 是基于 `1.3.0-preview.27` 的独立实验分支 `EZ4/ravenfield-arms-adapter`。普通 CAST/FBX/SMD/SEAnim 导出保持原流程；RF 适配使用独立入口和米制 FBX 预设。
+`1.3.0-rf.2` 是基于 `1.3.0-preview.27` 的独立实验分支 `EZ4/ravenfield-arms-adapter`。普通 CAST/FBX/SMD/SEAnim 导出保持原流程；RF 适配使用独立入口和米制 FBX 预设。
 
 ## 当前范围
 
-使用当前 COD 工程的一帧 idle 姿势，把 Ravenfield 原版手臂对齐到 COD 的握持位置，保留 RF 原始蒙皮及 COD 武器骨架，输出一个统一骨架。生成的是**静态校准姿势，两帧相同关键帧**，不是整段 idle 或换弹动画的重定向。
+把 Ravenfield 原版手臂对齐到已求值的 COD 动画，保留 RF 原始蒙皮及 COD 武器骨架，输出统一骨架。支持三种模式：静态参考姿势、选中参考动画的完整片段、工程全部动画写入同一文件。旧工程默认静态姿势，不会自动变更输出范围。
 
 支持原版 RFTools 的 `Hands no IK for custom models.blend` 和 `Hands.blend`。选择 `.unitypackage` 时优先读取前者，仅在缺失时使用后者；不会导入整个 Unity 工程，也不运行包内代码。自定义 `.blend` 必须保留相同的手臂骨架结构。
 
@@ -13,13 +13,28 @@ COD 参考骨架目前要求 `j_shoulder_le/ri`、`j_elbow_le/ri`、`j_wrist_le/
 ## 使用
 
 1. 打开包含 COD 手臂、武器和 idle 动画的工程；确认普通导出的姿势正确。COD 手臂只提供姿势参考，最终不输出它的网格。
-2. 在“设置”顶部找到“Ravenfield 手臂适配 · idle”，选择 RF `.blend` 或 `.unitypackage`。
+2. 在“设置”顶部找到“Ravenfield 手臂适配”，选择 RF `.blend` 或 `.unitypackage` 及输出模式。
 3. 选择参考 idle 和参考帧。首次进入设置时，只有一个名称含独立 `idle` 字段的候选会自动选中；多个候选需手动选择。RF 参考动画随工程独立保存，普通动画页的选择不影响它。帧按程序处理后的 **30 FPS** 时间线从 0 开始计数；已有动画层、手部姿势和 IK 一并参与计算。
 4. 确认 COD 输入数值单位，必要时调整 RF 手臂整体比例。
-5. 点击“适配选中 idle”。结果使用当前动画的输出目录（包括统一输出目录设置），文件名追加 `_rf_idle`。
+5. 点击“生成 RF 结果”。结果使用参考动画的输出目录（包括统一输出目录设置），文件名追加 `_rf_idle`（静态）、`_rf_anim`（完整动画）或 `_rf_library`（工程动画库）。
 6. 打开预览或 `.blend` 检查握持；需要时调整高级参数并重新适配。保存工程可保留全部 RF 参数。
 
 RF 适配需要本机 Blender。沿用程序现有 Blender 查找规则；未安装在常规目录时，可在启动程序前设置 `ALCHEMY_STARS_BLENDER` 为 `blender.exe` 的完整路径。无需安装插件，随程序提供 CAST 导入脚本。
+
+## 同一文件里的全部动画
+
+选择“工程全部动画（同一文件）”后，按工程顺序导出全部动画，每个片段分别求值自己的动画层、手部姿势及 IK，统一为 30 FPS。参考动画与参考帧只确定所有片段共同的视角校准和预览，不裁剪片段。片段名称使用输出名称，自动区分重名。
+
+与已检查的 RFTools 示例武器一样，FBX 使用一个 `Scene` take，各动画占不同帧区间，片段间留 10 帧间隔；间隔保持上一片段最后姿势，不是需要播放的动画。`.blend` 同时保留每段独立 Action 和 `RF Library Timeline` 总时间线，便于单独编辑。只需一份模型和骨架，不为每个片段复制几何。
+
+在 Unity 中切分：
+
+1. 将 FBX 与同名 `.report.json` 一起放入目标工程的 Assets 目录。
+2. 将安装包 `Tools/UnityEditor/UnityRavenfieldClipSetup.cs` 复制到该工程的 `Assets/Editor`。
+3. 选中 FBX，执行 `Assets > Ravenfield > Apply adapter clip ranges`，确认后按报告设置命名片段。
+4. 检查每段动画、循环选项及事件，再接入武器 Animator/controller。工具保留同名片段的其他设置；报告中没有的旧片段不再保留。新片段默认不循环。
+
+也可不使用脚本，在 FBX Import Settings 的 Animation 页面手工填写报告中的 `name`、`takeName`、`firstFrame` 和 `lastFrame`。脚本仅在点击菜单后运行，不自动修改其他资产。
 
 ## 单位与微调
 
@@ -47,10 +62,10 @@ RF 适配需要本机 Blender。沿用程序现有 Blender 查找规则；未安
 
 ## 输出
 
-- `.blend`：可编辑的统一骨架、原始绑定姿势和烘焙校准姿势；包含检查相机及 `RF First Person` 相机。可用纹理会打包到文件中。
-- `.fbx`：米制、`-Z Forward / Y Up`，骨骼主轴 X、次轴 -Y；仅输出选定骨架和网格，关闭叶骨骼，只烘焙当前两帧，简化为 0。
+- `.blend`：可编辑的统一骨架、原始绑定姿势和烘焙 Action；包含检查相机及 `RF First Person` 相机。可用纹理会打包到文件中。
+- `.fbx`：米制、`-Z Forward / Y Up`，骨骼主轴 X、次轴 -Y；仅输出选定骨架和网格，关闭叶骨骼，逐帧烘焙且简化为 0。单帧源片段重复为两帧以保持可导入。
 - `.preview.png`：中性色握持检查图，优先取景手臂与主武器。源模型中存放在远处的备用弹匣等仍保留在输出模型中。
-- `.report.json`：输入摘要、数值单位与换算系数、骨骼映射、肩部调整、手腕误差、合并前后蒙皮误差和缺失贴图记录。
+- `.report.json`：输入摘要、数值单位与换算系数、骨骼映射、肩部调整、手腕误差、合并前后蒙皮误差和缺失贴图记录；动画模式另含片段区间及连续性诊断。
 
 贴图缺失不阻止绑定，报告会提示；本功能不自动补齐原素材未提供的材质资源。FBX 不是可直接部署的 Ravenfield 武器 mod：武器预制体、事件、音效等仍需在 Unity/RFTools 中配置。
 
@@ -61,10 +76,11 @@ RF 适配需要本机 Blender。沿用程序现有 Blender 查找规则；未安
 ```powershell
 D:/blender/blender.exe --background --factory-startup --disable-autoexec --python-exit-code 1 --python scripts/test-ravenfield-adapter.py
 python scripts/verify-ravenfield-fbx.py --blender D:/blender/blender.exe --reference path/to/result.blend --fbx path/to/result.fbx
+python scripts/verify-ravenfield-fbx.py --library --reference path/to/library.blend --fbx path/to/library.fbx
 AlchemyStars.Avalonia.exe --rf-smoke project.aprj RFTools.unitypackage output-folder
 AlchemyStars.Avalonia.exe --rf-ui-smoke --page settings --render-smoke rf-settings.png --window-size 900x600
 ```
 
-核心验证覆盖三种数值单位的相同物理结果、双骨求解边界、工程持久化、源文件防覆盖和四文件发布回滚。每次实际适配还检查骨架合并前后的骨骼矩阵和蒙皮顶点。FBX 往返比较经过骨轴重定向后的世界变形，而非错误地要求本地骨骼 roll 完全相同。
+核心验证覆盖三种数值单位的相同物理结果、双骨求解边界、工程持久化、源文件防覆盖和四文件发布回滚。动画逐帧检查骨架合并前后的完整矩阵和所有蒙皮顶点；库模式还检查独立 Action 与总时间线对应区间一致。单片段 FBX 检查使用 `--animation`。FBX 往返比较经过骨轴重定向后的世界变形，而非要求本地骨骼 roll 完全相同。
 
 本机 Unity 2020.3.49f1c1 的批处理验证被未激活的 Editor 许可证阻止，尚未进入 FBX 导入阶段。`scripts/UnityRavenfieldImportCheck.cs` 提供隔离工程中的后续检查入口，已通过本机 Unity 2020 程序集的独立编译检查，但未在 Editor 执行；不能把 Blender 往返通过视为游戏内验收。

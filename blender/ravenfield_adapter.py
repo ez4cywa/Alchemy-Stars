@@ -42,6 +42,8 @@ def vector3(value, name):
 
 
 def validate_config(config):
+    require(config.get("mode", "pose") in ("pose", "animation", "library"), "Mode must be pose, animation or library")
+    config.setdefault("mode", "pose")
     require(config.get("sourceUnit", "cm") in UNIT_FACTORS, "Source unit must be cm, m or ft")
     config.setdefault("sourceUnit", "cm")
     frame = config.get("idleFrame", 0)
@@ -60,6 +62,14 @@ def validate_config(config):
     names = config.get("weaponBoneNames")
     require(isinstance(names, list) and names and all(isinstance(n, str) and n for n in names),
             "Explicit weaponBoneNames are required")
+    if config["mode"] == "library":
+        clips = config.get("clips")
+        require(isinstance(clips, list) and clips, "Animation library requires clips")
+        require(all(isinstance(c, dict) and isinstance(c.get("name"), str) and c["name"].strip()
+                    and isinstance(c.get("path"), str) and c["path"] for c in clips), "Invalid library clip")
+        require(len({c["name"] for c in clips}) == len(clips), "Library clip names must be unique")
+        index = config.get("referenceClip", 0)
+        require(type(index) is int and 0 <= index < len(clips), "Invalid library reference clip")
 
 
 def extract_rf_source(source, temporary):
@@ -181,7 +191,7 @@ def palm_frame(wrist, index, pinky):
     return Matrix((x, y, z)).transposed().to_quaternion()
 
 
-def solve_elbow(shoulder, wrist, pole, upper, lower, swivel):
+def solve_elbow(shoulder, wrist, pole, upper, lower, swivel, previous_plane=None):
     """Two-link length-preserving solve; a short RF elbow segment belongs to the forearm."""
     delta = wrist - shoulder
     require(delta.length > 1e-6, "Shoulder and wrist coincide")
@@ -191,6 +201,12 @@ def solve_elbow(shoulder, wrist, pole, upper, lower, swivel):
     fitted_shoulder = wrist - direction * distance
     plane = pole - fitted_shoulder
     plane -= direction * plane.dot(direction)
+    # A nearly straight source elbow has no reliable bend direction. Transport
+    # the preceding plane through that singularity instead of choosing a new side.
+    if previous_plane is not None and plane.length < 0.01 * max(upper, lower):
+        transported = previous_plane - direction * previous_plane.dot(direction)
+        if transported.length > 1e-6:
+            plane = transported
     if plane.length < 1e-6:
         plane = Vector((0, 0, -1)) - direction * direction.dot(Vector((0, 0, -1)))
     if plane.length < 1e-6:
@@ -276,7 +292,7 @@ def source_transform(rest, pose, factor):
     return yaw @ Matrix.Scale(factor, 4) @ Matrix.Translation(-origin.translation)
 
 
-def fit_hands(rf, cod_pose, cod_rest, config, report):
+def fit_hands(rf, cod_pose, cod_rest, config, report, continuity=None):
     rest = armature_rest(rf)
     for side, suffix, cod_side in (("left", "L", "le"), ("right", "R", "ri")):
         setting = config[side]
@@ -286,6 +302,10 @@ def fit_hands(rf, cod_pose, cod_rest, config, report):
                                  cod_pose[f"j_pinky_{cod_side}_1"].translation)
         rf_palm = palm_frame(rest[f"Hand.{suffix}"].translation, rest[f"Index.{suffix}"].translation,
                              rest[f"Pinky.{suffix}"].translation)
+        source_rest_palm = palm_frame(cod_rest[f"j_wrist_{cod_side}"].translation,
+                                     cod_rest[f"j_index_{cod_side}_1"].translation,
+                                     cod_rest[f"j_pinky_{cod_side}_1"].translation)
+        rest_alignment = source_rest_palm @ rf_palm.inverted()
         user_rotation = Euler([math.radians(x) for x in setting["rotation"]], "XYZ").to_quaternion()
         palm_alignment = user_rotation @ source_palm @ rf_palm.inverted()
         arm, elbow_part, forearm, hand = f"Arm.{suffix}", f"Arm.{suffix}.001", f"Wrist.{suffix}", f"Hand.{suffix}"
@@ -294,7 +314,15 @@ def fit_hands(rf, cod_pose, cod_rest, config, report):
         source_shoulder = cod_pose[f"j_shoulder_{cod_side}"].translation
         shoulder, elbow = solve_elbow(source_shoulder, target_wrist,
                                       cod_pose[f"j_elbow_{cod_side}"].translation,
-                                      upper, lower, setting["elbowSwivel"])
+                                      upper, lower, setting["elbowSwivel"],
+                                      continuity.get(side) if continuity is not None else None)
+        if continuity is not None:
+            axis = (target_wrist - shoulder).normalized()
+            plane = elbow - shoulder
+            plane -= axis * plane.dot(axis)
+            if plane.length > 1e-6:
+                # Store the pre-swivel plane so the user adjustment is applied once.
+                continuity[side] = Quaternion(axis, -math.radians(setting["elbowSwivel"])) @ plane.normalized()
         for name, position, direction in (
                 (arm, shoulder, elbow - shoulder),
                 (elbow_part, elbow, target_wrist - elbow),
@@ -309,6 +337,7 @@ def fit_hands(rf, cod_pose, cod_rest, config, report):
             for i, (rf_name, cod_name) in enumerate(zip(rf_names, source_names)):
                 if i < 2:
                     direction = cod_pose[source_names[i + 1]].translation - cod_pose[cod_name].translation
+                    rest_direction = cod_rest[source_names[i + 1]].translation - cod_rest[cod_name].translation
                 else:
                     # Extrapolate the anatomical distal axis, not Blender's arbitrary display tail.
                     rest_direction = cod_rest[cod_name].translation - cod_rest[source_names[i - 1]].translation
@@ -318,7 +347,12 @@ def fit_hands(rf, cod_pose, cod_rest, config, report):
                 direction = curl @ direction
                 # Keep the original RF knuckle offsets and segment lengths; do not move fingers to COD joints.
                 position = rf.pose.bones[rf_name].matrix.translation.copy() if i == 0 else rf.pose.bones[rf_names[i - 1]].tail.copy()
-                rotation = aim_rotation(palm_alignment @ rest[rf_name].to_quaternion(), direction)
+                # Transport the authored bone orientation from a fixed anatomical
+                # rest alignment. Re-solving a shortest swing from the moving palm
+                # can flip the distal finger's roll near a 180-degree opposition.
+                rest_rotation = aim_rotation(rest_alignment @ rest[rf_name].to_quaternion(), rest_direction)
+                transported = cod_pose[cod_name].to_quaternion() @ cod_rest[cod_name].to_quaternion().inverted() @ rest_rotation
+                rotation = aim_rotation(curl @ user_rotation @ transported, direction)
                 set_pose(rf, rf_name, position, rotation)
                 mapping[rf_name] = cod_name
         wrist_error = (rf.pose.bones[hand].matrix.translation - target_wrist).length
@@ -537,6 +571,11 @@ def main():
     require(all(p.is_file() for p in sources), "An input file is missing")
     config = json.loads(args.config.read_text(encoding="utf-8-sig"))
     validate_config(config)
+    if config["mode"] == "library":
+        sources.update(Path(c["path"]).resolve() for c in config["clips"])
+        require(args.input.resolve() == Path(config["clips"][config.get("referenceClip", 0)]["path"]).resolve(),
+                "--input must match the library reference clip")
+        require(all(p.is_file() for p in sources) and not sources.intersection(destinations), "Invalid library input/output paths")
     hashes = {str(p): hashlib.sha256(p.read_bytes()).hexdigest() for p in sources}
     args.output.parent.mkdir(parents=True, exist_ok=True)
     bpy.ops.wm.read_factory_settings(use_empty=True)
@@ -567,8 +606,14 @@ def main():
         report.update(template=template, evaluatedSourceFrame=frame, sourceUpperArmM=length,
                       viewTransform=[list(row) for row in transform], outputFrames=[1, 2],
                       warningScope="A fitted idle pose, not a full animation retarget or an in-game validation")
-        fit_hands(rf, cod_pose, cod_rest, config, report)
-        rig, meshes, verification = combine_rigs(rf, rf_meshes, cod, weapon_meshes, transform, factor, config)
+        if config["mode"] == "pose":
+            fit_hands(rf, cod_pose, cod_rest, config, report)
+            rig, meshes, verification = combine_rigs(rf, rf_meshes, cod, weapon_meshes, transform, factor, config)
+        else:
+            sys.path.insert(0, str(Path(__file__).resolve().parent))
+            from ravenfield_animation import bake_sequence
+            rig, meshes, verification = bake_sequence(rf, rf_meshes, cod, weapon_meshes, transform, factor,
+                                                       config, report, args.input.resolve(), temporary)
         report.update(bones=len(rig.data.bones), meshes=len(meshes), **verification)
         report["boundsM"] = configure_scene(rig, meshes)
         export(rig, meshes, args.output.resolve(), report)

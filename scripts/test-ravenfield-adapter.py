@@ -88,7 +88,10 @@ class AdapterContracts(unittest.TestCase):
         self.assertGreater(abs(results[4][1].y), 0.1)
 
     def test_invalid_config_is_rejected(self):
-        changes = [{"sourceUnit": "in"}, {"idleFrame": -1}, {"idleFrame": True},
+        changes = [{"mode": "unknown"}, {"mode": "library"}, {"mode": "library", "clips": []},
+                   {"mode": "library", "clips": [{"name": "Idle", "path": "a.cast"}], "referenceClip": 1},
+                   {"mode": "library", "clips": [{"name": "Idle", "path": "a.cast"}, {"name": "Idle", "path": "b.cast"}]},
+                   {"sourceUnit": "in"}, {"idleFrame": -1}, {"idleFrame": True},
                    {"handScale": -1}, {"handScale": 0}, {"handScale": float("nan")},
                    {"handScale": float("inf")}, {"handScale": True},
                    {"handMeshIndices": []}, {"handMeshIndices": [0, 0]},
@@ -112,6 +115,62 @@ class AdapterContracts(unittest.TestCase):
             adapter.palm_frame(Vector((0, 0, 0)), Vector((0, 1, 0)), Vector((0, 2, 0)))
         with self.assertRaises(ValueError):
             adapter.solve_elbow(Vector((0, 0, 0)), Vector((0, 0, 0)), Vector((0, 1, 0)), 0.3, 0.25, 0)
+
+    def test_elbow_plane_survives_a_straight_source_singularity(self):
+        previous = Vector((0, 1, 0))
+        for tiny in (1e-8, 0, -1e-8):
+            shoulder, elbow = adapter.solve_elbow(Vector((0, 0, 0)), Vector((0.4, 0, 0)),
+                Vector((0.2, tiny, 0)), 0.3, 0.25, 0, previous)
+            self.assertGreater(elbow.y, 0.1)
+            self.assertAlmostEqual((elbow - shoulder).length, 0.3, places=6)
+            self.assertAlmostEqual((elbow - Vector((0.4, 0, 0))).length, 0.25, places=6)
+
+    def test_animation_world_bake_and_quaternion_hemisphere(self):
+        import bpy
+        from mathutils import Quaternion
+        from ravenfield_animation import set_world_pose
+        bpy.ops.wm.read_factory_settings(use_empty=True)
+        data = bpy.data.armatures.new("test")
+        rig = bpy.data.objects.new("test", data)
+        bpy.context.scene.collection.objects.link(rig)
+        adapter.activate(rig)
+        bpy.ops.object.mode_set(mode="EDIT")
+        root = data.edit_bones.new("root")
+        root.head, root.tail = (0, 0, 0), (0, 1, 0)
+        child = data.edit_bones.new("child")
+        child.head, child.tail = (0, 1, 0), (0, 2, 0)
+        child.parent = root
+        bpy.ops.object.mode_set(mode="OBJECT")
+        previous, last = {}, None
+        for degrees in range(175, 187, 2):
+            parent = Matrix.LocRotScale(Vector((1, 2, 3)), Quaternion((0, 0, 1), math.radians(degrees)), Vector((1, 1, 1)))
+            expected = {"root": parent, "child": parent @ data.bones["child"].matrix_local @ Matrix.Rotation(0.3, 4, "X")}
+            set_world_pose(rig, expected, previous)
+            for name in expected:
+                self.assertLess(max(abs(expected[name][i][j] - rig.pose.bones[name].matrix[i][j]) for i in range(4) for j in range(4)), 1e-5)
+            current = rig.pose.bones["root"].rotation_quaternion.copy()
+            if last is not None:
+                self.assertGreater(current.dot(last), 0.99)
+            last = current
+
+    def test_library_ranges_hold_gaps_and_preserve_actions(self):
+        import bpy
+        from ravenfield_animation import compose_timeline
+        actions = []
+        for name, values in (("first", (0, 1)), ("second", (100, 101, 102))):
+            action = bpy.data.actions.new(name)
+            curve = action.fcurves.new('pose.bones["root"].location', index=0)
+            for frame, value in enumerate(values, 1):
+                curve.keyframe_points.insert(frame, value)
+            actions.append(action)
+        clips = [{"name": "first", "firstFrame": 1, "frameCount": 2}, {"name": "second", "firstFrame": 13, "frameCount": 3}]
+        timeline = compose_timeline(actions, clips)
+        curve = timeline.fcurves[0]
+        self.assertEqual(curve.evaluate(2), 1)
+        self.assertEqual(curve.evaluate(12), 1)
+        self.assertEqual(curve.evaluate(13), 100)
+        self.assertEqual(curve.evaluate(15), 102)
+        self.assertEqual(tuple(actions[1].frame_range), (1, 3))
 
 
 if __name__ == "__main__":

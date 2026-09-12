@@ -6,10 +6,11 @@ internal static class RavenfieldSmoke
     {
         try
         {
-            if (args.Length < 3) throw new ArgumentException("Usage: --rf-smoke project.aprj rf.blend|rf.unitypackage output-folder [animation-index]");
+            if (args.Length < 3) throw new ArgumentException("Usage: --rf-smoke project.aprj rf.blend|rf.unitypackage output-folder [animation-index] [pose|animation|library]");
             var store = new WorkspaceProjectStore();
             var workspace = store.Load(args[0]);
             workspace.Ravenfield.RfSourcePath = args[1];
+            if (args.Length > 4) workspace.Ravenfield.Mode = args[4];
             var savedId = workspace.Ravenfield.ReferenceAnimationId;
             var index = args.Length > 3 ? int.Parse(args[3], System.Globalization.CultureInfo.InvariantCulture)
                 : string.IsNullOrWhiteSpace(savedId) ? 0
@@ -51,6 +52,42 @@ internal static class RavenfieldSmoke
         var request = store.CreateExportRequest(loaded);
         var outputs = RavenfieldAdaptationEngine.Validate(request, 0, loaded.Ravenfield, project);
         Require(outputs.Count == 4 && outputs[0].EndsWith("idle_rf_idle.blend"), "RF output naming changed.");
+        Require(loaded.Ravenfield.Mode == "pose", "Default RF mode changed.");
+        loaded.Ravenfield.Mode = "animation";
+        store.Save(loaded, project);
+        loaded = store.Load(project);
+        Require(loaded.Ravenfield.Mode == "animation" && WorkspaceProjectStore.Snapshot(loaded).Ravenfield.Mode == "animation", "RF mode persistence/snapshot lost animation.");
+        var animationOutputs = RavenfieldAdaptationEngine.Validate(request, 0, loaded.Ravenfield, project);
+        Require(animationOutputs.SequenceEqual(new[] { ".blend", ".fbx", ".report.json", ".preview.png" }.Select(ext => Path.Combine(folder, "idle_rf_anim" + ext))), "RF animation output naming changed.");
+        foreach (var mode in new[] { "", "unknown", "Animation" })
+        {
+            loaded.Ravenfield.Mode = mode;
+            Reject(() => RavenfieldAdaptationEngine.Validate(request, 0, loaded.Ravenfield), "Invalid RF mode allowed.");
+        }
+        loaded.Ravenfield.Mode = "animation";
+        foreach (var output in animationOutputs)
+        {
+            var collision = request with { Parts = request.Parts.Append(new(output, ModelPartKind.Attachment)).ToArray() };
+            Reject(() => RavenfieldAdaptationEngine.Validate(collision, 0, loaded.Ravenfield), "Animation mode input overwrite allowed.");
+            Reject(() => RavenfieldAdaptationEngine.Validate(request, 0, loaded.Ravenfield, output), "Animation mode project overwrite allowed.");
+        }
+        loaded.Ravenfield.Mode = "pose";
+        loaded.Ravenfield.Mode = "library";
+        store.Save(loaded, project);
+        loaded = store.Load(project);
+        Require(loaded.Ravenfield.Mode == "library" && WorkspaceProjectStore.Snapshot(loaded).Ravenfield.Mode == "library", "RF library mode persistence/snapshot lost mode.");
+        var libraryOutputs = RavenfieldAdaptationEngine.Validate(request, 0, loaded.Ravenfield, project);
+        Require(libraryOutputs.SequenceEqual(new[] { ".blend", ".fbx", ".report.json", ".preview.png" }.Select(ext => Path.Combine(folder, "idle_rf_library" + ext))), "RF library output naming changed.");
+        var names = RavenfieldAdaptationEngine.BuildClipNames(["idle", "idle", "idle_2", "reload/fire", "IDLE"]);
+        Require(names.SequenceEqual(new[] { "idle", "idle_2", "idle_2_3", "reload_fire", "IDLE_5" }), "RF library names are not stable and unique.");
+        Reject(() => RavenfieldAdaptationEngine.Validate(request with { Animations = [request.Animations[0], request.Animations[0] with { OutputName = " " }] }, 0, loaded.Ravenfield), "Library accepted an empty unselected clip name.");
+        foreach (var output in libraryOutputs)
+        {
+            var collision = request with { Animations = [request.Animations[0], request.Animations[0] with { SourceFile = output }] };
+            Reject(() => RavenfieldAdaptationEngine.Validate(collision, 0, loaded.Ravenfield), "Library mode unselected input overwrite allowed.");
+            Reject(() => RavenfieldAdaptationEngine.Validate(request, 0, loaded.Ravenfield, output), "Library mode project overwrite allowed.");
+        }
+        loaded.Ravenfield.Mode = "pose";
         foreach (var output in outputs)
         {
             var protectedRequest = request with { Animations = [request.Animations[0], request.Animations[0] with { SourceFile = output }] };
@@ -61,12 +98,12 @@ internal static class RavenfieldSmoke
             Reject(() => RavenfieldAdaptationEngine.Validate(request, 0, loaded.Ravenfield, output), "Project overwrite allowed.");
         }
         var nullableProject = Path.Combine(folder, "null-rf.aprj");
-        foreach (var json in new[] { "{}", "{\"Ravenfield\":null}", "{\"Ravenfield\":{\"Left\":null,\"Right\":null,\"SourceUnit\":null}}" })
+        foreach (var json in new[] { "{}", "{\"Ravenfield\":null}", "{\"Ravenfield\":{\"Left\":null,\"Right\":null,\"SourceUnit\":null,\"Mode\":null}}", "{\"Ravenfield\":{\"IdleFrame\":5}}" })
         {
             File.WriteAllText(nullableProject, json);
             var empty = store.Load(nullableProject);
             Require(empty.Ravenfield is not null && empty.Ravenfield.Left is not null && empty.Ravenfield.Right is not null
-                && empty.Ravenfield.SourceUnit == "cm", "Nullable RF project did not normalize.");
+                && empty.Ravenfield.SourceUnit == "cm" && empty.Ravenfield.Mode == "pose", "Old/nullable RF project did not normalize.");
         }
         TestPublication(folder);
         TestModelAxes(folder, request);
@@ -98,7 +135,7 @@ internal static class RavenfieldSmoke
         loaded.Ravenfield.Left.PositionZ = 0; loaded.Ravenfield.SourceUnit = "unknown";
         Reject(() => RavenfieldAdaptationEngine.Validate(request, 0, loaded.Ravenfield), "Unknown unit allowed.");
         Require(doc.OutputFormat == ".cast" && doc.OutputUpAxis == "source", "RF settings mutated normal export.");
-        Console.WriteLine("RF persistence/nulls, units, validation, protected inputs, transactional publication and workspace-switch races PASS");
+        Console.WriteLine("RF pose/animation/library persistence/nulls, clip naming, units, validation, protected inputs, transactional publication and workspace-switch races PASS");
     }
 
     private static void TestModelAxes(string folder, AnimationExportRequest request)

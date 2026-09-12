@@ -15,6 +15,7 @@ public sealed partial class MainWindowViewModel
     public IReadOnlyList<LocalizedOption> WeaponFollowOptions { get; private set; } = [];
     public IReadOnlyList<LocalizedOption> DualModeOptions { get; private set; } = [];
     public IReadOnlyList<LocalizedOption> OutputUpAxes { get; private set; } = [];
+    public IReadOnlyList<LocalizedOption> RavenfieldModes { get; private set; } = [];
 
     private void InitializeLocalizedOptions()
     {
@@ -23,6 +24,7 @@ public sealed partial class MainWindowViewModel
         WeaponFollowOptions = Text.WeaponFollowModes.Select(label => new LocalizedOption(label)).ToArray();
         DualModeOptions = Text.DualModes.Select(label => new LocalizedOption(label)).ToArray();
         OutputUpAxes = [new(Text.KeepSceneAxis), new("Z-up"), new("Y-up")];
+        RavenfieldModes = [new(Text.RfPose), new(Text.RfAnimation), new(Text.RfLibrary)];
     }
 
     private void RefreshLocalizedOptions()
@@ -32,6 +34,8 @@ public sealed partial class MainWindowViewModel
         Refresh(WeaponFollowOptions, Text.WeaponFollowModes);
         Refresh(DualModeOptions, Text.DualModes);
         OutputUpAxes[0].Label = Text.KeepSceneAxis;
+        Refresh(RavenfieldModes, [Text.RfPose, Text.RfAnimation, Text.RfLibrary]);
+        RaiseRavenfieldMode();
         static void Refresh(IReadOnlyList<LocalizedOption> options, string[] labels)
         {
             for (var index = 0; index < options.Count; index++) options[index].Label = labels[index];

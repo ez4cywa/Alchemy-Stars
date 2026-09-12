@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.3.0-rf.2 — Local experimental branch (full clips and one-file RF library)
+
+- Bake complete evaluated clips on the shared RF/weapon bind skeleton; keep static pose as the backward-compatible default.
+- Export every project animation into one FBX Scene timeline with named frame ranges and ten-frame gaps; retain independent Actions in the editable blend.
+- Preserve source finger rotation and stabilize the near-straight elbow plane; verify every baked bone matrix and skinned vertex.
+- Add an explicit Unity clip-range setup menu and full-sequence/library FBX round-trip verification. Unity Editor runtime remains unverified because its local license is inactive.
+
 ## 1.3.0-rf.1 — Local experimental branch (RF idle hand adaptation)
 
 - Branch independently from preview.27 as `EZ4/ravenfield-arms-adapter`; keep ordinary exports unchanged and use a separate settings directory.
