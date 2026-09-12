@@ -15,16 +15,17 @@ public sealed class AvaloniaFilePickerAdapter(
     public async Task<IReadOnlyList<string>> PickFilesAsync(FilePickerPurpose purpose, bool allowMultiple)
     {
         var project = purpose == FilePickerPurpose.Project;
+        var ravenfield = purpose == FilePickerPurpose.Ravenfield;
         var scope = project ? "project" : PurposeScope(purpose);
         var files = await owner.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
         {
-            Title = project ? "Alchemy Stars | Open project" : "Alchemy Stars | Select CAST files",
+            Title = project ? "Alchemy Stars | Open project" : ravenfield ? "Alchemy Stars | RF hands" : "Alchemy Stars | Select CAST files",
             AllowMultiple = allowMultiple,
             SuggestedStartLocation = await ResolveStartLocationAsync(scope),
-            FileTypeFilter = project ? [ProjectFileType, AllFileType] : [CastFileType, AllFileType],
+            FileTypeFilter = project ? [ProjectFileType, AllFileType] : ravenfield ? [new FilePickerFileType("RF hands") { Patterns = ["*.blend", "*.unitypackage"] }] : [CastFileType, AllFileType],
         });
         var paths = files.Select(file => file.Path.LocalPath).Where(path => !string.IsNullOrWhiteSpace(path))
-            .Where(path => project || WorkspacePaths.IsCastAnimationFile(path)).ToArray();
+            .Where(path => project || ravenfield || WorkspacePaths.IsCastAnimationFile(path)).ToArray();
         if (paths.Length > 0)
             preferences.RememberDirectory(scope, paths[0]);
         return paths;
@@ -78,6 +79,7 @@ public sealed class AvaloniaFilePickerAdapter(
     {
         FilePickerPurpose.ModelPart => "part",
         FilePickerPurpose.Preview => "preview",
+        FilePickerPurpose.Ravenfield => "ravenfield",
         FilePickerPurpose.AnimationLayer => "layer",
         FilePickerPurpose.LeftPose or FilePickerPurpose.RightPose => "pose",
         _ => "animation",

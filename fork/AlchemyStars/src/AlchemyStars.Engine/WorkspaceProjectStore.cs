@@ -83,6 +83,9 @@ public sealed class WorkspaceProjectStore
     {
         if (document.SchemaVersion > 4) throw new InvalidDataException("This project requires a newer Alchemy Stars version.");
         document.DualAnimations ??= [];
+        document.Ravenfield ??= new();
+        document.Ravenfield.Left ??= new();
+        document.Ravenfield.Right ??= new();
         document.OutputFormat = OutputFormats.Normalize(document.OutputFormat);
         document.Parts ??= [];
         document.Animations ??= [];

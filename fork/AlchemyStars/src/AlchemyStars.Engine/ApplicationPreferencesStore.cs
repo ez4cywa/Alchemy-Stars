@@ -13,7 +13,7 @@ public sealed class ApplicationPreferencesStore
         var environmentPath = Environment.GetEnvironmentVariable("ALCHEMY_STARS_SETTINGS_PATH");
         this.settingsPath = Path.GetFullPath(settingsPath
             ?? (string.IsNullOrWhiteSpace(environmentPath)
-                ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Alchemy Stars", "settings.json")
+                ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Alchemy Stars RF", "settings.json")
                 : environmentPath));
     }
 

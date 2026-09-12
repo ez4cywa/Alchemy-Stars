@@ -87,6 +87,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
         SelectedPart = workspace.Parts.FirstOrDefault();
         footerStatus = text.Ready;
         WatchDualSources();
+        WatchRavenfieldReference();
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -96,14 +97,22 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
         get => workspace;
         private set
         {
+            // Publish the cleared selection before changing ItemsSource. Otherwise
+            // ComboBox's internal reset can win over an unchanged cached binding value.
+            replacingRavenfieldWorkspace = true;
+            RaiseRavenfieldReference();
             UnwatchDualSources();
+            UnwatchRavenfieldReference();
             partSourceRequests.Clear();
             foreach (var item in automaticHandDefaults.Keys) item.PropertyChanged -= HandDefaultEdited;
             automaticHandDefaults.Clear();
             manualHandFields.Clear();
             workspace = value;
+            ravenfieldResult = null;
+            OnPropertyChanged(nameof(HasRavenfieldResult));
             selectedDual = null;
             WatchDualSources();
+            WatchRavenfieldReference();
             OnPropertyChanged(nameof(Animations));
             OnPropertyChanged(nameof(DualAnimations));
             RaiseDualSelection();
@@ -114,6 +123,9 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
             OnPropertyChanged(nameof(OutputUpAxisIndex));
             OnPropertyChanged(nameof(IsCastOutput));
             SelectedDual = workspace.DualAnimations.FirstOrDefault();
+            // Restore selection after ComboBox has received the new ItemsSource.
+            replacingRavenfieldWorkspace = false;
+            RaiseRavenfieldReference();
         }
     }
 
@@ -243,6 +255,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
     public void SelectPage(WorkspacePage page)
     {
         if ((page == WorkspacePage.DualAnimations) != IsDualPage) Preview.Clear();
+        if (page == WorkspacePage.Settings) SuggestRavenfieldIdle();
         SelectedPage = page;
     }
 
@@ -667,6 +680,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
         CancelUpdate();
         DiscardDownloadedUpdate();
         UnwatchDualSources();
+        UnwatchRavenfieldReference();
         if (selectedPart is not null)
             selectedPart.PropertyChanged -= SelectedPartChanged;
         Timeline.Dispose();

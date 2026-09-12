@@ -76,6 +76,8 @@ public sealed partial class App : Application
                         await TextMenuSmoke.RunAsync(mainWindow, viewModel);
                     if (Program.InspectorSmokeRequested)
                         await InspectorSmoke.RunAsync(mainWindow, viewModel);
+                    if (Program.RavenfieldUiSmokeRequested)
+                        await RavenfieldUiSmoke.RunAsync(mainWindow, viewModel);
                     if (Program.WindowChromeSmokeRequested)
                         await WindowChromeSmoke.RunAsync(mainWindow, viewModel);
                     if (Program.SharedBaseBatchSmokeRequested)

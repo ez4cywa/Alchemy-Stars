@@ -26,6 +26,7 @@ internal static class Program
     internal static bool ShortcutsSmokeRequested { get; private set; }
     internal static bool TextMenuSmokeRequested { get; private set; }
     internal static bool InspectorSmokeRequested { get; private set; }
+    internal static bool RavenfieldUiSmokeRequested { get; private set; }
     internal static bool WindowChromeSmokeRequested { get; private set; }
     internal static bool SharedBaseBatchSmokeRequested { get; private set; }
 
@@ -47,6 +48,8 @@ internal static class Program
 
         if (args.Contains("--self-test", StringComparer.OrdinalIgnoreCase))
             return SelfTest.Run();
+        var rfIndex = Array.IndexOf(args, "--rf-smoke");
+        if (rfIndex >= 0) return RavenfieldSmoke.RunProject(args.Skip(rfIndex + 1).ToArray());
         if (GetOption(args, "--axis-smoke") is { } axisDirectory)
         {
             try { CastAxisSmoke.Run(axisDirectory, args.Contains("--fbx")); return 0; }
@@ -94,6 +97,7 @@ internal static class Program
         ShortcutsSmokeRequested = args.Contains("--shortcuts-smoke", StringComparer.OrdinalIgnoreCase);
         TextMenuSmokeRequested = args.Contains("--textmenu-smoke", StringComparer.OrdinalIgnoreCase);
         InspectorSmokeRequested = args.Contains("--inspector-smoke", StringComparer.OrdinalIgnoreCase);
+        RavenfieldUiSmokeRequested = args.Contains("--rf-ui-smoke", StringComparer.OrdinalIgnoreCase);
         WindowChromeSmokeRequested = args.Contains("--window-chrome-smoke", StringComparer.OrdinalIgnoreCase);
         SharedBaseBatchSmokeRequested = args.Contains("--shared-base-batch-smoke", StringComparer.OrdinalIgnoreCase);
         StartupProjectPath = args

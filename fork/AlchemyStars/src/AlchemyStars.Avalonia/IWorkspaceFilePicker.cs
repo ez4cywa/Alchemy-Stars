@@ -9,6 +9,7 @@ public enum FilePickerPurpose
     LeftPose,
     RightPose,
     Preview,
+    Ravenfield,
 }
 
 public interface IWorkspaceFilePicker

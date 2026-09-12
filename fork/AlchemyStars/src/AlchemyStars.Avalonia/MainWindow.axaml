@@ -184,6 +184,7 @@
     <!-- Settings workspace -->
     <ScrollViewer Grid.Column="1" Grid.Row="1" IsVisible="{Binding IsSettingsPage}" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
       <StackPanel x:Name="SettingsContent" Margin="14,12,14,28" Spacing="14" MaxWidth="1080">
+        <local:RavenfieldView />
         <StackPanel Spacing="3"><TextBlock Text="{Binding Text.OutputSettings}" Classes="display-title" FontSize="21" FontWeight="SemiBold" /><TextBlock Text="{Binding Text.OutputSettingsHelp}" Classes="muted body-copy" TextWrapping="Wrap" /></StackPanel>
         <Grid ColumnDefinitions="*,16,*">
           <Border Classes="card"><StackPanel Spacing="14">

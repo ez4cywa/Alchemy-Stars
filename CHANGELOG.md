@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.3.0-rf.1 — Local experimental branch (RF idle hand adaptation)
+
+- Branch independently from preview.27 as `EZ4/ravenfield-arms-adapter`; keep ordinary exports unchanged and use a separate settings directory.
+- Fit the original Ravenfield hand rig and skin to a processed COD idle pose, with explicit cm/ft/m input units (cm default based on measured source anatomy), length-preserving arm fitting and three-chain finger mapping.
+- Persist per-hand offsets and export an editable Blender scene, metre-based Y-up FBX, neutral preview and numerical report. This version emits a static calibration pose, not a complete animation retarget.
+- Validate unit equivalence, arm-solver boundaries, bone/skin invariance, FBX interchange, project state and transactional output replacement.
+
 ## 1.3.0-preview.27 — 2026-09-12 (optional scene output-axis conversion)
 
 Chinese release notes: [更新日志](docs/releases/1.3.0-preview.27.zh-CN.md). Includes the internal preview.26 changes below.

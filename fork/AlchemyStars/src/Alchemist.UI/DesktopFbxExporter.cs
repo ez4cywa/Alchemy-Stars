@@ -40,7 +40,7 @@ internal static class DesktopFbxExporter
         Logging.Logger.Info("FBX exported using Blender: " + blender);
     }
 
-    private static string? FindBlender()
+    internal static string? FindBlender()
     {
         var configured = Environment.GetEnvironmentVariable("ALCHEMY_STARS_BLENDER");
         if (!string.IsNullOrWhiteSpace(configured))

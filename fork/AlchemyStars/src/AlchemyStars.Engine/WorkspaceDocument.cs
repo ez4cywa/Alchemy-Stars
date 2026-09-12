@@ -27,6 +27,7 @@ public abstract class ObservableModel : INotifyPropertyChanged
 public sealed class WorkspaceDocument : ObservableModel
 {
     public int SchemaVersion { get; set; } = 1;
+    public RavenfieldAdaptationOptions Ravenfield { get; set; } = new();
     public ObservableCollection<WorkspaceDualAnimation> DualAnimations { get; set; } = [];
     private bool enableAnimationTrimming;
     private string leftIkStartBoneName = "j_shoulder_le";
