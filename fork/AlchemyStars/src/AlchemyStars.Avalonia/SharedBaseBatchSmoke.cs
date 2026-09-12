@@ -33,7 +33,7 @@ internal static class SharedBaseBatchSmoke
         foreach (var task in tasks)
         {
             Require(task.Name == template.Name && task.OutputFolder == template.OutputFolder
-                && task.OutputFramerate == 30 && task.WeaponFollowMode == 2
+                && task.OutputFramerate == 60 && task.WeaponFollowMode == 2
                 && !task.EnableLeftHandIK && task.EnableRightHandIK && !task.UseExperimentalFeatures
                 && task.LeftHandPoseFile == "left.cast" && task.RightHandPoseFile == "right.cast"
                 && task.LeftIKTargetBoneName == "left_target" && task.RightIKTargetBoneName == "right_target",
@@ -75,9 +75,11 @@ internal static class SharedBaseBatchSmoke
             && vm.Animations.Count == 3 && ReferenceEquals(vm.Animations[0], template)
             && ReferenceEquals(vm.SelectedAnimation, vm.Animations[1]), "View model batch insertion failed.");
         var request = new WorkspaceProjectStore().CreateExportRequest(vm.Workspace);
-        Require(request.Animations.Count == 3, "Generated tasks did not enter normal bulk export.");
+        Require(request.Animations.Count == 3 && request.Animations.All(animation => animation.Framerate == 60),
+            "Generated tasks did not retain the configured output framerate.");
         var snapshot = WorkspaceProjectStore.Snapshot(vm.Workspace);
         Require(snapshot.Animations[1].OutputName == "reload" && snapshot.Animations[2].OutputName == "fire"
+            && snapshot.Animations[1].OutputFramerate == 60
             && snapshot.Animations[1].Layers[0].Name == "common.cast", "Snapshot changed generated tasks.");
         vm.AddSharedBaseBatchPaths(template, [first]);
         Require(vm.SelectedAnimation!.OutputName == "reload_2", "UI did not reserve existing task output names.");
@@ -143,6 +145,17 @@ internal static class SharedBaseBatchSmoke
         timedScene.Sample(15);
         Require(MathF.Abs(timedScene.Skeletons.Single().Bones.Single(b => b.Name == "j_test").LocalTranslation.X - 30) < .001f,
             "Resampling changed the half-second pose.");
+        var timed60 = timed with
+        {
+            Animations = [timed.Animations[0] with { OutputName = "resampled60", Framerate = 60 }],
+        };
+        var timed60Output = new AnimationExportEngine().Export(timed60).OutputFiles.Single();
+        var timed60Scene = CastPreviewScene.Load(timed60Output, request.Parts);
+        Require(timed60Scene.Framerate == 60 && timed60Scene.FrameCount > timedScene.FrameCount,
+            "Custom 60 FPS output did not preserve the source timeline.");
+        timed60Scene.Sample(30);
+        Require(MathF.Abs(timed60Scene.Skeletons.Single().Bones.Single(b => b.Name == "j_test").LocalTranslation.X - 30) < .001f,
+            "Custom 60 FPS resampling changed the midpoint pose.");
         Require(AnimationClipMetadataReader.Read(sixty).FrameCount == 31, "Timeline did not use output-frame units.");
         void Reject(AnimationExportRequest invalid)
         {
@@ -152,13 +165,14 @@ internal static class SharedBaseBatchSmoke
             throw new InvalidOperationException("Invalid batch was accepted.");
         }
         Reject(timed with { Animations = [timed.Animations[0], timed.Animations[0]] });
+        Reject(timed with { Animations = [timed.Animations[0] with { Framerate = 0 }] });
         var originalBytes = File.ReadAllBytes(sixty);
         Reject(timed with { Animations = [request.Animations[0] with { OutputFolder = fixture, OutputName = "sixty" }, timed.Animations[0]] });
         Require(File.ReadAllBytes(sixty).SequenceEqual(originalBytes), "Cross-task input was overwritten.");
         var unsupported = Path.Combine(fixture, "input.seanim");
         File.Copy(sixty, unsupported);
         Reject(timed with { Animations = [timed.Animations[0] with { SourceFile = unsupported }] });
-        Console.WriteLine("Real CAST: 60-to-30 FPS duration/pose/timeline, output collisions and CAST-only validation PASS");
+        Console.WriteLine("Real CAST: variable-FPS duration/pose/timeline, output collisions and CAST-only validation PASS");
     }
 
     private static void WriteAnimation(string path, float translation, float fps = 30, byte lastFrame = 1)

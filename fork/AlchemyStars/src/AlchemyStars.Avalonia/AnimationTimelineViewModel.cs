@@ -33,6 +33,7 @@ public sealed class AnimationTrackItem : INotifyPropertyChanged, IDisposable
 {
     private readonly WorkspaceAnimation? animation;
     private readonly WorkspaceLayer? layer;
+    private float targetFramerate;
     private UiText text;
     private int frameCount = 1;
     private bool metadataKnown;
@@ -44,13 +45,15 @@ public sealed class AnimationTrackItem : INotifyPropertyChanged, IDisposable
     internal AnimationTrackItem(WorkspaceAnimation animation, UiText text)
     {
         this.animation = animation;
+        targetFramerate = animation.OutputFramerate;
         this.text = text;
         animation.PropertyChanged += SourcePropertyChanged;
     }
 
-    internal AnimationTrackItem(WorkspaceLayer layer, UiText text)
+    internal AnimationTrackItem(WorkspaceLayer layer, float targetFramerate, UiText text)
     {
         this.layer = layer;
+        this.targetFramerate = targetFramerate;
         this.text = text;
         layer.PropertyChanged += SourcePropertyChanged;
     }
@@ -59,6 +62,7 @@ public sealed class AnimationTrackItem : INotifyPropertyChanged, IDisposable
     internal event EventHandler<string?>? SourceChanged;
 
     internal WorkspaceLayer? Layer => layer;
+    internal float TargetFramerate => targetFramerate;
     public bool IsBase => animation is not null;
     public bool IsLayer => layer is not null;
     public string SourcePath => animation?.Name ?? layer?.Name ?? string.Empty;
@@ -93,6 +97,8 @@ public sealed class AnimationTrackItem : INotifyPropertyChanged, IDisposable
         frameCount = 1;
         RaiseMetadata();
     }
+
+    internal void SetTargetFramerate(float value) => targetFramerate = value;
 
     internal void SetMetadata(AnimationClipMetadata metadata)
     {
@@ -255,7 +261,7 @@ public sealed class AnimationTimelineViewModel : INotifyPropertyChanged, IDispos
 
     private AnimationTrackItem Create(WorkspaceLayer value)
     {
-        var item = new AnimationTrackItem(value, text);
+        var item = new AnimationTrackItem(value, animation?.OutputFramerate ?? 30f, text);
         item.SourceChanged += TrackSourceChanged;
         LoadMetadata(item);
         return item;
@@ -298,6 +304,15 @@ public sealed class AnimationTimelineViewModel : INotifyPropertyChanged, IDispos
             return;
         if (propertyName is nameof(WorkspaceAnimation.Name) or nameof(WorkspaceLayer.Name))
             LoadMetadata(item);
+        if (propertyName == nameof(WorkspaceAnimation.OutputFramerate) && animation is not null)
+        {
+            generation++;
+            var rate = animation.OutputFramerate;
+            BaseTrack?.SetTargetFramerate(rate);
+            foreach (var track in LayerTracks) track.SetTargetFramerate(rate);
+            if (BaseTrack is not null) LoadMetadata(BaseTrack);
+            foreach (var track in LayerTracks) LoadMetadata(track);
+        }
         if (propertyName == nameof(WorkspaceLayer.Offset))
             Recalculate();
     }
@@ -311,7 +326,7 @@ public sealed class AnimationTimelineViewModel : INotifyPropertyChanged, IDispos
         AnimationClipMetadata? metadata = null;
         try
         {
-            metadata = await Task.Run(() => AnimationClipMetadataReader.Read(sourcePath));
+            metadata = await Task.Run(() => AnimationClipMetadataReader.Read(sourcePath, item.TargetFramerate));
         }
         catch (Exception)
         {

@@ -175,8 +175,8 @@ internal static class CastPreviewRenderer
             // is framed in front of the lens instead of being cut by the viewport.
             var verticalTangent = height / (float)Math.Max(1, width);
             var fitTangent = Math.Max(0.1f, Math.Min(1, verticalTangent));
-            var fitDistance = scene.Radius * 0.55f / fitTangent;
-            var sceneOffset = forward * fitDistance - scene.Center;
+            var fitDistance = scene.AllRadius * 1.15f / fitTangent;
+            var sceneOffset = forward * fitDistance - scene.AllCenter;
             return new PreviewView(Vector3.Zero, forward, right, up, focal, 0.1f, sceneOffset);
         }
 

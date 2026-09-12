@@ -307,7 +307,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
     {
         var added = 0;
         var normalized = NormalizeCastPaths(paths).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
-        var templates = AnimationBlendTemplateAnalyzer.AnalyzeBatch(normalized, Parts.Select(part => part.FilePath));
+        var templates = AnimationBlendTemplateAnalyzer.AnalyzeBatchWithModelParts(normalized, ModelPartSpecs());
         foreach (var template in templates)
         {
             var animation = new WorkspaceAnimation
@@ -778,7 +778,6 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
         if (!partSourceRequests.TryGetValue(part, out var latest) || latest != request) return;
         partSourceRequests.Remove(part);
         if (!Parts.Contains(part) || !string.Equals(part.FilePath, normalized, StringComparison.OrdinalIgnoreCase)) return;
-        RefreshForegripTemplateDefaults();
         if (classification is not null)
         {
             part.Type = classification.Kind;
@@ -793,6 +792,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
             part.AutoClassification = null;
             FooterStatus = Text.PartDetectionFailed;
         }
+        RefreshForegripTemplateDefaults();
         RaisePartClassificationState();
     }
 
@@ -808,7 +808,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
     private void RefreshForegripTemplateDefaults()
     {
         var items = Animations.Where(animation => WorkspacePaths.IsCastAnimationFile(animation.Name)).ToArray();
-        var analyses = AnimationBlendTemplateAnalyzer.AnalyzeBatch(items.Select(animation => animation.Name).ToArray(), Parts.Select(part => part.FilePath));
+        var analyses = AnimationBlendTemplateAnalyzer.AnalyzeBatchWithModelParts(items.Select(animation => animation.Name).ToArray(), ModelPartSpecs());
         for (var index = 0; index < items.Length; index++)
         {
             var animation = items[index];
@@ -833,9 +833,16 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
     {
         if (e.PropertyName == nameof(WorkspacePart.Type) && sender is WorkspacePart part)
             RememberImportedArms(part);
-        if (e.PropertyName is nameof(WorkspacePart.Type) or nameof(WorkspacePart.AutoClassification))
+        if (e.PropertyName is nameof(WorkspacePart.Type) or nameof(WorkspacePart.AutoClassification)
+            or nameof(WorkspacePart.FilePath))
+        {
+            RefreshForegripTemplateDefaults();
             RaisePartClassificationState();
+        }
     }
+
+    private IEnumerable<ModelPartSpec> ModelPartSpecs() =>
+        Parts.Select(part => new ModelPartSpec(part.FilePath, part.Type, part.ParentBoneTag));
 
     private void RaisePartClassificationState()
     {
@@ -1051,7 +1058,7 @@ public sealed partial class UiText
     public string OutputName => L("输出名称", "Output name");
     public string OutputFolder => L("输出目录（默认：源文件夹/output）", "Output folder (default: source folder/output)");
     public string Framerate => L("输出帧率", "Output framerate");
-    public string FixedFramerate => L("30 FPS（固定）", "30 FPS (fixed)");
+    public string FramerateHelp => L("默认 30，可填写大于 0 的数值。", "Default 30; enter any value greater than 0.");
     public string Layers => L("动画层", "Animation layers");
     public string AddLayer => L("添加动画层", "Add layer");
     public string EmptyLayers => L("右键或拖入 CAST 添加动画层", "Right-click or drop CAST files to add layers");
@@ -1097,7 +1104,7 @@ public sealed partial class UiText
     public string DefaultOutputFormat => L("输出格式", "Output format");
     public string OutputUpAxis => L("输出向上轴", "Output up axis");
     public string KeepSceneAxis => L("保持原场景（不指定）", "Keep scene axis (unspecified)");
-    public string OutputUpAxisHelp => L("未指定时保留主模型的场景轴（优先手臂）；选择 Y/Z 时整体转换。输入轴可不同，缺少标记按 Y-up 读取，源文件不变。", "Unspecified keeps the primary model's axis (arms first); Y/Z converts the whole scene. Mixed inputs are aligned; untagged inputs use Y-up. Source files stay unchanged.");
+    public string OutputUpAxisHelp => L("未指定时保留输入的原始坐标（以手臂轴标记写出）；选择 Y/Z 时才按各文件轴标记整体转换。源文件不变。", "Unspecified preserves raw input coordinates and writes the arms axis marker; choosing Y/Z converts each file from its axis marker. Source files stay unchanged.");
     public string FormatHelp => L("为当前项目选择目标管线和烘焙策略。", "Choose the target pipeline and bake strategy for this project.");
     public string AnimationOnlyCast => L("仅输出合并动画 CAST", "Animation-only merged CAST");
     public string AnimationOnlyHelp => L("只保留唯一的合并动画；导入或预览时需要匹配的骨架。", "Retains one merged animation; importing or previewing requires a matching skeleton.");

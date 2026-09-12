@@ -2,7 +2,7 @@
 
 # Alchemy Stars Avalonia preview quick guide
 
-This guide applies to `1.3.0-preview.27`. WPF v1.1.9 remains the supported release until .NET 11 GA.
+This guide applies to `1.3.0-preview.28`. WPF v1.1.9 remains the supported release until .NET 11 GA.
 
 The sidebar switches between Animation blend, Model parts, Dual merge, Settings and About. It shows icons and labels at normal widths and collapses to icons in narrow windows. The base-animation library sits on the left, a real CAST preview in the center, composition layers across the bottom, and collapsible properties on the right. Drag the dividers or focus them and use arrow keys to resize panels. Icon commands have localized tooltips and UI Automation names; the titlebar displays the current page, with window controls at the upper right.
 
@@ -28,7 +28,7 @@ Dialogs isolate the workspace and cycle `Tab` / `Shift+Tab` internally. Focus th
 
 Choose **Keep scene axis (unspecified, default)**, **Z-up** or **Y-up** in Settings → Output format → Output up axis. This controls the whole exported scene, not individual parts. It is persisted in the project and can be saved as the default for new projects. Existing explicit Y/Z selections remain unchanged.
 
-Keep scene axis follows the primary model: arms first, otherwise the first model in merge order. No extra output-axis rotation is applied; mixed inputs are still aligned to that scene basis. Full/selected exports, previews, dual animations and companion models share this rule.
+Keep scene axis writes the primary model's marker (arms first, otherwise the first model in merge order) and preserves every input's raw coordinates. This tolerates third-party CAST files whose axis marker does not match their numeric data. Choose explicit Z-up or Y-up when every input has reliable axis metadata and should be converted. Full/selected exports, previews, dual animations and companion models share this rule.
 
 Inputs may mix X/Y/Z-up without rejection. Before merging, bone translations/rotations/scale axes, mesh positions, normals and tangents are converted in memory; base animations, layers and hand poses use the same target basis. Missing/unknown metadata uses Y-up and cannot reveal an asset's intended orientation. Source files are never rewritten.
 

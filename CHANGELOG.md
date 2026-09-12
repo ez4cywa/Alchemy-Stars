@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.3.0-preview.28 — 2026-09-12 (foregrip IK target and configurable output frame rate)
+
+Chinese release notes: [更新日志](docs/releases/1.3.0-preview.28.zh-CN.md).
+
+- Auto-fill the per-animation left-hand IK target with the exact `tag_ik_loc_le_foregrip` bone when it exists in a model part classified as Weapon. Keep the field empty when absent so the workspace default remains effective.
+- Replace the fixed 30 FPS display with an editable per-animation output frame rate that defaults to 30 FPS. Preserve clip duration and poses by resampling the base animation, hand poses and layers to the selected rate.
+- Refresh timeline durations when the target frame rate changes, validate positive finite rates at export, restore invalid persisted values to 30 FPS, and cover 30/60 FPS output behavior in the Native AOT self-test.
+- Keep the product title centered against the visible workspace at the 900 × 600 minimum size and make Native AOT UI Automation tolerate cold-start attachment and unavailable external timeline fixtures.
+- Make the default Keep scene axis mode preserve raw model and animation coordinates even when third-party CAST metadata disagrees. Explicit Y/Z selections still convert from each file's declared axis. Fit the complete scene in the 90-degree first-person preview.
+- Validate the supplied Hawk and Mike2011 assets: the foregrip wrist target stays within 0.01 units across the sampled jog, and both dual weapon roots stay exactly on their left/right mounts through idle, fire and reload.
+
 ## 1.3.0-preview.27 — 2026-09-12 (optional scene output-axis conversion)
 
 Chinese release notes: [更新日志](docs/releases/1.3.0-preview.27.zh-CN.md). Includes the internal preview.26 changes below.

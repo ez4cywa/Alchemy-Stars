@@ -83,7 +83,7 @@ internal static class DualWieldSmoke
             MustReject(() => engine.Export(document, fire)); fire.Name = originalName; fire.OutputFolder = originalFolder;
             var rTask = document.Animations.Single(a => a.Id == fire.RightAnimationId);
             rTask.OutputFramerate = 60;
-            Require(rTask.OutputFramerate == 30, "Workspace output framerate must stay fixed at 30 FPS.");
+            Require(rTask.OutputFramerate == 60, "Dual-wield source task did not retain its configured framerate.");
             var rightPath = rTask.Name;
             rTask.Name = document.Animations.First(a => a.Name.Contains("_r_idle")).Name;
             MustReject(() => engine.Export(document, fire)); rTask.Name = rightPath;

@@ -105,7 +105,7 @@ public sealed class DualWieldEngine
             // All source clips are resampled into the shared 30 FPS timeline before binding.
             foreach (var path in new[] { job.SourceFile }.Concat((job.Layers ?? []).Select(l => l.FilePath)))
             {
-                var clip = AnimationConverter.LoadAtStandardFramerate(path, plan.UpAxis);
+                var clip = AnimationConverter.LoadAtStandardFramerate(path, plan.UpAxis, plan.NormalizeInputAxes);
                 plan.BindAnimation(clip);
                 var known = plan.Skeleton.Bones.Select(b => b.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
                 foreach (var target in clip.Targets.Where(t => !known.Contains(t.BoneName))) unknown.Add(target.BoneName);

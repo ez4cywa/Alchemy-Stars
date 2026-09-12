@@ -141,9 +141,14 @@ public sealed partial class MainWindow : Window
     {
         var titleOrigin = ProductTitle.TranslatePoint(default, this)
             ?? throw new InvalidOperationException("Product title is not attached.");
+        var shellOrigin = ShellGrid.TranslatePoint(default, this)
+            ?? throw new InvalidOperationException("The workspace shell is not attached.");
+        var shellCenter = shellOrigin.X + ShellGrid.Bounds.Width / 2;
         if (ProductTitle.Text != ViewModel.Text.ProductName || titleOrigin.Y > 16
-            || Math.Abs(titleOrigin.X + ProductTitle.Bounds.Width / 2 - ClientSize.Width / 2) > 1)
-            throw new InvalidOperationException("Product title must stay centered at the top of the window.");
+            || Math.Abs(titleOrigin.X + ProductTitle.Bounds.Width / 2 - shellCenter) > 1)
+            throw new InvalidOperationException(
+                $"Product title must stay centered at the top of the window: text='{ProductTitle.Text}', " +
+                $"expected='{ViewModel.Text.ProductName}', origin={titleOrigin}, size={ProductTitle.Bounds.Size}, shell={ShellGrid.Bounds}.");
         var buttons = this.GetVisualDescendants().OfType<Button>().Where(button => button.Classes.Contains("toolbar")).ToArray();
         if (buttons.Length != 4) throw new InvalidOperationException("The project toolbar must expose four commands.");
         foreach (var button in buttons)

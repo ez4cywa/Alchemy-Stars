@@ -132,12 +132,10 @@ public sealed class WorkspaceAnimation : ObservableModel
     private string leftIkTargetBoneName = string.Empty;
     private string rightIkTargetBoneName = string.Empty;
 
-    // Alchemy Stars emits one canonical timeline. Keeping this fixed avoids relabeling
-    // a source clip while silently changing its duration.
     public float OutputFramerate
     {
-        get => WorkspacePaths.StandardAnimationFramerate;
-        set => SetProperty(ref outputFramerate, WorkspacePaths.StandardAnimationFramerate);
+        get => outputFramerate;
+        set => SetProperty(ref outputFramerate, value);
     }
     public string Name
     {

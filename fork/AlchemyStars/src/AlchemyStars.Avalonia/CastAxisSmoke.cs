@@ -127,6 +127,7 @@ internal static class CastAxisSmoke
         File.WriteAllText(oldProject, "{}");
         Require(store.Load(oldProject).OutputUpAxis == "source", "A project without an axis must not force conversion.");
         VerifySourceAxis(folder);
+        VerifyMismatchedSourceMetadata(folder);
         VerifyDual(folder);
         if (includeFbx)
         {
@@ -181,6 +182,24 @@ internal static class CastAxisSmoke
         Require(CastReader.Load(output).RootNodes.Single().Children.OfType<MetadataNode>().Single().UpAxis == "y",
             "Keep-scene mode must use the primary arms model, not the UI insertion order.");
         Console.WriteLine("Keep scene axis: X/Y/Z/missing, unchanged coordinates, animation-only metadata, primary-model priority PASS");
+    }
+
+    private static void VerifyMismatchedSourceMetadata(string folder)
+    {
+        var hands = Path.Combine(folder, "y.cast");
+        var animation = Path.Combine(folder, "z.cast");
+        var request = Request(hands, folder, "keep-mismatched-metadata") with
+        {
+            Animations = [new(animation, "keep-mismatched-metadata", folder, EnableLeftHandIk: false, EnableRightHandIk: false)],
+        };
+        var output = new AnimationExportEngine().Export(request).OutputFiles.Single();
+        var scene = CastPreviewScene.Load(output);
+        scene.Sample(1);
+        Require(Vector3.Distance(scene.Skeletons.Single().Bones[0].LocalTranslation, new(2, 2, 3)) < 1e-5f,
+            "Keep-scene mode trusted mismatched metadata and rotated raw animation coordinates.");
+        Require(CastReader.Load(output).RootNodes.Single().Children.OfType<MetadataNode>().Single().UpAxis == "y",
+            "Keep-scene mode did not retain the primary model metadata marker.");
+        Console.WriteLine("Keep scene axis: mismatched model/animation metadata preserves raw coordinates PASS");
     }
 
     private static void VerifyDual(string folder)

@@ -59,7 +59,7 @@ public sealed class WorkspaceProjectStore
                 animation.Name,
                 animation.OutputName,
                 animation.OutputFolder,
-                WorkspacePaths.StandardAnimationFramerate,
+                animation.OutputFramerate,
                 animation.EnableLeftHandIK,
                 animation.EnableRightHandIK,
                 animation.LeftHandPoseFile,
@@ -102,6 +102,8 @@ public sealed class WorkspaceProjectStore
             animation.Name = animation.Name;
             animation.OutputName ??= string.Empty;
             animation.OutputFolder = animation.OutputFolder;
+            if (!float.IsFinite(animation.OutputFramerate) || animation.OutputFramerate <= 0)
+                animation.OutputFramerate = WorkspacePaths.StandardAnimationFramerate;
             animation.LeftHandPoseFile = animation.LeftHandPoseFile;
             animation.RightHandPoseFile = animation.RightHandPoseFile;
             animation.LeftIKTargetBoneName ??= string.Empty;

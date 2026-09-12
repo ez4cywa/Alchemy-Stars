@@ -1,3 +1,7 @@
+using System.Numerics;
+using Cast.NET;
+using Cast.NET.Nodes;
+
 namespace AlchemyStars.Avalonia;
 
 internal static class AnimationBlendTemplateSmoke
@@ -101,7 +105,46 @@ internal static class AnimationBlendTemplateSmoke
             Require(result.BaseAnimationFile == path && result.LayerFiles.Count == 0, "Non-whitelisted animation was blended: " + suffix);
             Require(result.EnableLeftHandIK && result.EnableRightHandIK, "Action word was mistaken for a hand marker.");
         }
-        Console.WriteLine("Animation blend templates: whitelist, idle_active base fill, offsets and unrelated-source isolation PASS");
+
+        var weaponWithForegrip = Path.Combine(directory, "weapon-with-foregrip.cast");
+        var weaponWithoutForegrip = Path.Combine(directory, "weapon-without-foregrip.cast");
+        var attachmentWithForegrip = Path.Combine(directory, "attachment-with-foregrip.cast");
+        WriteModel(weaponWithForegrip, "tag_origin", "tag_ik_loc_le_foregrip");
+        WriteModel(weaponWithoutForegrip, "tag_origin", "tag_ik_loc_le");
+        WriteModel(attachmentWithForegrip, "tag_origin", "tag_ik_loc_le_foregrip");
+        var exactTarget = AnimationBlendTemplateAnalyzer.AnalyzeWithModelParts(idle, imported,
+            [new ModelPartSpec(weaponWithForegrip, ModelPartKind.Weapon)]);
+        Require(exactTarget.LeftIKTargetBoneName == "tag_ik_loc_le_foregrip",
+            "Exact weapon foregrip target was not auto-filled.");
+        var missingTarget = AnimationBlendTemplateAnalyzer.AnalyzeWithModelParts(idle, imported,
+            [new ModelPartSpec(weaponWithoutForegrip, ModelPartKind.Weapon)]);
+        Require(missingTarget.LeftIKTargetBoneName.Length == 0,
+            "Missing weapon foregrip target did not preserve the workspace default.");
+        var attachmentTarget = AnimationBlendTemplateAnalyzer.AnalyzeWithModelParts(idle, imported,
+            [new ModelPartSpec(attachmentWithForegrip, ModelPartKind.Attachment)]);
+        Require(attachmentTarget.LeftIKTargetBoneName.Length == 0,
+            "An attachment foregrip target was mistaken for the weapon target.");
+
+        Console.WriteLine("Animation blend templates: whitelist, idle_active base fill, offsets, exact weapon foregrip target and unrelated-source isolation PASS");
+    }
+
+    private static void WriteModel(string path, params string[] boneNames)
+    {
+        var root = new CastNode(CastNodeIdentifier.Root) { Hash = 1 };
+        var model = new ModelNode { Parent = root, Hash = 2 };
+        var skeleton = new SkeletonNode { Parent = model, Hash = 3 };
+        ulong hash = 4;
+        for (var index = 0; index < boneNames.Length; index++)
+        {
+            var bone = new BoneNode { Parent = skeleton, Hash = hash++ };
+            bone.AddString("n", boneNames[index]);
+            bone.AddValue("p", index == 0 ? uint.MaxValue : 0U);
+            bone.AddValue("lp", Vector3.Zero);
+            bone.AddValue("wp", Vector3.Zero);
+            bone.AddValue("lr", new Vector4(0, 0, 0, 1));
+            bone.AddValue("wr", new Vector4(0, 0, 0, 1));
+        }
+        CastWriter.Save(path, new Cast.NET.Cast([root]));
     }
 
     private static void Require(bool condition, string message)

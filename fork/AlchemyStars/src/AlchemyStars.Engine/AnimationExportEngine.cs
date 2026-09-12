@@ -11,7 +11,7 @@ namespace AlchemyStars.Engine;
 
 public sealed class AnimationExportEngine : IAnimationExportEngine
 {
-    public const string EngineVersion = "1.3.0-preview.27";
+    public const string EngineVersion = "1.3.0-preview.28";
 
     /// <summary>Creates an independent bind skeleton for previewing animation-only CAST data.</summary>
     public static RedFox.Graphics3D.Skeletal.Skeleton CreatePreviewSkeleton(IReadOnlyList<ModelPartSpec> parts, bool legacy, string outputAxis = "source") =>
@@ -36,7 +36,6 @@ public sealed class AnimationExportEngine : IAnimationExportEngine
             Animations = request.Animations.Select(job => job with
             {
                 OutputFolder = WorkspacePaths.ResolveAnimationOutputFolder(job.SourceFile, job.OutputFolder),
-                Framerate = WorkspacePaths.StandardAnimationFramerate,
             }).ToArray(),
         };
         Validate(request);
@@ -100,6 +99,9 @@ public sealed class AnimationExportEngine : IAnimationExportEngine
         foreach (var job in request.Animations)
         {
             RequireFile(job.SourceFile, "Animation");
+            if (!float.IsFinite(job.Framerate) || job.Framerate <= 0)
+                throw new ExportValidationException(ExportErrorCode.InvalidFramerate,
+                    "Output framerate must be greater than zero.", nameof(job.Framerate));
             foreach (var path in new[] { job.SourceFile, job.LeftHandPoseFile, job.RightHandPoseFile }
                 .Concat((job.Layers ?? []).Select(layer => layer.FilePath)).Where(path => !string.IsNullOrWhiteSpace(path)))
                 WorkspacePaths.RequireCastAnimation(path);
@@ -112,9 +114,6 @@ public sealed class AnimationExportEngine : IAnimationExportEngine
                 throw new ExportValidationException(ExportErrorCode.MissingOutputFolder, "An output folder is required.", nameof(job.OutputFolder));
             if (string.IsNullOrWhiteSpace(job.OutputName))
                 throw new ExportValidationException(ExportErrorCode.MissingOutputName, "An output name is required.", nameof(job.OutputName));
-            // The workspace timeline is intentionally fixed at 30 FPS. Accept legacy
-            // project values but never propagate them to an output file.
-
             var outputPath = Path.GetFullPath(Path.Combine(
                 job.OutputFolder,
                 request.Options.OutputPrefix + job.OutputName + request.Options.OutputSuffix + ToExtension(request.Options.Format)));
@@ -171,7 +170,7 @@ public sealed class AnimationExportEngine : IAnimationExportEngine
             Name = job.SourceFile,
             OutputName = job.OutputName,
             OutputFolder = WorkspacePaths.ResolveAnimationOutputFolder(job.SourceFile, job.OutputFolder),
-            OutputFramerate = WorkspacePaths.StandardAnimationFramerate,
+            OutputFramerate = job.Framerate,
             EnableLeftHandIK = job.EnableLeftHandIk,
             EnableRightHandIK = job.EnableRightHandIk,
             LeftHandPoseFile = job.LeftHandPoseFile,

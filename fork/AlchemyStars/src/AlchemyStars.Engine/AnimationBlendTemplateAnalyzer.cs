@@ -18,19 +18,44 @@ public static class AnimationBlendTemplateAnalyzer
         string sourceFile,
         IEnumerable<string>? siblingFiles = null,
         IEnumerable<string>? modelPartFiles = null)
-        => AnalyzeCore(sourceFile, siblingFiles, new ScanContext(modelPartFiles));
+        => AnalyzeCore(sourceFile, siblingFiles,
+            new ScanContext((modelPartFiles ?? []).Select(path => new ModelPartSpec(path, ModelPartKind.Weapon))));
+
+    public static AnimationBlendTemplateAnalysis AnalyzeWithModelParts(
+        string sourceFile,
+        IEnumerable<string>? siblingFiles,
+        IEnumerable<ModelPartSpec>? modelParts)
+        => AnalyzeCore(sourceFile, siblingFiles, new ScanContext(modelParts));
 
     public static IReadOnlyList<AnimationBlendTemplateAnalysis> AnalyzeBatch(IReadOnlyList<string> sources,
         IEnumerable<string>? modelPartFiles = null)
     {
-        var context = new ScanContext(modelPartFiles);
+        var context = new ScanContext((modelPartFiles ?? []).Select(path => new ModelPartSpec(path, ModelPartKind.Weapon)));
         return sources.Select(source => AnalyzeCore(source, sources, context)).ToArray();
     }
 
-    private sealed class ScanContext(IEnumerable<string>? models)
+    public static IReadOnlyList<AnimationBlendTemplateAnalysis> AnalyzeBatchWithModelParts(IReadOnlyList<string> sources,
+        IEnumerable<ModelPartSpec>? modelParts)
     {
-        internal readonly (string Left, string Right)[] Targets = (models ?? []).Where(File.Exists).Select(FindForegripTargets).ToArray();
+        var context = new ScanContext(modelParts);
+        return sources.Select(source => AnalyzeCore(source, sources, context)).ToArray();
+    }
+
+    private sealed class ScanContext
+    {
+        private readonly ModelPartSpec[] modelParts;
+        internal readonly (string Left, string Right)[] Targets;
+        internal readonly string[] LeftForegripTargets;
         private readonly Dictionary<string, string[]> directories = new(StringComparer.OrdinalIgnoreCase);
+
+        internal ScanContext(IEnumerable<ModelPartSpec>? models)
+        {
+            modelParts = (models ?? []).Where(model => !string.IsNullOrWhiteSpace(model.FilePath)).ToArray();
+            Targets = modelParts.Where(model => File.Exists(model.FilePath)).Select(model => FindForegripTargets(model.FilePath)).ToArray();
+            LeftForegripTargets = modelParts.Where(model => model.Kind == ModelPartKind.Weapon && File.Exists(model.FilePath))
+                .Select(model => FindExactLeftForegripTarget(model.FilePath)).Where(name => name.Length > 0).ToArray();
+        }
+
         internal string[] Files(string directory)
         {
             if (!directories.TryGetValue(directory, out var files))
@@ -54,7 +79,8 @@ public static class AnimationBlendTemplateAnalyzer
         var stem = Path.GetFileNameWithoutExtension(source);
         var left = IsLeft(stem);
         var right = IsRight(stem);
-        var hasForegrip = context.Targets.Any(target => target.Left.Length > 0 || target.Right.Length > 0)
+        var hasForegrip = context.LeftForegripTargets.Length > 0
+            || context.Targets.Any(target => target.Left.Length > 0 || target.Right.Length > 0)
             || ContainsAny(stem, "grip", "vertgrip", "foregrip");
 
         WorkspacePaths.RequireCastAnimation(source);
@@ -76,11 +102,11 @@ public static class AnimationBlendTemplateAnalyzer
         {
             foreach (var targets in context.Targets)
             {
-                leftTarget = targets.Left;
                 rightTarget = targets.Right;
-                if (leftTarget.Length > 0 || rightTarget.Length > 0) break;
+                if (rightTarget.Length > 0) break;
             }
         }
+        leftTarget = context.LeftForegripTargets.FirstOrDefault() ?? string.Empty;
 
         return new(
             baseFile,
@@ -228,6 +254,21 @@ public static class AnimationBlendTemplateAnalyzer
             return (string.Empty, string.Empty);
         }
         catch { return (string.Empty, string.Empty); }
+    }
+
+    private static string FindExactLeftForegripTarget(string path)
+    {
+        try
+        {
+            foreach (var model in Cast.NET.CastReader.Load(path).RootNodes.SelectMany(Walk).OfType<Cast.NET.Nodes.ModelNode>())
+            {
+                var target = model.Skeleton?.Bones.FirstOrDefault(bone =>
+                    bone.Name.Equals("tag_ik_loc_le_foregrip", StringComparison.OrdinalIgnoreCase));
+                if (target is not null) return target.Name;
+            }
+        }
+        catch { }
+        return string.Empty;
     }
 
     private static bool ContainsForegripTag(string path) => FindForegripTargets(path) is { Left.Length: > 0 } or { Right.Length: > 0 };

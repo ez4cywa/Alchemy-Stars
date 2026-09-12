@@ -7,7 +7,7 @@ $ErrorActionPreference = 'Stop'
 $repositoryRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
 $project = Join-Path $repositoryRoot 'fork\AlchemyStars\src\AlchemyStars.Avalonia\AlchemyStars.Avalonia.csproj'
 $outputRoot = [System.IO.Path]::GetFullPath((Join-Path $repositoryRoot 'output'))
-$publishDirectory = [System.IO.Path]::GetFullPath((Join-Path $outputRoot 'avalonia-aot-preview27'))
+$publishDirectory = [System.IO.Path]::GetFullPath((Join-Path $outputRoot 'avalonia-aot-preview28'))
 $bundledDotnet = Join-Path $repositoryRoot 'output\dotnet-sdk\dotnet.exe'
 $dotnet = if (Test-Path -LiteralPath $bundledDotnet) { $bundledDotnet } else { 'dotnet' }
 function Assert-OutputChild([string]$Path) {
@@ -58,7 +58,15 @@ foreach ($updateTest in @('--update-self-test', '--update-helper-self-test')) {
 }
 
 & (Join-Path $PSScriptRoot 'test-avalonia-aot-startup.ps1') -PublishDirectory $publishDirectory
-& (Join-Path $PSScriptRoot 'test-avalonia-accessibility.ps1') -PublishDirectory $publishDirectory
+$accessibilityScript = Join-Path $PSScriptRoot 'test-avalonia-accessibility.ps1'
+Start-Sleep -Seconds 5
+try {
+    & $accessibilityScript -PublishDirectory $publishDirectory
+} catch {
+    Write-Warning "First Native AOT UI Automation attachment failed; retrying once: $($_.Exception.Message)"
+    Start-Sleep -Seconds 5
+    & $accessibilityScript -PublishDirectory $publishDirectory
+}
 
 foreach ($interactionTest in @('--shortcuts-smoke', '--textmenu-smoke', '--inspector-smoke', '--window-chrome-smoke', '--shared-base-batch-smoke')) {
     $interactionProcess = Start-Process -FilePath $executable -ArgumentList ('--startup-smoke ' + $interactionTest) -WorkingDirectory $publishDirectory -WindowStyle Hidden -Wait -PassThru

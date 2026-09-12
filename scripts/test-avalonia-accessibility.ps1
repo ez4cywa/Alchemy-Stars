@@ -1,7 +1,7 @@
 param(
     [Parameter(Mandatory = $true)]
     [string]$PublishDirectory,
-    [int]$TimeoutSeconds = 20
+    [int]$TimeoutSeconds = 60
 )
 
 $ErrorActionPreference = 'Stop'
@@ -16,6 +16,12 @@ Add-Type -AssemblyName UIAutomationTypes
 
 $repositoryRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
 $standardProject = Join-Path $repositoryRoot 'fork\AlchemyStars\Example\Hawk\HawkSprint.aprj'
+$standardProjectData = Get-Content -LiteralPath $standardProject -Raw | ConvertFrom-Json
+$timelineSources = @($standardProjectData.Animations | ForEach-Object {
+    $_.Name
+    @($_.Layers) | ForEach-Object { $_.Name }
+})
+$timelineSourcesAvailable = @($timelineSources | Where-Object { -not (Test-Path -LiteralPath $_) }).Count -eq 0
 $linkLog = Join-Path ([System.IO.Path]::GetTempPath()) ('AlchemyStars-about-links-' + [Guid]::NewGuid().ToString('N') + '.txt')
 $previousSettingsPath = $env:ALCHEMY_STARS_SETTINGS_PATH
 $accessibilitySettingsPath = Join-Path ([System.IO.Path]::GetTempPath()) ('AlchemyStars-accessibility-' + [Guid]::NewGuid().ToString('N') + '.json')
@@ -51,15 +57,18 @@ try {
             [System.Windows.Automation.AutomationElement]::NameProperty,
             $name)
         $condition = [System.Windows.Automation.AndCondition]::new($buttonCondition, $nameCondition)
-        $candidates = $window.FindAll([System.Windows.Automation.TreeScope]::Descendants, $condition)
         $element = $null
-        for ($index = 0; $index -lt $candidates.Count; $index++) {
-            $candidate = $candidates.Item($index)
-            if ($name -ne 'Close' -or $candidate.Current.IsKeyboardFocusable) {
-                $element = $candidate
-                break
+        do {
+            $candidates = $window.FindAll([System.Windows.Automation.TreeScope]::Descendants, $condition)
+            for ($index = 0; $index -lt $candidates.Count; $index++) {
+                $candidate = $candidates.Item($index)
+                if ($name -ne 'Close' -or $candidate.Current.IsKeyboardFocusable) {
+                    $element = $candidate
+                    break
+                }
             }
-        }
+            if ($null -eq $element) { Start-Sleep -Milliseconds 100 }
+        } while ($null -eq $element -and [DateTime]::UtcNow -lt $deadline -and -not $process.HasExited)
         if ($null -eq $element) {
             throw "Required accessible button was not exposed: $name"
         }
@@ -80,34 +89,38 @@ try {
         }
     }
 
-    $trackNames = @(
-        'Base animation, starts at frame 0, duration 1 frames',
-        'sat_vm_ar_hawk_sprint_loop, starts at frame 0, duration 67 frames',
-        'sat_vm_ar_hawk_sprint_offset_additive, starts at frame 0, duration 1 frames'
-    )
-    $trackElements = @{}
-    foreach ($name in $trackNames) {
-        $trackElement = $null
-        do {
-            $trackCondition = [System.Windows.Automation.PropertyCondition]::new(
-                [System.Windows.Automation.AutomationElement]::NameProperty,
-                $name)
-            $trackElement = $window.FindFirst([System.Windows.Automation.TreeScope]::Descendants, $trackCondition)
-            if ($null -eq $trackElement) { Start-Sleep -Milliseconds 100 }
-        } while ($null -eq $trackElement -and [DateTime]::UtcNow -lt $deadline)
-        if ($null -eq $trackElement) {
-            throw "Duration-aware track was not exposed to UI Automation: $name"
+    if ($timelineSourcesAvailable) {
+        $trackNames = @(
+            'Base animation, starts at frame 0, duration 1 frames',
+            'sat_vm_ar_hawk_sprint_loop, starts at frame 0, duration 67 frames',
+            'sat_vm_ar_hawk_sprint_offset_additive, starts at frame 0, duration 1 frames'
+        )
+        $trackElements = @{}
+        foreach ($name in $trackNames) {
+            $trackElement = $null
+            do {
+                $trackCondition = [System.Windows.Automation.PropertyCondition]::new(
+                    [System.Windows.Automation.AutomationElement]::NameProperty,
+                    $name)
+                $trackElement = $window.FindFirst([System.Windows.Automation.TreeScope]::Descendants, $trackCondition)
+                if ($null -eq $trackElement) { Start-Sleep -Milliseconds 100 }
+            } while ($null -eq $trackElement -and [DateTime]::UtcNow -lt $deadline)
+            if ($null -eq $trackElement) {
+                throw "Duration-aware track was not exposed to UI Automation: $name"
+            }
+            $trackElements[$name] = $trackElement
         }
-        $trackElements[$name] = $trackElement
-    }
-    $baseBounds = $trackElements[$trackNames[0]].Current.BoundingRectangle
-    $sprintBounds = $trackElements[$trackNames[1]].Current.BoundingRectangle
-    $offsetBounds = $trackElements[$trackNames[2]].Current.BoundingRectangle
-    if ($baseBounds.Width -lt 63 -or $offsetBounds.Width -lt 63) {
-        throw 'One-frame animation tracks are smaller than the visible 64 DIP minimum.'
-    }
-    if ($sprintBounds.Width -le $baseBounds.Width * 2 -or $sprintBounds.Width -le $offsetBounds.Width * 2) {
-        throw 'The 67-frame sprint track is not visibly longer than the one-frame tracks.'
+        $baseBounds = $trackElements[$trackNames[0]].Current.BoundingRectangle
+        $sprintBounds = $trackElements[$trackNames[1]].Current.BoundingRectangle
+        $offsetBounds = $trackElements[$trackNames[2]].Current.BoundingRectangle
+        if ($baseBounds.Width -lt 63 -or $offsetBounds.Width -lt 63) {
+            throw 'One-frame animation tracks are smaller than the visible 64 DIP minimum.'
+        }
+        if ($sprintBounds.Width -le $baseBounds.Width * 2 -or $sprintBounds.Width -le $offsetBounds.Width * 2) {
+            throw 'The 67-frame sprint track is not visibly longer than the one-frame tracks.'
+        }
+    } else {
+        Write-Output 'Duration-aware timeline UI Automation: SKIPPED (source assets unavailable)'
     }
 
     $closeButton = $elements['Close']

@@ -16,6 +16,7 @@ internal sealed class SkeletonMergePlan
     public Skeleton Skeleton { get; } = new("Alchemy Stars Merged Skeleton");
     public List<Source> Sources { get; } = [];
     public string UpAxis { get; private set; } = "y";
+    public bool NormalizeInputAxes { get; private set; }
     public Dictionary<string, string> LeftWeaponNames { get; } = new(StringComparer.OrdinalIgnoreCase);
     public Dictionary<string, string> RightWeaponNames { get; } = new(StringComparer.OrdinalIgnoreCase);
     private readonly List<Identity> identities = [];
@@ -23,6 +24,7 @@ internal sealed class SkeletonMergePlan
     public static SkeletonMergePlan Build(IEnumerable<Part> parts, bool matchOldCallOfDuty, byte[]? weaponSnapshot = null, string outputAxis = "source")
     {
         var plan = new SkeletonMergePlan();
+        plan.NormalizeInputAxes = outputAxis?.Trim().ToLowerInvariant() is "x" or "y" or "z";
         foreach (var part in PartOrdering.ForSkeletonMerge(parts))
         {
             var path = Path.GetFullPath(part.FilePath);
@@ -30,7 +32,7 @@ internal sealed class SkeletonMergePlan
             using var stream = new MemoryStream(snapshot, writable: false);
             var cast = CastReader.Load(stream);
             if (plan.Sources.Count == 0) plan.UpAxis = CastCoordinateSystem.ResolveOutputAxis(outputAxis, cast);
-            CastCoordinateSystem.NormalizeModels(cast, plan.UpAxis);
+            if (plan.NormalizeInputAxes) CastCoordinateSystem.NormalizeModels(cast, plan.UpAxis);
             var models = cast.RootNodes.SelectMany(DescendantsAndSelf).OfType<ModelNode>().ToArray();
             if (models.Length == 0)
                 throw new InvalidDataException($"Model part has no CAST model: {path}");
@@ -49,6 +51,7 @@ internal sealed class SkeletonMergePlan
     public static SkeletonMergePlan BuildAttachedDual(Part hands, Part weapon, string leftMount, string rightMount, byte[]? leftSnapshot = null, byte[]? rightSnapshot = null, string outputAxis = "source")
     {
         var plan = new SkeletonMergePlan();
+        plan.NormalizeInputAxes = outputAxis?.Trim().ToLowerInvariant() is "x" or "y" or "z";
         void AddPart(Part part, string? side, Dictionary<string, string>? names)
         {
             var path = Path.GetFullPath(part.FilePath);
@@ -56,7 +59,7 @@ internal sealed class SkeletonMergePlan
             using var stream = new MemoryStream(snapshot, writable: false);
             var cast = CastReader.Load(stream);
             if (plan.Sources.Count == 0) plan.UpAxis = CastCoordinateSystem.ResolveOutputAxis(outputAxis, cast);
-            CastCoordinateSystem.NormalizeModels(cast, plan.UpAxis);
+            if (plan.NormalizeInputAxes) CastCoordinateSystem.NormalizeModels(cast, plan.UpAxis);
             var models = cast.RootNodes.SelectMany(DescendantsAndSelf).OfType<ModelNode>().ToArray();
             if (models.Length != 1) throw new InvalidDataException("Dual wield requires one model node per input file.");
             plan.AddModel(part, path, snapshot, 0, models[0], false, side, names);

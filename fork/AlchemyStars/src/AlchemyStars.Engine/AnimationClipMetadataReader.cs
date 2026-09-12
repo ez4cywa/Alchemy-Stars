@@ -15,9 +15,11 @@ public readonly record struct AnimationClipMetadata(
 /// </summary>
 public static class AnimationClipMetadataReader
 {
-    public static AnimationClipMetadata Read(string filePath)
+    public static AnimationClipMetadata Read(string filePath, float targetFramerate = 30f)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
+        if (!float.IsFinite(targetFramerate) || targetFramerate <= 0)
+            throw new ArgumentOutOfRangeException(nameof(targetFramerate));
 
         var cast = CastReader.Load(filePath);
         var animations = cast.RootNodes
@@ -39,8 +41,8 @@ public static class AnimationClipMetadataReader
             : 30f;
         if (!float.IsFinite(animation.Framerate) || animation.Framerate <= 0)
             throw new InvalidDataException("Invalid source animation framerate: " + filePath);
-        var normalizedLast = (int)MathF.Ceiling(Math.Max(0, lastFrame) * 30f / framerate);
-        return new AnimationClipMetadata(0, normalizedLast, normalizedLast + 1, 30f);
+        var normalizedLast = (int)MathF.Ceiling(Math.Max(0, lastFrame) * targetFramerate / framerate);
+        return new AnimationClipMetadata(0, normalizedLast, normalizedLast + 1, targetFramerate);
     }
 
     private static IEnumerable<CastNode> DescendantsAndSelf(CastNode node)

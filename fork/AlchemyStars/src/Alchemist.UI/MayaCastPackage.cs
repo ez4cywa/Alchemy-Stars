@@ -49,7 +49,7 @@ internal static class MayaCastPackage
             {
                 using var stream = new MemoryStream(source.Snapshot, writable: false);
                 var modelCast = CastReader.Load(stream);
-                CastCoordinateSystem.NormalizeModels(modelCast, plan.UpAxis);
+                if (plan.NormalizeInputAxes) CastCoordinateSystem.NormalizeModels(modelCast, plan.UpAxis);
                 FreshenHashes(modelCast, ref nextHash);
                 var model = modelCast.RootNodes.SelectMany(DescendantsAndSelf).OfType<ModelNode>().ElementAt(source.ModelIndex);
                 sourceModels.Add((model, source));
