@@ -41,6 +41,35 @@ internal static class RavenfieldUiSmoke
             var help = view.FindControl<TextBlock>("RfModeHelp")!;
             var contact = view.FindControl<CheckBox>("RfContactFit")!;
             var local = view.FindControl<CheckBox>("RfLocalHandFit")!;
+            var camera = view.FindControl<CheckBox>("RfCameraMotion")!;
+            var translation = view.FindControl<NumericUpDown>("RfCameraTranslation")!;
+            var rotation = view.FindControl<NumericUpDown>("RfCameraRotation")!;
+            var savedCamera = vm.Workspace.Ravenfield.CameraMotion;
+            var savedTranslation = translation.Value;
+            var savedRotation = rotation.Value;
+            translation.Value = .5m;
+            rotation.Value = 1.5m;
+            foreach (var enabled in new[] { false, true })
+            {
+                camera.IsChecked = enabled;
+                await Task.Delay(50);
+                if (vm.RavenfieldCameraMotion != enabled || translation.IsEffectivelyEnabled != enabled || rotation.IsEffectivelyEnabled != enabled
+                    || translation.Minimum != 0 || translation.Maximum != 2 || rotation.Minimum != 0 || rotation.Maximum != 2
+                    || vm.Workspace.Ravenfield.CameraTranslationScale != .5 || vm.Workspace.Ravenfield.CameraRotationScale != 1.5
+                    || camera.Content is not TextBlock cameraLabel || cameraLabel.Text != vm.Text.RfCameraMotion)
+                    throw new InvalidOperationException("RF camera binding, bounds, disabled state or localization failed.");
+            }
+            camera.BringIntoView();
+            await Task.Delay(80);
+            window.UpdateLayout();
+            if (camera.TranslatePoint(default, scroll) is { } cameraPosition)
+                scroll.Offset = new Vector(0, Math.Max(0, scroll.Offset.Y + cameraPosition.Y - 50));
+            await Task.Delay(50);
+            window.UpdateLayout();
+            Save(window, Path.Combine(directory, "rf-900-" + (chinese ? "zh" : "en") + "-camera.png"));
+            camera.IsChecked = savedCamera;
+            translation.Value = savedTranslation;
+            rotation.Value = savedRotation;
             contact.IsChecked = true;
             local.IsChecked = true;
             foreach (var enabled in new[] { false, true })

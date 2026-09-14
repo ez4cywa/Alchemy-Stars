@@ -32,6 +32,10 @@ internal static class RavenfieldSmoke
         File.WriteAllText(rf, "validation fixture");
         var doc = new WorkspaceDocument();
         Require(doc.Ravenfield.ContactFit, "New RF workspace did not enable contact fit.");
+        Require(doc.Ravenfield.CameraMotion && doc.Ravenfield.CameraTranslationScale == 1 && doc.Ravenfield.CameraRotationScale == 1, "Camera defaults changed.");
+        doc.Ravenfield.CameraMotion = false;
+        doc.Ravenfield.CameraTranslationScale = .5;
+        doc.Ravenfield.CameraRotationScale = 1.5;
         Require(!doc.Ravenfield.LocalHandFit, "New RF workspace enabled local reshaping without opt-in.");
         doc.Ravenfield.LocalHandFit = true;
         doc.Ravenfield.ContactFit = false;
@@ -50,12 +54,15 @@ internal static class RavenfieldSmoke
         var project = Path.Combine(folder, "rf.aprj");
         store.Save(doc, project);
         var loaded = store.Load(project);
+        var cameraSnapshot = WorkspaceProjectStore.Snapshot(loaded).Ravenfield;
+        Require(!cameraSnapshot.CameraMotion && cameraSnapshot.CameraTranslationScale == .5 && cameraSnapshot.CameraRotationScale == 1.5, "Camera save/load/snapshot lost preferences.");
         Require(!loaded.Ravenfield.ContactFit && !WorkspaceProjectStore.Snapshot(loaded).Ravenfield.ContactFit, "Disabled contact fit was lost on save/load/snapshot.");
         Require(loaded.Ravenfield.LocalHandFit && WorkspaceProjectStore.Snapshot(loaded).Ravenfield.LocalHandFit, "Local hand-fit preference was lost on save/load/snapshot with contact fit disabled.");
         foreach (var contact in new[] { false, true })
         foreach (var local in new[] { false, true })
         {
             loaded.Ravenfield.ContactFit = contact;
+            loaded.Ravenfield.CameraMotion = contact;
             loaded.Ravenfield.LocalHandFit = local;
             using var stream = new MemoryStream();
             using (var writer = new System.Text.Json.Utf8JsonWriter(stream))
@@ -65,6 +72,9 @@ internal static class RavenfieldSmoke
                 writer.WriteEndObject();
             }
             using var config = System.Text.Json.JsonDocument.Parse(stream.ToArray());
+            Require(config.RootElement.GetProperty("cameraMotion").GetBoolean() == contact
+                && config.RootElement.GetProperty("cameraTranslationScale").GetDouble() == .5
+                && config.RootElement.GetProperty("cameraRotationScale").GetDouble() == 1.5, "Camera config lost toggle or saved strengths.");
             Require(config.RootElement.GetProperty("contactFit").GetBoolean() == contact
                 && config.RootElement.GetProperty("localHandFit").GetBoolean() == (contact && local)
                 && loaded.Ravenfield.LocalHandFit == local, "Exported RF fitting config lost the prerequisite or changed the saved preference.");
@@ -78,6 +88,22 @@ internal static class RavenfieldSmoke
             && loaded.Ravenfield.Right.ElbowSwivel == -25 && loaded.Ravenfield.Left.FingerCurl == 5, "RF persistence lost fields.");
         var request = store.CreateExportRequest(loaded);
         var outputs = RavenfieldAdaptationEngine.Validate(request, 0, loaded.Ravenfield, project);
+        foreach (var invalid in new[] { -.01, 2.01, double.NaN, double.PositiveInfinity, double.NegativeInfinity })
+        {
+            loaded.Ravenfield.CameraTranslationScale = invalid;
+            Reject(() => RavenfieldAdaptationEngine.Validate(request, 0, loaded.Ravenfield), "Invalid camera translation strength allowed.");
+            loaded.Ravenfield.CameraTranslationScale = 1;
+            loaded.Ravenfield.CameraRotationScale = invalid;
+            Reject(() => RavenfieldAdaptationEngine.Validate(request, 0, loaded.Ravenfield), "Invalid camera rotation strength allowed.");
+            loaded.Ravenfield.CameraRotationScale = 1;
+        }
+        foreach (var boundary in new[] { 0d, 2d })
+        {
+            loaded.Ravenfield.CameraTranslationScale = boundary;
+            loaded.Ravenfield.CameraRotationScale = boundary;
+            RavenfieldAdaptationEngine.Validate(request, 0, loaded.Ravenfield);
+        }
+        loaded.Ravenfield.CameraTranslationScale = loaded.Ravenfield.CameraRotationScale = 1;
         Require(outputs.Count == 4 && outputs[0].EndsWith("idle_rf_idle.blend"), "RF output naming changed.");
         Require(loaded.Ravenfield.Mode == "pose", "Default RF mode changed.");
         loaded.Ravenfield.Mode = "animation";
@@ -125,12 +151,13 @@ internal static class RavenfieldSmoke
             Reject(() => RavenfieldAdaptationEngine.Validate(request, 0, loaded.Ravenfield, output), "Project overwrite allowed.");
         }
         var nullableProject = Path.Combine(folder, "null-rf.aprj");
-        foreach (var json in new[] { "{}", "{\"Ravenfield\":null}", "{\"Ravenfield\":{\"Left\":null,\"Right\":null,\"SourceUnit\":null,\"Mode\":null,\"ContactFit\":null}}", "{\"Ravenfield\":{\"IdleFrame\":5}}" })
+        foreach (var json in new[] { "{}", "{\"Ravenfield\":null}", "{\"Ravenfield\":{\"Left\":null,\"Right\":null,\"SourceUnit\":null,\"Mode\":null,\"ContactFit\":null,\"CameraMotion\":null}}", "{\"Ravenfield\":{\"IdleFrame\":5}}" })
         {
             File.WriteAllText(nullableProject, json);
             var empty = store.Load(nullableProject);
             Require(empty.Ravenfield is not null && empty.Ravenfield.Left is not null && empty.Ravenfield.Right is not null
-                && empty.Ravenfield.SourceUnit == "cm" && empty.Ravenfield.Mode == "pose" && empty.Ravenfield.ContactFit && !empty.Ravenfield.LocalHandFit, "Old/nullable RF project did not normalize.");
+                && empty.Ravenfield.SourceUnit == "cm" && empty.Ravenfield.Mode == "pose" && empty.Ravenfield.ContactFit && !empty.Ravenfield.LocalHandFit
+                && empty.Ravenfield.CameraMotion && empty.Ravenfield.CameraTranslationScale == 1 && empty.Ravenfield.CameraRotationScale == 1, "Old/nullable RF project did not normalize.");
         }
         TestPublication(folder);
         foreach (var (json, expected) in new (string, bool?)[] {

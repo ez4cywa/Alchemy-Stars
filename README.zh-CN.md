@@ -2,7 +2,7 @@
 
 # Alchemy Stars（炼金之星）
 
-> **RF 独立实验分支：** `EZ4/ravenfield-arms-adapter`，版本 `1.3.0-rf.7`，基于 Avalonia AOT preview.27（.NET 11 Preview 7、Avalonia 12.1.2）。可选局部握持拟合让整只左手向武器靠拢，四掌面与三虎口目标共同深入表面 1.5 mm，允许穿模并保留离手动作。源素材、原骨绑定/长度和枪位置不变；Unity 尚未验证。正式版仍为 `main` 上的 v1.1.9。[RF 使用说明](docs/ravenfield-adapter.zh-CN.md)、[RF.7 发布说明](docs/releases/1.3.0-rf.7.zh-CN.md)。
+> **RF 独立实验分支：** `EZ4/ravenfield-arms-adapter`，版本 `1.3.0-rf.8`，基于 Avalonia AOT preview.27（.NET 11 Preview 7、Avalonia 12.1.2）。新增 ADS 基础姿态补全与所有动画的独立摄像机轨道，保留 RF.6 的允许穿模握持方案。原有手臂/武器层级、蒙皮和片段区间不变；Unity 镜头桥接可选且仅手动绑定，目标工程/游戏尚未验证。正式版仍为 `main` 上的 v1.1.9。[RF 使用说明](docs/ravenfield-adapter.zh-CN.md)、[RF.8 发布说明](docs/releases/1.3.0-rf.8.zh-CN.md)。
 
 
 最新预览版：[preview.27 详细更新日志](docs/releases/1.3.0-preview.27.zh-CN.md)，默认保持原场景轴，也可为整个输出场景选择 Z-up/Y-up。包含混合输入轴、单动画导出与无障碍改进。

@@ -2,7 +2,7 @@
 
 # Alchemy Stars
 
-> **RF experimental branch:** `EZ4/ravenfield-arms-adapter`, version `1.3.0-rf.7`, independently based on Avalonia AOT preview.27 (.NET 11 Preview 7, Avalonia 12.1.2). Optional local grip fitting seats the whole left hand toward the weapon and fits four palm plus three web targets 1.5 mm inside the surface, allowing penetration and preserving authored release. Source assets, original bone binds/lengths and weapon placement remain unchanged. Unity remains unverified. Production remains v1.1.9 on `main`. [RF usage guide (Chinese)](docs/ravenfield-adapter.zh-CN.md), [RF.7 release notes (Chinese)](docs/releases/1.3.0-rf.7.zh-CN.md).
+> **RF experimental branch:** `EZ4/ravenfield-arms-adapter`, version `1.3.0-rf.8`, independently based on Avalonia AOT preview.27 (.NET 11 Preview 7, Avalonia 12.1.2). Adds reference-pose completion for ADS and independent camera tracks across all clips, retaining RF.6 penetrating grip fitting. Existing hand/weapon hierarchy, skin and clip ranges remain unchanged. Unity camera binding is optional and explicit; target Unity/game validation remains pending. Production remains v1.1.9 on `main`. [RF usage guide (Chinese)](docs/ravenfield-adapter.zh-CN.md), [RF.8 release notes (Chinese)](docs/releases/1.3.0-rf.8.zh-CN.md).
 
 
 Latest preview release: [preview.27 notes (Chinese)](docs/releases/1.3.0-preview.27.zh-CN.md): keep the original scene axis by default or choose Z-up/Y-up for the whole output scene. Includes mixed input-axis conversion, selected export and accessibility improvements.

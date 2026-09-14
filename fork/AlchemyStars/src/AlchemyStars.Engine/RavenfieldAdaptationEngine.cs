@@ -28,6 +28,8 @@ public sealed class RavenfieldAdaptationEngine
         if (options.SourceUnit is not ("ft" or "m" or "cm") || options.UntaggedModelUpAxis is not ("hands" or "x" or "y" or "z") || options.IdleFrame < 0 ||
             !double.IsFinite(options.HandScale) || options.HandScale < 0.1 || options.HandScale > 10)
             throw new InvalidDataException("RF 单位、帧或比例无效 / Invalid RF unit, frame or scale.");
+        if (new[] { options.CameraTranslationScale, options.CameraRotationScale }.Any(v => !double.IsFinite(v) || v < 0 || v > 2))
+            throw new InvalidDataException("摄像机位移与旋转强度必须在 0–2 之间 / Camera translation and rotation strengths must be between 0 and 2.");
         foreach (var hand in new[] { options.Left, options.Right })
             if (hand is null || new[] { hand.PositionX, hand.PositionY, hand.PositionZ, hand.RotationX,
                 hand.RotationY, hand.RotationZ, hand.ElbowSwivel, hand.FingerCurl }.Any(v => !double.IsFinite(v))
@@ -96,6 +98,7 @@ public sealed class RavenfieldAdaptationEngine
             foreach (var index in indices)
             {
                 var job = request.Animations[index] with { OutputFolder = Path.Combine(temporary, "clip-" + index), OutputName = "processed", Framerate = 30 };
+                job = RavenfieldAdsPreparation.Prepare(axisRequest, job, animationIndex, options.IdleFrame, plan, temporary);
                 var prepared = axisRequest with { Animations = [job], Options = request.Options with {
                     Format = ExportFormat.Cast, OutputPrefix = "", OutputSuffix = "", OutputUpAxis = "z",
                     CastAnimationOnly = false, BakeRelevantBonesOnly = false } };
@@ -171,6 +174,9 @@ public sealed class RavenfieldAdaptationEngine
 
     internal static void WriteFittingConfiguration(Utf8JsonWriter json, RavenfieldAdaptationOptions options)
     {
+        json.WriteBoolean("cameraMotion", options.CameraMotion);
+        json.WriteNumber("cameraTranslationScale", options.CameraTranslationScale);
+        json.WriteNumber("cameraRotationScale", options.CameraRotationScale);
         json.WriteBoolean("contactFit", options.ContactFit);
         json.WriteBoolean("localHandFit", options.ContactFit && options.LocalHandFit);
     }

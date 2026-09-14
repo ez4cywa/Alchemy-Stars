@@ -191,6 +191,10 @@ def bake_sequence(rig, rf_meshes, cod, weapon_meshes, transform, factor, config,
         else:
             contact = PalmContactFitter(cod, rig, source_meshes, rf_meshes, transform)
     result, pairs, rf_names, remap = shared_output(rig, rf_meshes, cod, weapon_meshes, transform, factor, config)
+    from ravenfield_camera import CameraMotion, BONE_NAME, add_bone
+    camera = CameraMotion({n: transform @ m for n, m in rf.armature_pose(cod).items()}, config)
+    if camera.active:
+        add_bone(result)
     rest = {n: transform @ m for n, m in rf.armature_rest(cod).items()}
     result.animation_data_create()
     actions, clips = [], []
@@ -214,6 +218,7 @@ def bake_sequence(rig, rf_meshes, cod, weapon_meshes, transform, factor, config,
         diagnostics = {"maxBoneStepDegrees": 0.0, "maxElbowStepM": 0.0, "maxWristErrorM": 0.0, "maxShoulderCorrectionM": 0.0,
                        "maxSourceHandBoneStepDegrees": 0.0}
         previous_source = None
+        camera_samples = []
         contact_summary = {'toleranceM': .005, 'framesExceeded': 0, 'maxErrorM': 0., 'maxBeforeErrorM': 0.,
                            'maxCorrectionStepDegrees': 0., 'maxCorrectionStepM': 0., 'frames': []}
         if config.get('localHandFit',False):
@@ -281,6 +286,10 @@ def bake_sequence(rig, rf_meshes, cod, weapon_meshes, transform, factor, config,
             rf_pose = rf.armature_pose(rig)
             expected.update((n, rf_pose[n]) for n in rf_names)
             expected.update((remap[n], rf.unscaled(cod_pose[n], factor)) for n in remap)
+            camera_sample = camera.sample(cod_pose)
+            camera_samples.append(camera_sample)
+            if camera.active:
+                expected[BONE_NAME] = camera_sample
             set_world_pose(result, expected, previous)
             errors = verify_frame(result, pairs, expected)
             maxima = [max(a, b) for a, b in zip(maxima, errors)]
@@ -313,6 +322,7 @@ def bake_sequence(rig, rf_meshes, cod, weapon_meshes, transform, factor, config,
         clip = {"name": definition["name"], "actionName": action.name, "firstFrame": cursor, "lastFrame": cursor + count - 1,
                 "takeName": "Scene", "frameCount": count, "sourceFrames": [start, end], "loopTime": False, **diagnostics}
         clips.append(clip)
+        clip['cameraMotion'] = camera.summary(camera_samples)
         if contact:
             clip['palmContact'] = contact_summary
             if contact_summary['framesExceeded']:
@@ -352,5 +362,9 @@ def bake_sequence(rig, rf_meshes, cod, weapon_meshes, transform, factor, config,
                   clips=clips, timelineAction=timeline.name, outputFrames=[scene.frame_start, scene.frame_end],
                   fps=30, previewFrame=scene.frame_current, sourceFrameAlignment="Fixed reference-frame view transform for every clip",
                   warningScope="Baked skeletal animation; no automatic collision correction, Unity events or in-game validation")
+    report['cameraMotion'] = {"enabled": camera.enabled, "outputBone": BONE_NAME if camera.active else None,
+                              "sourceNode": camera.node, "reference": "Shared selected reference animation/frame",
+                              "animatedClips": sum(c['cameraMotion']['status'] == 'animated' for c in clips),
+                              "integration": "Optional explicit Ravenfield camera bridge; existing meshes and controller unchanged"}
     return result, [mesh for _, mesh, _ in pairs], {"maxBakePositionErrorM": maxima[0], "maxBakeMatrixError": maxima[1],
             "maxSkinningVertexErrorM": maxima[2], "skinningVerified": True, "verifiedFrames": sum(c["frameCount"] for c in clips)}

@@ -50,6 +50,8 @@ internal static class Program
         if (args.Contains("--self-test", StringComparer.OrdinalIgnoreCase))
             return SelfTest.Run();
         var rfIndex = Array.IndexOf(args, "--rf-smoke");
+        var rfAdsIndex = Array.IndexOf(args, "--rf-ads-smoke");
+        if (rfAdsIndex >= 0) return RavenfieldAdsSmoke.Run(args.Skip(rfAdsIndex + 1).ToArray());
         if (rfIndex >= 0) return RavenfieldSmoke.RunProject(args.Skip(rfIndex + 1).ToArray());
         if (GetOption(args, "--axis-smoke") is { } axisDirectory)
         {

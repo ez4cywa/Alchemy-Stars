@@ -531,6 +531,8 @@ def configure_scene(rig, meshes):
     fp_data.lens = 14.406464576721191
     fp_data.clip_start = 0.01
     fp.hide_set(True)
+    from ravenfield_camera import attach_preview
+    attach_preview(rig, fp)
     return {"minimum": list(minimum), "maximum": list(maximum), "previewFocusMinimum": list(focus_minimum)}
 
 

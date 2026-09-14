@@ -1,0 +1,66 @@
+-- Optional Ravenscript. Bind explicitly with UnityRavenfieldCameraSetup.cs.
+behaviour("RFCameraMotion")
+
+function RFCameraMotion:Awake()
+    self.motion = self.targets.motion.transform
+    self.rig = self.targets.rig.transform
+    self.rest = self.targets.rest.transform
+    self.basis = self.targets.basis.transform
+    self.weapon = self.targets.weapon.GetComponent(Weapon)
+    self.wrotePosition = false
+    self.wroteRotation = false
+end
+
+-- The offset properties are shared. Restore only values still owned by us.
+-- Remove the previous contribution before game logic; never accumulate it.
+function RFCameraMotion:Release()
+    if self.wrotePosition then
+        if (PlayerCamera.fpCameraLocalPosition - self.lastPosition).sqrMagnitude < 0.000000000001 then
+            PlayerCamera.fpCameraLocalPosition = self.basePosition
+        end
+        self.wrotePosition = false
+    end
+    if self.wroteRotation then
+        if Quaternion.Angle(PlayerCamera.fpCameraLocalRotation, self.lastRotation) < 0.0001 then
+            PlayerCamera.fpCameraLocalRotation = self.baseRotation
+        end
+        self.wroteRotation = false
+    end
+end
+
+function RFCameraMotion:Update()
+    self:Release()
+end
+
+function RFCameraMotion:LateUpdate()
+    self:Release()
+    local actor = Player.actor
+    if actor == nil or actor.isDead or actor.isSeated or actor.activeWeapon ~= self.weapon
+        or not PlayerCamera.isUsingFPCamera or PlayerCamera.isUsingOverrideCamera
+        or not self.motion.gameObject.activeInHierarchy
+        or self.weapon.animator == nil or not self.weapon.animator.isActiveAndEnabled then
+        return
+    end
+    local basis = self.basis.localRotation
+    -- RF_Root bind rotation differs from its animated pose. Include that parent.
+    local positionInRig = self.rig.InverseTransformPoint(self.motion.position)
+    local rotationInRig = Quaternion.Inverse(self.rig.rotation) * self.motion.rotation
+    local translation = basis * ((positionInRig - self.rest.localPosition) * self.basis.localScale.x)
+    local rotation = basis * (rotationInRig * Quaternion.Inverse(self.rest.localRotation)) * Quaternion.Inverse(basis)
+    self.basePosition = PlayerCamera.fpCameraLocalPosition
+    self.baseRotation = PlayerCamera.fpCameraLocalRotation
+    self.lastPosition = self.basePosition + translation
+    self.lastRotation = self.baseRotation * rotation
+    PlayerCamera.fpCameraLocalPosition = self.lastPosition
+    PlayerCamera.fpCameraLocalRotation = self.lastRotation
+    self.wrotePosition = true
+    self.wroteRotation = true
+end
+
+function RFCameraMotion:OnDisable()
+    self:Release()
+end
+
+function RFCameraMotion:OnDestroy()
+    self:Release()
+end

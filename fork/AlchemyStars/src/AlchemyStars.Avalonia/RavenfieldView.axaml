@@ -46,6 +46,18 @@
             </Border>
             <Border Classes="rf-section">
               <StackPanel Spacing="10">
+                <TextBlock Text="{Binding Text.RfCameraSection}" Classes="rf-heading" />
+                <CheckBox x:Name="RfCameraMotion" IsChecked="{Binding RavenfieldCameraMotion}" AutomationProperties.Name="{Binding Text.RfCameraMotion}"><TextBlock Text="{Binding Text.RfCameraMotion}" TextWrapping="Wrap" /></CheckBox>
+                <Grid ColumnDefinitions="*,12,*" IsEnabled="{Binding RavenfieldCameraMotion}">
+                  <StackPanel><TextBlock Text="{Binding Text.RfCameraTranslation}" Classes="field-label" TextWrapping="Wrap" /><NumericUpDown x:Name="RfCameraTranslation" Value="{Binding Workspace.Ravenfield.CameraTranslationScale}" Minimum="0" Maximum="2" Increment="0.05" FormatString="0.00" AutomationProperties.Name="{Binding Text.RfCameraTranslation}" /></StackPanel>
+                  <StackPanel Grid.Column="2"><TextBlock Text="{Binding Text.RfCameraRotation}" Classes="field-label" TextWrapping="Wrap" /><NumericUpDown x:Name="RfCameraRotation" Value="{Binding Workspace.Ravenfield.CameraRotationScale}" Minimum="0" Maximum="2" Increment="0.05" FormatString="0.00" AutomationProperties.Name="{Binding Text.RfCameraRotation}" /></StackPanel>
+                </Grid>
+                <TextBlock Text="{Binding Text.RfCameraHelp}" Classes="muted" TextWrapping="Wrap" />
+                <TextBlock Text="{Binding Text.RfCameraBindingHelp}" Classes="muted" TextWrapping="Wrap" />
+              </StackPanel>
+            </Border>
+            <Border Classes="rf-section">
+              <StackPanel Spacing="10">
                 <TextBlock Text="{Binding Text.RfOutputSection}" Classes="rf-heading" />
                 <ComboBox x:Name="RfMode" ItemsSource="{Binding RavenfieldModes}" SelectedIndex="{Binding RavenfieldModeIndex}" AutomationProperties.Name="{Binding Text.RfMode}">
                   <ComboBox.ItemTemplate><DataTemplate x:DataType="local:LocalizedOption"><TextBlock Text="{Binding Label}" TextTrimming="CharacterEllipsis" /></DataTemplate></ComboBox.ItemTemplate>

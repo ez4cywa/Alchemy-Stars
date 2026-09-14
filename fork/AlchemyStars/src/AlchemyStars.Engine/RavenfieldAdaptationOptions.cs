@@ -11,6 +11,13 @@ public sealed class RavenfieldAdaptationOptions : ObservableModel
     private string mode = "pose";
     private bool contactFit = true;
     private bool localHandFit;
+    private bool cameraMotion = true;
+    private double cameraTranslationScale = 1;
+    private double cameraRotationScale = 1;
+    [JsonConverter(typeof(RavenfieldContactFitConverter))]
+    public bool CameraMotion { get => cameraMotion; set => SetProperty(ref cameraMotion, value); }
+    public double CameraTranslationScale { get => cameraTranslationScale; set => SetProperty(ref cameraTranslationScale, value); }
+    public double CameraRotationScale { get => cameraRotationScale; set => SetProperty(ref cameraRotationScale, value); }
     public bool LocalHandFit { get => localHandFit; set => SetProperty(ref localHandFit, value); }
     [JsonConverter(typeof(RavenfieldContactFitConverter))]
     public bool ContactFit { get => contactFit; set => SetProperty(ref contactFit, value); }

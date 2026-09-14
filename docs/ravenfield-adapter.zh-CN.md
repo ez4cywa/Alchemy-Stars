@@ -1,6 +1,6 @@
 # Ravenfield 手臂与动画适配
 
-`1.3.0-rf.7` 是基于 `1.3.0-preview.27` 的独立实验分支 `EZ4/ravenfield-arms-adapter`。普通 CAST/FBX/SMD/SEAnim 导出保持原流程；RF 适配使用左侧独立工作区和米制 FBX 预设。
+`1.3.0-rf.8` 是基于 `1.3.0-preview.27` 的独立实验分支 `EZ4/ravenfield-arms-adapter`。普通 CAST/FBX/SMD/SEAnim 导出保持原流程；RF 适配使用左侧独立工作区和米制 FBX 预设。
 
 通用握持流程、模块职责及验收约定见 [软件内的 RF 握持适配方案](ravenfield-grip-solution.zh-CN.md)。
 
@@ -39,6 +39,14 @@ RF 适配需要本机 Blender。沿用程序现有 Blender 查找规则；未安
 4. 检查每段动画、循环选项及事件，再接入武器 Animator/controller。工具保留同名片段的其他设置；报告中没有的旧片段不再保留。新片段默认不循环。
 
 也可不使用脚本，在 FBX Import Settings 的 Animation 页面手工填写报告中的 `name`、`takeName`、`firstFrame` 和 `lastFrame`。脚本仅在点击菜单后运行，不自动修改其他资产。
+
+## ADS、开火与全部片段的摄像机运动（RF.8）
+
+将 ADS、开火和回稳文件添加到工程动画列表，参考动画仍选择完整 Idle，输出范围选择“工程全部动画（同一文件）”。仅包含 `tag_ads` 的 ADS 会自动使用参考帧的完整姿态作为基础；普通完整动画不需要此步骤。已有显式动画层的片段不自动补底，以用户的层配置为准。单动画模式导出的是所选参考动画，不能将仅含 ADS 控制骨的文件本身作为完整姿态参考。
+
+“转移所有片段的摄像机运动”默认开启，强度 1 为源强度，0 为关闭该分量，范围 0–2。读取已求值摄像机世界姿态（包含父级），统一参考、单位和 30 FPS 时间轴。所有片段都带中性或运动镜头曲线，不按名称猜测晃动。静止或缺失数据不额外合成后坐力/FOV。只导出参考姿态时不生成动态镜头轨道。
+
+镜头为 `RF_Root/RF_CameraMotion` 独立无权重骨骼，不改变原手臂/武器层级和蒙皮；关闭选项可不生成该节点。`.blend` 中的 `RF First Person` 跟随镜头轨道，软件右侧仍是生成快照。游戏镜头必须显式接入可选桥接，且原生后坐力/ADS 设置不自动修改。详见 [兼容现有 Unity 工程的摄像机接入说明](ravenfield-camera-motion.zh-CN.md)。
 
 ## 单位与微调
 

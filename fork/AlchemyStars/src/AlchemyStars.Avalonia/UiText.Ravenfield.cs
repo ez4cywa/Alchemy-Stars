@@ -8,6 +8,12 @@ public sealed partial class UiText
     public string RfSetup => L("素材与参考", "Sources & reference");
     public string RfGripSection => L("握持贴合", "Grip fitting");
     public string RfOutputSection => L("输出范围", "Output scope");
+    public string RfCameraSection => L("摄像机运动", "Camera motion");
+    public string RfCameraMotion => L("转移所有片段的摄像机运动", "Transfer camera motion for all clips");
+    public string RfCameraTranslation => L("位移强度", "Translation strength");
+    public string RfCameraRotation => L("旋转强度", "Rotation strength");
+    public string RfCameraHelp => L("1.00 为源强度，0 为关闭该分量，范围 0–2。位移沿用输入单位换算。只转移源数据，不为静止或缺失轨道添加晃动。", "1.00 preserves source strength; 0 disables that component (range 0–2). Translation uses the input unit conversion. Static or missing tracks do not gain artificial shake.");
+    public string RfCameraBindingHelp => L("导出镜头运动轨道；游戏摄像机仍需配置绑定。结果预览是静态快照，不能演示镜头晃动。", "Exports camera motion tracks; the game camera still requires binding configuration. The result preview is a static snapshot, not a camera-motion preview.");
     public string RfPreviewTitle => L("生成结果", "Generated result");
     public string RfNoResult => L("等待首次生成", "No result yet");
     public string RfPreviewEmpty => L("生成后在这里检查真实预览图。预览不会随参数实时更新。", "Generate to inspect the actual output preview here. Parameter changes do not update it live.");

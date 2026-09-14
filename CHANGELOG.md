@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.3.0-rf.8 — ADS completion and independent camera motion
+
+- Complete controller-only `tag_ads` clips from the selected RF reference pose; leave ordinary exports and explicit layer stacks unchanged.
+- Transfer evaluated camera motion, including animated parents, into an independent unskinned `RF_CameraMotion` bone across every library clip. Keep the existing hand/weapon hierarchy and Scene ranges.
+- Add persistent camera enable/translation/rotation strengths and per-clip motion diagnostics; Blender's first-person inspection camera follows the exported motion.
+- Ship an optional, explicitly invoked Unity scene-instance binding tool and Ravenscript bridge. No automatic importer, controller, prefab or project changes; target Unity/game validation remains required.
+
 ## 1.3.0-rf.7 — Dedicated RF workspace
 
 - Promote RF hands adaptation from Settings to the left workspace navigation. Preserve project options and the RF.6 fitting algorithm.
