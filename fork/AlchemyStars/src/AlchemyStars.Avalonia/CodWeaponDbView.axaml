@@ -24,13 +24,13 @@
         </Grid></Border>
 
         <StackPanel Grid.Row="1" Spacing="8" Margin="14,10,14,6">
-          <TextBox x:Name="CodSearchBox" Text="{Binding CodSearch}" Watermark="{Binding Text.CodDbSearchWatermark}"
+          <TextBox x:Name="CodSearchBox" Text="{Binding CodSearch}" PlaceholderText="{Binding Text.CodDbSearchWatermark}"
               AutomationProperties.Name="{Binding Text.CodDbSearch}" AutomationProperties.HelpText="{Binding Text.CodDbSearchHelp}" />
           <ComboBox x:Name="CodGamePicker" HorizontalAlignment="Stretch" ItemsSource="{Binding CodGameOptions}"
               SelectedItem="{Binding CodGameFilter, Mode=TwoWay}" AutomationProperties.Name="{Binding Text.CodDbGameFilter}" />
           <ComboBox x:Name="CodClassPicker" HorizontalAlignment="Stretch" ItemsSource="{Binding CodClassOptions}"
               SelectedItem="{Binding CodClassFilter, Mode=TwoWay}" AutomationProperties.Name="{Binding Text.CodDbClassFilter}" />
-          <TextBox x:Name="CodPrefixBox" Text="{Binding CodPrefix}" Watermark="{Binding Text.CodDbPrefixWatermark}"
+          <TextBox x:Name="CodPrefixBox" Text="{Binding CodPrefix}" PlaceholderText="{Binding Text.CodDbPrefixWatermark}"
               AutomationProperties.Name="{Binding Text.CodDbPrefixFilter}" />
         </StackPanel>
 
