@@ -40,15 +40,33 @@ public sealed partial class MainWindowViewModel
     private CodFilterOption? codClassFilter;
     private long codIconRequestVersion;
     private bool codSuppressFilterRefresh;
+    private CodWeaponDbUpdater? codUpdater;
+    private CodWeaponDbRevision? codLatestRevision;
+    private string codUpdateStatus = string.Empty;
+    private bool codIsCheckingUpdate;
+    private bool codIsUpdating;
 
     public ObservableCollection<CodWeapon> CodResults => codResults;
     public ObservableCollection<CodFilterOption> CodGameOptions => codGameOptions;
     public ObservableCollection<CodFilterOption> CodClassOptions => codClassOptions;
 
-    public bool CodIsLoading { get => codIsLoading; private set { codIsLoading = value; OnPropertyChanged(); OnPropertyChanged(nameof(CodIsReady)); } }
+    public bool CodIsLoading { get => codIsLoading; private set { codIsLoading = value; OnPropertyChanged(); RaiseCodReadiness(); } }
     public bool CodIsFetchingIcon { get => codIsFetchingIcon; private set { codIsFetchingIcon = value; OnPropertyChanged(); OnPropertyChanged(nameof(CodCanFetchIcon)); } }
     public bool CodIsReady => codCatalog is not null && !codIsLoading;
     public bool CodCanFetchIcon => CodIsReady && !codIsFetchingIcon && codSelectedWeapon is not null;
+
+    /// <summary>
+    /// Every action that depends on the catalog being loaded must be re-raised whenever
+    /// readiness flips; the actions are bound before the lazy load completes.
+    /// </summary>
+    private void RaiseCodReadiness()
+    {
+        OnPropertyChanged(nameof(CodIsReady));
+        OnPropertyChanged(nameof(CodCanFetchIcon));
+        OnPropertyChanged(nameof(CodCanUpdateDatabase));
+        OnPropertyChanged(nameof(CodHasUpdate));
+        OnPropertyChanged(nameof(CodUpdateSummary));
+    }
 
     public string CodSearch
     {
@@ -229,8 +247,105 @@ public sealed partial class MainWindowViewModel
     }
 
     private CodWikiIconService CodIconService => codIconService ??= new CodWikiIconService(preferences.CodWikiIconDirectory);
+    private CodWeaponDbUpdater CodUpdater => codUpdater ??= new CodWeaponDbUpdater();
 
     public int CodCatalogGameCount => codCatalog?.Games.Count ?? 0;
+
+    /// <summary>True while any database update step runs; the page disables its actions.</summary>
+    public bool CodIsUpdatingDatabase => codIsCheckingUpdate || codIsUpdating;
+    public bool CodCanUpdateDatabase => CodIsReady && !CodIsUpdatingDatabase;
+    public string CodUpdateStatus { get => codUpdateStatus; private set { codUpdateStatus = value; OnPropertyChanged(); } }
+
+    /// <summary>The loaded dataset is behind the latest upstream revision we saw.</summary>
+    public bool CodHasUpdate => codLatestRevision is { } latest
+        && codCatalog is { } catalog
+        && latest.CommitSha.Length == 40
+        && !latest.CommitSha.Equals(catalog.Provenance.CommitSha, StringComparison.OrdinalIgnoreCase);
+
+    public string CodUpdateSummary
+    {
+        get
+        {
+            if (codCatalog is not { } catalog) return string.Empty;
+            var loaded = catalog.Provenance.CommitSha;
+            var loadedText = loaded.Length >= 8 ? loaded[..8] : (loaded.Length > 0 ? loaded : Text.CodDbUpdateUnknownRevision);
+            if (codLatestRevision is not { } latest || latest.CommitSha.Length != 40) return loadedText;
+            var checkedAt = CodWeaponCatalog.FormatTimestamp(latest.CommitTimestamp);
+            return checkedAt.Length == 0 ? latest.ShortSha : $"{latest.ShortSha} · {checkedAt}";
+        }
+    }
+
+    /// <summary>Reads only the advertised upstream revision; cheap enough to run on demand.</summary>
+    public async Task CheckCodUpdateAsync()
+    {
+        if (CodIsUpdatingDatabase || !CodIsReady) return;
+        codIsCheckingUpdate = true;
+        OnPropertyChanged(nameof(CodIsUpdatingDatabase));
+        OnPropertyChanged(nameof(CodCanUpdateDatabase));
+        CodUpdateStatus = Text.CodDbUpdateChecking;
+        try
+        {
+            var revision = await CodUpdater.CheckAsync().ConfigureAwait(true);
+            codLatestRevision = revision;
+            OnPropertyChanged(nameof(CodHasUpdate));
+            OnPropertyChanged(nameof(CodUpdateSummary));
+            CodUpdateStatus = CodHasUpdate ? Text.CodDbUpdateAvailable : Text.CodDbUpdateCurrent;
+        }
+        catch (Exception error)
+        {
+            CodUpdateStatus = DescribeUpdateFailure(error);
+        }
+        finally
+        {
+            codIsCheckingUpdate = false;
+            OnPropertyChanged(nameof(CodIsUpdatingDatabase));
+            OnPropertyChanged(nameof(CodCanUpdateDatabase));
+        }
+    }
+
+    /// <summary>
+    /// Rebuilds the dataset from the commit-pinned upstream tables and switches the
+    /// page to it. Blueprints have no upstream table, so the current copy is carried over.
+    /// </summary>
+    public async Task UpdateCodDatabaseAsync()
+    {
+        if (CodIsUpdatingDatabase || !CodIsReady) return;
+        codIsUpdating = true;
+        OnPropertyChanged(nameof(CodIsUpdatingDatabase));
+        OnPropertyChanged(nameof(CodCanUpdateDatabase));
+        CodUpdateStatus = Text.CodDbUpdateStarting;
+        var previousDirectory = codDatasetDirectory;
+        try
+        {
+            var progress = new Progress<string>(stage => CodUpdateStatus = stage);
+            var result = await CodUpdater
+                .UpdateAsync(preferences.CodWeaponDbDirectory, previousDirectory, progress)
+                .ConfigureAwait(true);
+            codLatestRevision = new CodWeaponDbRevision(result.CommitSha, result.CommitTimestamp);
+            preferences.SaveCodWeaponDatasetDirectory(result.Directory);
+            codLoaded = false;
+            await LoadCodWeaponDbAsync(result.Directory).ConfigureAwait(true);
+            CodUpdateStatus = string.Format(CultureInfo.CurrentCulture, Text.CodDbUpdateComplete,
+                result.RecordCount, result.GameCount, result.AddedCount, result.RemovedCount, result.ChangedCount);
+            FooterStatus = CodUpdateStatus;
+        }
+        catch (Exception error)
+        {
+            CodUpdateStatus = DescribeUpdateFailure(error);
+            ShowDialog(Text.CodDbUpdateFailed, CodUpdateStatus, true);
+        }
+        finally
+        {
+            codIsUpdating = false;
+            OnPropertyChanged(nameof(CodIsUpdatingDatabase));
+            OnPropertyChanged(nameof(CodCanUpdateDatabase));
+            OnPropertyChanged(nameof(CodHasUpdate));
+            OnPropertyChanged(nameof(CodUpdateSummary));
+        }
+    }
+
+    private string DescribeUpdateFailure(Exception error) =>
+        Text.CodDbUpdateFailed + ": " + (error is CodWeaponDbUpdateException ? error.Message : error.GetType().Name + ": " + error.Message);
 
     /// <summary>Test seam: swaps the wiki transport so a smoke can run without the network.</summary>
     internal void OverrideCodIconService(CodWikiIconService? service)
@@ -238,6 +353,13 @@ public sealed partial class MainWindowViewModel
         if (!ReferenceEquals(codIconService, service)) codIconService?.Dispose();
         codIconService = service;
         ShowCodCachedIcon();
+    }
+
+    /// <summary>Test seam: swaps the database transport so a smoke can run without the network.</summary>
+    internal void OverrideCodUpdater(CodWeaponDbUpdater? updater)
+    {
+        if (!ReferenceEquals(codUpdater, updater)) codUpdater?.Dispose();
+        codUpdater = updater;
     }
 
     /// <summary>Waits for the lazy dataset load; used by render and UI verification.</summary>
@@ -283,7 +405,7 @@ public sealed partial class MainWindowViewModel
             codDatasetDirectory = CodWeaponCatalog.BuiltInDirectory;
             codResults.Clear();
             CodStatus = Text.CodDbLoadFailed + ": " + error.Message;
-            OnPropertyChanged(nameof(CodIsReady));
+            RaiseCodReadiness();
         }
         finally
         {
@@ -304,7 +426,7 @@ public sealed partial class MainWindowViewModel
         OnPropertyChanged(nameof(CodDatasetDirectoryHelp));
         OnPropertyChanged(nameof(CodCanRestoreDataset));
         OnPropertyChanged(nameof(CodProvenanceSummary));
-        OnPropertyChanged(nameof(CodIsReady));
+        RaiseCodReadiness();
         OnPropertyChanged(nameof(CodResultSummary));
         CodStatus = CodResultSummary;
     }

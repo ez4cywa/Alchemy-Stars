@@ -104,4 +104,23 @@ public sealed partial class UiText
     public string CodDbBlueprintsFetched => L("蓝图抓取时间", "Blueprints fetched");
     public string CodDbQaIssues => L("待复核问题", "Open QA issues");
     public string CodDbLicense => L("许可", "License");
+
+    // In-app database update
+    public string CodDbUpdateSection => L("数据库更新", "Database update");
+    public string CodDbUpdateHelp => L(
+        "从上游仓库的固定 commit 重新读取全部武器表，重建武器名与控制台代号；蓝图没有可刷新的上游表格，会沿用当前数据。更新成功后自动切换到新数据集，失败时保留原数据。",
+        "Re-reads every upstream weapon table at its pinned commit and rebuilds weapon names and console codenames. Blueprints have no upstream table and are carried over. A successful update switches to the new dataset; a failure keeps the old one.");
+    public string CodDbUpdateCheck => L("检查更新", "Check for updates");
+    public string CodDbUpdateNow => L("更新数据库", "Update database");
+    public string CodDbUpdateChecking => L("正在检查上游版本…", "Checking the upstream revision…");
+    public string CodDbUpdateAvailable => L("发现新的上游数据，可以更新。", "New upstream data is available.");
+    public string CodDbUpdateCurrent => L("当前已是最新数据。", "The loaded database is already current.");
+    public string CodDbUpdateStarting => L("正在准备更新…", "Preparing the update…");
+    public string CodDbUpdateComplete => L(
+        "更新完成：{0} 条记录 / {1} 个游戏，新增 {2}、移除 {3}、名称变更 {4}。",
+        "Update complete: {0} records over {1} games, {2} added, {3} removed, {4} renamed.");
+    public string CodDbUpdateFailed => L("数据库更新失败", "Database update failed");
+    public string CodDbUpdateUnknownRevision => L("未知版本", "unknown revision");
+    public string CodDbUpdateLoadedRevision => L("当前数据集", "Loaded dataset");
+    public string CodDbUpdateLatestRevision => L("上游最新", "Upstream");
 }

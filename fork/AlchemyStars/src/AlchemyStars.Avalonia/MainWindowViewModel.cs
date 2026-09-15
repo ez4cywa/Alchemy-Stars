@@ -694,6 +694,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
         Timeline.Dispose();
         Preview.Dispose();
         codIconService?.Dispose();
+        codUpdater?.Dispose();
         codIconBitmap?.Dispose();
     }
 

@@ -2,7 +2,7 @@
 
 Status: complete test implementation on `codex/avalonia-aot`; do not merge into `main` or publish as a stable release before .NET 11 GA.
 
-Version: `1.3.0-preview.29` (Native AOT preview)
+Version: `1.3.0-preview.30` (Native AOT preview)
 Runtime: .NET 11 Preview 7
 UI framework: Avalonia 12.1.2
 Production baseline: WPF v1.1.9 on `main`

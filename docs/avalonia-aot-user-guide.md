@@ -2,11 +2,11 @@
 
 # Alchemy Stars Avalonia preview quick guide
 
-This guide applies to `1.3.0-preview.29`. WPF v1.1.9 remains the supported release until .NET 11 GA.
+This guide applies to `1.3.0-preview.30`. WPF v1.1.9 remains the supported release until .NET 11 GA.
 
 The sidebar switches between Animation blend, Model parts, Dual merge, COD weapon DB, Settings and About. It shows icons and labels at normal widths and collapses to icons in narrow windows. The base-animation library sits on the left, a real CAST preview in the center, composition layers across the bottom, and collapsible properties on the right. Drag the dividers or focus them and use arrow keys to resize panels. Icon commands have localized tooltips and UI Automation names; the titlebar displays the current page, with window controls at the upper right.
 
-COD weapon DB (Ctrl+6) looks weapon names and console codenames up offline and fetches reference icons from the Call of Duty Wiki for comparison. See the [COD weapon database guide (Chinese)](cod-weapon-db.zh-CN.md).
+COD weapon DB (Ctrl+6) looks weapon names and console codenames up offline and fetches reference icons from the Call of Duty Wiki for comparison. Its Database update card (also reachable from the panel header) re-reads the commit-pinned upstream weapon tables online; blueprints are carried over. See the [COD weapon database guide (Chinese)](cod-weapon-db.zh-CN.md).
 
 1. Open **Model parts** and add view hands first, then the weapon and attachments. Each CAST is classified from its skeleton topology; the inspector shows confidence and evidence, recommends `tag_weapon` for weapons, and lets you override either field. Low-confidence or unreadable files retain a visible review path. Existing `.aprj` entries are not reclassified when opened.
 2. Open **Animation blend** and add the base animation. Paths remain editable and accept pasted Windows **Copy as path** values.

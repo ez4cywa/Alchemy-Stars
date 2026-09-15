@@ -2,10 +2,10 @@
 
 # Alchemy Stars（炼金之星）
 
-> **Avalonia AOT 预览测试分支：** 本测试线使用 .NET 11 Preview 7、Avalonia 12.1.2，版本为 `1.3.0-preview.29`，完整桌面工作流已可作为自包含 Native AOT 程序运行。正式版仍是 `main` 上的 v1.1.9；在 .NET 11 GA 前，现有 WPF 程序仍是稳定基线，请勿把本分支构建作为稳定版分发。
+> **Avalonia AOT 预览测试分支：** 本测试线使用 .NET 11 Preview 7、Avalonia 12.1.2，版本为 `1.3.0-preview.30`，完整桌面工作流已可作为自包含 Native AOT 程序运行。正式版仍是 `main` 上的 v1.1.9；在 .NET 11 GA 前，现有 WPF 程序仍是稳定基线，请勿把本分支构建作为稳定版分发。
 
 
-最新预览版：[preview.29 详细更新日志](docs/releases/1.3.0-preview.29.zh-CN.md)，新增左侧「COD 武器库」栏目：内置 CODWeaponDB v0.12.0 离线代号库，并可从 Call of Duty Wiki 获取武器图标用于对照；同时包含 preview.28 的前握把 IK 自动目标与逐任务输出帧率。用法见 [COD 武器库与图标对照](docs/cod-weapon-db.zh-CN.md)。
+最新预览版：[preview.30 详细更新日志](docs/releases/1.3.0-preview.30.zh-CN.md)，「COD 武器库」新增在线数据库更新：重新读取固定 commit 的上游武器表，并保留既有蓝图。同时包含 preview.29 的 COD 武器库栏目与 COD Wiki 图标对照。用法见 [COD 武器库与图标对照](docs/cod-weapon-db.zh-CN.md)。
 使用方法见 [Avalonia 预览版快速指南](docs/avalonia-aot-user-guide.zh-CN.md)；详细结果见 [Avalonia AOT 迁移报告](docs/avalonia-aot-migration.md)与 [.NET 11 Preview 兼容性报告](docs/dotnet11-preview.md)。
 
 本分支新增「双持动画」栏目和 Blender 4.3 FBX 转换，参见 [双持处理指南](docs/dual-wield.zh-CN.md)。可从一份手臂、一份武器模型和左右动画任务生成统一双持场景。
@@ -122,7 +122,7 @@ Alchemy Stars 保留原版批处理、动画层、IK 与 RedFox 转换管线，�
 
 `run-tests.ps1` 会编译稳定 WPF 基线并执行 Maya 转换回归。`verify-avalonia-aot.ps1` 会发布裁剪后的本机程序，执行 AOT 契约与标准工程导出，启动真实 Win32 窗口，通过 Windows UI Automation 检查控件名称、焦点和操作区，并在 900 × 600 最小尺寸渲染五个页面与居中对话框。
 
-项目约定每次功能性改动都迭代版本；本次测试版本为 `1.3.0-preview.29`，稳定版本仍为 `1.1.9`。
+项目约定每次功能性改动都迭代版本；本次测试版本为 `1.3.0-preview.30`，稳定版本仍为 `1.1.9`。
 
 要检查某组手臂 + 武器同时满足动画混合与挂点双持，直接传入三个真实素材（不会作为测试夹具提交）：
 

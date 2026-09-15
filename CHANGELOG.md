@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.3.0-preview.30 — 2026-09-15 (COD weapon database online update)
+
+Chinese release notes: [更新日志](docs/releases/1.3.0-preview.30.zh-CN.md). Includes the preview.29 changes below.
+
+- Add an online database update to the COD weapon database page. Check for updates reads only the upstream `main` revision; Update database pins that commit, downloads its codeload archive, re-parses the README game catalog and every `Games/*.md` two-column table, and rebuilds the dataset. Both the data card and the panel header link to it.
+- Follow CODWeaponDB's `github-only` rules exactly (same game identifiers, class-prefix table, source URLs and ordering) so a refresh stays interchangeable with the upstream application. The pinned commit, timestamp and repository are written to `refresh-manifest.json` under `%LOCALAPPDATA%\Alchemy Stars\CodWeaponDb\`.
+- Publish through a staging directory plus an atomic swap: any failed stage keeps the previous dataset and reports why, and a success reports record, game and added/removed/renamed counts against the data it replaced.
+- Carry the current `blueprints.json` into the refreshed dataset because blueprints have no upstream table to align with, keeping the `game:weapon` join intact; weapon icons are still fetched from the COD Wiki on demand.
+- Fix actions bound before the lazy catalog load finishing never re-enabling: readiness changes now notify the update and icon commands, so the buttons are actionable once the dataset is loaded.
+
 ## 1.3.0-preview.29 — 2026-09-14 (COD weapon database and wiki reference icons)
 
 Chinese release notes: [更新日志](docs/releases/1.3.0-preview.29.zh-CN.md). Includes the preview.28 changes below.

@@ -76,11 +76,16 @@
             <local:ThemedIcon Classes="product-icon" Glyph="output-naming" IsHitTestVisible="False" />
             <TextBlock Text="{Binding Text.CodDbTitle}" Classes="dock-title" />
           </StackPanel>
-          <Button x:Name="CodCopyCodenameButton" Grid.Column="1" Click="CopyCodenameClick" IsEnabled="{Binding CodHasSelection}"
-              Content="{Binding Text.CodDbCopyCodename}" AutomationProperties.Name="{Binding Text.CodDbCopyCodename}" />
+          <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+            <Button x:Name="CodUpdateHeaderButton" Classes="secondary" Click="UpdateHeaderClick"
+                Content="{Binding Text.CodDbUpdateSection}" ToolTip.Tip="{Binding Text.CodDbUpdateHelp}"
+                IsEnabled="{Binding CodCanUpdateDatabase}" AutomationProperties.Name="{Binding Text.CodDbUpdateSection}" />
+            <Button x:Name="CodCopyCodenameButton" Click="CopyCodenameClick" IsEnabled="{Binding CodHasSelection}"
+                Content="{Binding Text.CodDbCopyCodename}" AutomationProperties.Name="{Binding Text.CodDbCopyCodename}" />
+          </StackPanel>
         </Grid></Border>
 
-        <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+        <ScrollViewer x:Name="CodDetailsScroll" Grid.Row="1" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
           <StackPanel Margin="18,14,18,24" Spacing="16">
             <TextBlock Text="{Binding Text.CodDbSelectHint}" IsVisible="{Binding !CodHasSelection}" Classes="muted" TextWrapping="Wrap" />
 
@@ -172,6 +177,31 @@
                       Content="{Binding Text.CodDbRestoreDataset}" IsEnabled="{Binding CodCanRestoreDataset}" AutomationProperties.Name="{Binding Text.CodDbRestoreDataset}" />
                 </WrapPanel>
                 <TextBlock Text="{Binding Text.CodDbAttributionHelp}" Classes="muted" FontSize="11" TextWrapping="Wrap" />
+              </StackPanel>
+            </Border>
+
+            <!-- In-app refresh of the commit-pinned upstream weapon tables. -->
+            <Border x:Name="CodUpdateCard" Classes="subcard">
+              <StackPanel Spacing="10">
+                <Grid ColumnDefinitions="*,Auto">
+                  <TextBlock Text="{Binding Text.CodDbUpdateSection}" Classes="card-title" VerticalAlignment="Center" />
+                  <Border Grid.Column="1" Classes="preview-badge" VerticalAlignment="Center" IsVisible="{Binding CodHasUpdate}">
+                    <TextBlock Text="{Binding Text.CodDbUpdateAvailable}" Classes="eyebrow" TextWrapping="Wrap" />
+                  </Border>
+                </Grid>
+                <TextBlock Text="{Binding Text.CodDbUpdateHelp}" Classes="muted" FontSize="11" TextWrapping="Wrap" />
+                <Grid ColumnDefinitions="Auto,10,*">
+                  <TextBlock Text="{Binding Text.CodDbUpdateLoadedRevision}" Classes="field-label" />
+                  <TextBlock Grid.Column="2" Text="{Binding CodUpdateSummary}" FontSize="11" TextWrapping="Wrap" />
+                </Grid>
+                <TextBlock Text="{Binding CodUpdateStatus}" Classes="muted" FontSize="11" TextWrapping="Wrap" />
+                <ProgressBar IsVisible="{Binding CodIsUpdatingDatabase}" IsIndeterminate="True" Height="3" />
+                <WrapPanel>
+                  <Button x:Name="CodCheckUpdateButton" Classes="secondary" Margin="0,0,8,8" Click="CheckUpdateClick"
+                      Content="{Binding Text.CodDbUpdateCheck}" IsEnabled="{Binding CodCanUpdateDatabase}" AutomationProperties.Name="{Binding Text.CodDbUpdateCheck}" />
+                  <Button x:Name="CodUpdateDatabaseButton" Classes="primary" Margin="0,0,8,8" Click="UpdateDatabaseClick"
+                      Content="{Binding Text.CodDbUpdateNow}" IsEnabled="{Binding CodCanUpdateDatabase}" AutomationProperties.Name="{Binding Text.CodDbUpdateNow}" />
+                </WrapPanel>
               </StackPanel>
             </Border>
           </StackPanel>

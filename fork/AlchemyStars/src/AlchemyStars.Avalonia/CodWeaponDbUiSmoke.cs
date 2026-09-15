@@ -104,6 +104,29 @@ internal static class CodWeaponDbUiSmoke
                 await Task.Delay(80);
             }
 
+            // The in-app database update controls must be present and actionable.
+            var checkButton = view.GetVisualDescendants().OfType<Button>().FirstOrDefault(button => button.Name == "CodCheckUpdateButton")
+                ?? throw new InvalidOperationException("The database update card has no check button.");
+            var updateButton = view.GetVisualDescendants().OfType<Button>().FirstOrDefault(button => button.Name == "CodUpdateDatabaseButton")
+                ?? throw new InvalidOperationException("The database update card has no update button.");
+            Require(checkButton.IsEffectivelyVisible && checkButton.IsEffectivelyEnabled,
+                $"The check-for-updates button is not actionable (visible={checkButton.IsEffectivelyVisible}, enabled={checkButton.IsEffectivelyEnabled}, own={checkButton.IsEnabled}, vm={vm.CodCanUpdateDatabase}, ready={vm.CodIsReady}, updating={vm.CodIsUpdatingDatabase}, busy={vm.IsBusy}, dialog={vm.IsDialogOpen}, interact={vm.CanInteract}).");
+            Require(updateButton.IsEffectivelyVisible && updateButton.IsEffectivelyEnabled, "The update button is not actionable.");
+            Require(checkButton.Bounds.Width >= 44 && checkButton.Bounds.Height >= 44, "The check-for-updates hit target is too small.");
+            Require(updateButton.Bounds.Width >= 44 && updateButton.Bounds.Height >= 44, "The update hit target is too small.");
+            Require(!string.IsNullOrWhiteSpace(vm.CodUpdateSummary), "The update card must show the loaded dataset revision.");
+            Require(!vm.CodHasUpdate, "An unchecked dataset must not claim an available update before a check runs.");
+
+            // A failing check must report a reason and stay actionable.
+            var failing = new CodWeaponDbUpdater(new ThrowingHandler());
+            vm.OverrideCodUpdater(failing);
+            await vm.CheckCodUpdateAsync();
+            Require(!vm.CodHasUpdate, "A failed check must not report an available update.");
+            Require(vm.CodUpdateStatus.Length > 0, "A failed check must surface a status message.");
+            Require(vm.CodCanUpdateDatabase, "The card must stay actionable after a failed check.");
+            vm.OverrideCodUpdater(null);
+            Console.WriteLine($"COD page: update card verified, loaded revision '{vm.CodUpdateSummary}'.");
+
             // Reference icon: stub transport, real download/decode/cache path.
             var handler = new StubWikiHandler();
             stub = new CodWikiIconService(Path.Combine(temporary, "icons"), handler);
@@ -205,5 +228,12 @@ internal static class CodWeaponDbUiSmoke
                 Content = new ByteArrayContent(Convert.FromBase64String(OnePixelPngBase64)),
             });
         }
+    }
+
+    /// <summary>Simulates an unreachable upstream so the failure path can be asserted offline.</summary>
+    private sealed class ThrowingHandler : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) =>
+            throw new HttpRequestException("offline");
     }
 }

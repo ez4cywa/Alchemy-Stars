@@ -77,11 +77,15 @@ internal static class CodWeaponDbSmoke
             Console.WriteLine($"Provenance: {catalog.Provenance.Repository} @ {catalog.Provenance.CommitSha[..10]}, mode '{catalog.Provenance.SourceMode}'.");
 
             VerifyDatasetSwap(temporary, catalog);
+            VerifyUpstreamParsing();
 
             VerifyWikiUrls();
             VerifyIconPipeline(temporary).GetAwaiter().GetResult();
             if (args.Contains("--live", StringComparer.OrdinalIgnoreCase))
+            {
                 VerifyLiveWiki(temporary, catalog).GetAwaiter().GetResult();
+                VerifyLiveDatabaseUpdate(temporary).GetAwaiter().GetResult();
+            }
 
             var text = new UiText(true);
             Require(text.CodDbUnknownClass.Equals("未分类", StringComparison.Ordinal), "the Chinese class label for Unknown must read 未分类.");
@@ -246,6 +250,108 @@ internal static class CodWeaponDbSmoke
     private static void Require(bool condition, string message)
     {
         if (!condition) throw new InvalidOperationException(message);
+    }
+
+    /// <summary>
+    /// Exercises the upstream table parser offline. These assertions pin the same
+    /// rules CODWeaponDB uses, so a refreshed dataset stays schema compatible.
+    /// </summary>
+    private static void VerifyUpstreamParsing()
+    {
+        const string markdown = """
+            [Weapon Showcase](https://example.invalid)
+            *(beta) Updated on 27/08/26 (d/m/y)*
+            | In-game       | Code Name   |
+            |---------------|-------------|
+            | Kastov 762    | ar_akilo
+            | M4            | ar_mike4
+            | ISO Nightshade| sm_spier9
+            | FiNN LMG      | lm_sierrax
+            | Dual Wield    | ar_one / ar_two
+            |               | sh_orphan
+            """;
+        const string sha = "c1b3b9fc6ef0b5787d31b32aa5740146cfd0a51c";
+        var records = CodWeaponDbUpdater.ParseGameMarkdown(markdown, "mw4", "Call of Duty: Modern Warfare 4", "MW4", "REX",
+            sha, "2026-08-27T16:32:00+01:00", "Games/REX MW4.md");
+        Require(records.Count == 6, $"the table must yield six codenames, saw {records.Count}.");
+        Require(records[0].Codename == "ar_akilo" && records[0].WeaponDisplayName == "Kastov 762",
+            "the first row must parse its display name and codename.");
+        Require(records[0].WeaponClass == "Assault Rifle", $"ar_ must map to Assault Rifle, saw '{records[0].WeaponClass}'.");
+        Require(records[0].GameId == "mw4" && records[0].GameShortName == "MW4" && records[0].EngineCode == "REX",
+            "game identity must come from the resolved catalog entry.");
+        var primary = records[0].Sources is { Count: 1 } ? records[0].Sources![0] : null;
+        Require(primary is { Role: "primary" } && primary.CommitSha == sha,
+            "each record must carry one pinned primary source.");
+        Require(primary!.Url.Contains($"/blob/{sha}/Games/REX%20MW4.md#L5", StringComparison.Ordinal),
+            $"the source URL must pin the commit, percent-encode the path and name the line, saw '{primary.Url}'.");
+        Require(records[0].RawSha256.Length == 64 && records[0].ParserVersion == "github-markdown-v2",
+            "the raw line hash and parser version must be recorded.");
+        Require(records[1].WeaponClass == "Assault Rifle", "ar_mike4 must map to Assault Rifle.");
+        Require(records[2].WeaponClass == "Submachine Gun", "sm_ must map to Submachine Gun.");
+        Require(records[3].WeaponClass == "Light Machine Gun", "lm_ must map to Light Machine Gun.");
+        Require(records[4].Codename == "ar_one" && records[4].Ordinal == 1 && records[5].Codename == "ar_two" && records[5].Ordinal == 2,
+            "a slash-separated cell must split into ordered records.");
+        Require(records.All(record => record.GameOrder == 0), "the parser must not assign game order.");
+
+        Require(CodWeaponDbUpdater.DeriveWeaponClass("assault_rifle_x") == "Assault Rifle",
+            "the longest matching class prefix must win.");
+        Require(CodWeaponDbUpdater.DeriveWeaponClass("me_x") == "Melee", "me_ must map to Melee.");
+        Require(CodWeaponDbUpdater.DeriveWeaponClass("j_gun") == "Unknown", "an unrecognised prefix must stay Unknown.");
+        Require(CodWeaponDbUpdater.DeriveWeaponClass("xz_me_gun") == "Melee", "a class prefix after another token must still match.");
+
+        Require(CodWeaponDbUpdater.NormalizeName("Skål Crusher") == "sk l crusher",
+            $"alias normalisation must drop diacritics, saw '{CodWeaponDbUpdater.NormalizeName("Skål Crusher")}'.");
+        Require(CodWeaponDbUpdater.NormalizeName("M4") == CodWeaponDbUpdater.NormalizeName("m4"),
+            "alias normalisation must be case-insensitive.");
+
+        var titles = CodWeaponDbUpdater.ReadmeGameTitles(
+            "[Call of Duty: Modern Warfare 4](https://github.com/x/y/blob/main/Games/REX%20MW4.md)\n"
+            + "[Call of Duty: Black Ops 7](Games/SAT%20BO7.md)\n"
+            + "[not a game](README.md)\n");
+        Require(titles.Count == 2 && titles["games/rex mw4.md"] == "Call of Duty: Modern Warfare 4"
+            && titles["games/sat bo7.md"] == "Call of Duty: Black Ops 7",
+            "the README must supply display titles for both absolute and relative game links.");
+
+        Require(CodWeaponDbUpdater.GameMetadata["rex mw4"].GameId == "mw4"
+            && CodWeaponDbUpdater.GameMetadata["rex mw4"].ReleaseYear == 2026,
+            "the game catalog must keep the shipped identifiers and chronology.");
+        Console.WriteLine("Upstream parsing: table rows, class prefixes, pinned URLs, alias normalisation and README titles verified.");
+    }
+
+    /// <summary>
+    /// Optional networked refresh against the real upstream repository, then a full
+    /// load of the produced dataset including the carried-over blueprints.
+    /// </summary>
+    private static async Task VerifyLiveDatabaseUpdate(string temporary)
+    {
+        var directory = Path.Combine(temporary, "refreshed");
+        using var updater = new CodWeaponDbUpdater();
+        var revision = await updater.CheckAsync();
+        Require(revision.CommitSha.Length == 40, $"the upstream revision must be a full commit sha, saw '{revision.CommitSha}'.");
+
+        var result = await updater.UpdateAsync(directory, CodWeaponCatalog.BuiltInDirectory);
+        Require(result.RecordCount > 1000, $"the refresh must keep the full roster, saw {result.RecordCount}.");
+        Require(result.GameCount >= 20, $"the refresh must cover every upstream game file, saw {result.GameCount}.");
+        Require(result.CommitSha == revision.CommitSha, "the refresh must pin the revision it checked.");
+        foreach (var required in new[] { "weapons.jsonl", "blueprints.json", "refresh-manifest.json", "qa.json", "README.md" })
+            Require(File.Exists(Path.Combine(directory, required)), $"the refreshed dataset is missing {required}.");
+
+        var catalog = await CodWeaponCatalog.LoadAsync(directory);
+        Require(catalog.Weapons.Count == result.RecordCount, "every refreshed record must load back.");
+        Require(catalog.Provenance.CommitSha.Equals(result.CommitSha, StringComparison.OrdinalIgnoreCase),
+            "the refreshed provenance must record the new commit.");
+        Require(catalog.Provenance.SourceMode == "github-only", $"the refreshed mode must stay github-only, saw '{catalog.Provenance.SourceMode}'.");
+        Require(catalog.BlueprintCount > 4000, $"carried blueprints must still join, saw {catalog.BlueprintCount}.");
+        Require(catalog.Query("ar_mike4", CodWeaponFilter.None).Any(), "a known codename must be searchable in the refreshed data.");
+        Require(catalog.Query(null, new CodWeaponFilter(CodenamePrefix: "sm_")).Count > 0, "class prefixes must still filter refreshed data.");
+
+        // A second refresh must be idempotent against its own output.
+        var again = await updater.UpdateAsync(directory, directory);
+        Require(again.AddedCount == 0 && again.RemovedCount == 0 && again.ChangedCount == 0,
+            $"re-refreshing the same commit must report no diff, saw +{again.AddedCount} -{again.RemovedCount} ~{again.ChangedCount}.");
+
+        Console.WriteLine($"Live update: {result.RecordCount} records / {result.GameCount} games @ {result.ShortSha} "
+            + $"(+{result.AddedCount} -{result.RemovedCount} ~{result.ChangedCount}), blueprints {catalog.BlueprintCount}.");
     }
 
     /// <summary>

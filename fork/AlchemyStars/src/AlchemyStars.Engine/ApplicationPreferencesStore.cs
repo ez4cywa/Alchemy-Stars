@@ -34,6 +34,8 @@ public sealed class ApplicationPreferencesStore
     public string UpdatesDirectory => Path.Combine(Path.GetDirectoryName(settingsPath)!, "Updates");
     /// <summary>Cache for reference icons downloaded from the Call of Duty Wiki.</summary>
     public string CodWikiIconDirectory => Path.Combine(Path.GetDirectoryName(settingsPath)!, "CodWikiIcons");
+    /// <summary>Where an in-app COD weapon database refresh publishes its dataset.</summary>
+    public string CodWeaponDbDirectory => Path.Combine(Path.GetDirectoryName(settingsPath)!, "CodWeaponDb");
 
     public void SaveRememberArms(bool enabled) => Update(p => p.RememberArms = enabled);
     public void SaveArmsPath(string? path) => Update(p => p.SavedArmsPath = path ?? string.Empty);
