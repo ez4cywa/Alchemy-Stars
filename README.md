@@ -2,10 +2,10 @@
 
 # Alchemy Stars
 
-> **Avalonia AOT preview branch:** this test line targets .NET 11 Preview 7, Avalonia 12.1.2 and version `1.3.0-preview.28`. The complete desktop workflow now runs as a self-contained Native AOT application. Production remains v1.1.9 on `main`; the existing WPF application is still the stable baseline until .NET 11 GA. Do not distribute this build as a stable release.
+> **Avalonia AOT preview branch:** this test line targets .NET 11 Preview 7, Avalonia 12.1.2 and version `1.3.0-preview.29`. The complete desktop workflow now runs as a self-contained Native AOT application. Production remains v1.1.9 on `main`; the existing WPF application is still the stable baseline until .NET 11 GA. Do not distribute this build as a stable release.
 
 
-Latest preview release: [preview.28 notes (Chinese)](docs/releases/1.3.0-preview.28.zh-CN.md): automatically use the weapon foregrip IK target when present and allow each animation task to choose its output frame rate.
+Latest preview release: [preview.29 notes (Chinese)](docs/releases/1.3.0-preview.29.zh-CN.md): adds a COD weapon database page to the left sidebar with the bundled CODWeaponDB v0.12.0 codename catalog and Call of Duty Wiki reference icons. Includes preview.28's automatic weapon foregrip IK target and per-task output frame rate. See the [COD weapon database guide (Chinese)](docs/cod-weapon-db.zh-CN.md).
 See the [Avalonia preview quick guide](docs/avalonia-aot-user-guide.md), [migration report](docs/avalonia-aot-migration.md) and [.NET 11 preview compatibility report](docs/dotnet11-preview.md).
 
 This preview adds attached dual-wield composition and Blender 4.3 FBX conversion. See the [dual-wield workflow and current limits (Chinese)](docs/dual-wield.zh-CN.md).
@@ -112,9 +112,17 @@ This preview branch requires .NET SDK `11.0.100-preview.7.26381.103` to build. `
 .\scripts\verify-avalonia-aot.ps1
 ```
 
-`run-tests.ps1` builds the stable WPF baseline and runs the Maya-backed conversion regressions. `verify-avalonia-aot.ps1` publishes the trimmed native application, runs its AOT contract/project export checks, starts a real Win32 window, validates Windows UI Automation names/focus/target bounds, and renders all four pages plus a centered dialog at the 900 × 600 minimum size.
+`run-tests.ps1` builds the stable WPF baseline and runs the Maya-backed conversion regressions. `verify-avalonia-aot.ps1` publishes the trimmed native application, runs its AOT contract/project export checks, starts a real Win32 window, validates Windows UI Automation names/focus/target bounds, and renders all five pages plus a centered dialog at the 900 × 600 minimum size.
 
-Every functional preview change increments the prerelease revision; this test version is `1.3.0-preview.28`. The stable release remains `1.1.9`.
+Every functional preview change increments the prerelease revision; this test version is `1.3.0-preview.29`. The stable release remains `1.1.9`.
+
+To check one arms + weapon pair against both the animation-blend and the attached dual-wield pipelines, pass the three real assets (they are never committed as fixtures):
+
+```powershell
+AlchemyStars.Avalonia.exe --asset-pair-smoke <hands.cast> <weapon.cast> <animation.cast> <output folder>
+```
+
+It verifies that the pair classifies correctly, that merging conserves every vertex and bone, that the weapon root mounts under the resolved mount bone (`<root>__weapon` for a single weapon, `<root>__left`/`<root>__right` for dual), that the rig stays connected with unique bone names, that both pipelines bake the same clip length, that each deliverable carries only what it should (geometry in the bound model, animation in the CAST), and that the sources stay byte-identical.
 
 The 1.1.9 UI audit fixes the clipped About icon, toolbar overflow, cramped layer paths, and low-contrast controls. See the [UI audit and validation notes](design-system/alchemy-stars/pages/ui-audit-1.1.9.md) for coverage and limitations.
 

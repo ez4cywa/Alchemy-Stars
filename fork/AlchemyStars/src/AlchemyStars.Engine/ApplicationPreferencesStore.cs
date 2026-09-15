@@ -32,6 +32,8 @@ public sealed class ApplicationPreferencesStore
 
     public string AppearanceDirectory => Path.Combine(Path.GetDirectoryName(settingsPath)!, "Appearance");
     public string UpdatesDirectory => Path.Combine(Path.GetDirectoryName(settingsPath)!, "Updates");
+    /// <summary>Cache for reference icons downloaded from the Call of Duty Wiki.</summary>
+    public string CodWikiIconDirectory => Path.Combine(Path.GetDirectoryName(settingsPath)!, "CodWikiIcons");
 
     public void SaveRememberArms(bool enabled) => Update(p => p.RememberArms = enabled);
     public void SaveArmsPath(string? path) => Update(p => p.SavedArmsPath = path ?? string.Empty);
@@ -46,6 +48,10 @@ public sealed class ApplicationPreferencesStore
     public void SaveAutoUpdate(bool enabled) => Update(p => p.AutoUpdateEnabled = enabled);
     public void SaveSkippedUpdate(string version) => Update(p => p.SkippedUpdateVersion = version);
     public void SaveUnifiedOutputDirectory(string? path) => Update(p => p.UnifiedOutputDirectory =
+        string.IsNullOrWhiteSpace(path) ? string.Empty : Path.GetFullPath(path));
+
+    /// <summary>Remembers an external CODWeaponDB dataset; empty means the bundled snapshot.</summary>
+    public void SaveCodWeaponDatasetDirectory(string? path) => Update(p => p.CodWeaponDatasetDirectory =
         string.IsNullOrWhiteSpace(path) ? string.Empty : Path.GetFullPath(path));
 
     public WorkspaceDocument CreateWorkspace()
@@ -166,6 +172,7 @@ public sealed class AppPreferenceData
     public bool AutoUpdateEnabled { get; set; }
     public string SkippedUpdateVersion { get; set; } = string.Empty;
     public string UnifiedOutputDirectory { get; set; } = string.Empty;
+    public string CodWeaponDatasetDirectory { get; set; } = string.Empty;
     public string ThemeStyle { get; set; } = "apple";
     public string ThemeMode { get; set; } = "light";
     public string Language { get; set; } = "system";
@@ -182,6 +189,7 @@ public sealed class AppPreferenceData
         AutoUpdateEnabled = AutoUpdateEnabled,
         SkippedUpdateVersion = SkippedUpdateVersion,
         UnifiedOutputDirectory = UnifiedOutputDirectory,
+        CodWeaponDatasetDirectory = CodWeaponDatasetDirectory,
         Language = Language,
         ThemeStyle = ThemeStyle,
         ThemeMode = ThemeMode,

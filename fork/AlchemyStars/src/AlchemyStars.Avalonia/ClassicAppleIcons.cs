@@ -84,6 +84,9 @@ internal static class ClassicAppleIcons
                 Circle(5.5, 5.5, 2.5); Line("M9,5.5 H13 Q17,5.5 17,9 Q17,12.5 13,12.5 H10 Q6,12.5 6,16 Q6,19.5 10,19.5 H20 M16.5,16 L20,19.5 L16.5,23", 1.5); break;
             case "weapon-processing-mode":
                 Line("M8.5,3 H15.5 V8 H8.5 Z M12,8 V12 M6,16 V12 H18 V16 M3,16 H9 V21 H3 Z M15,16 H21 V21 H15 Z", 1.55); break;
+            case "cod-weapon-database":
+                Line("M4.5,6.5 V17.5 A7.5,2.8 0 0,0 19.5,17.5 V6.5 M4.5,10.3 A7.5,2.8 0 0,0 19.5,10.3 M4.5,14.1 A7.5,2.8 0 0,0 19.5,14.1", 1.6);
+                Line("M4.5,6.5 A7.5,2.8 0 1,0 19.5,6.5 A7.5,2.8 0 1,0 4.5,6.5 Z", 1.6); break;
             case "zoom-in":
             case "zoom-out":
                 Circle(10, 10, 6.5); Line("M15,15 L21,21 M7,10 H13"); if (glyph == "zoom-in") Line("M10,7 V13"); break;

@@ -2,9 +2,11 @@
 
 # Alchemy Stars Avalonia 预览版快速指南
 
-本指南适用于 `1.3.0-preview.28`。在 .NET 11 GA 前，WPF v1.1.9 仍是受支持的稳定版。
+本指南适用于 `1.3.0-preview.29`。在 .NET 11 GA 前，WPF v1.1.9 仍是受支持的稳定版。
 
-侧栏用于切换“动画混合、模型部件、双持合并、设置、关于”，正常宽度下显示图标和名称，窄窗口下折叠为图标栏。左侧为资源库，中央显示真实 CAST，底部横跨资源库和预览区显示合成图层，右侧为可折叠属性。分隔条支持拖动，也可获得焦点后用方向键调整。图标提供双语工具提示和 UI Automation 名称，标题栏显示当前页面，窗口按钮位于右上角。
+侧栏用于切换“动画混合、模型部件、双持合并、COD 武器库、设置、关于”，正常宽度下显示图标和名称，窄窗口下折叠为图标栏。左侧为资源库，中央显示真实 CAST，底部横跨资源库和预览区显示合成图层，右侧为可折叠属性。分隔条支持拖动，也可获得焦点后用方向键调整。图标提供双语工具提示和 UI Automation 名称，标题栏显示当前页面，窗口按钮位于右上角。
+
+「COD 武器库」（`Ctrl+6`）离线查询武器名与控制台代号，并可从 Call of Duty Wiki 取回武器图标用于对照。完整说明见 [COD 武器库与图标对照](cod-weapon-db.zh-CN.md)。
 
 1. 打开“模型部件”，先添加手臂，再添加武器与附件。软件会根据每个 CAST 的骨架结构识别类型；属性检查器显示置信度和依据，为武器推荐 `tag_weapon`，类型与父骨骼仍可手动覆盖。低置信度或无法读取的文件会明确提示确认；打开已有 `.aprj` 时不会自动重分类。
 2. 打开“动画混合”并添加基础动画。所有路径都可编辑，也能直接粘贴 Windows“复制文件地址”得到的带引号路径。
@@ -54,9 +56,9 @@
 
 ## Windows 2000 经典桌面主题
 
-在“设置 → 界面风格”选择“Windows 2000 · 经典桌面”。主题包含灰色凹凸控件、深蓝标题与选中态、34 个配套彩色像素图标，并支持浅色、深色和跟随系统。它只改变外观，不改变项目数据；选择会在重启后保留。自定义主题 JSON 也可使用 `windows-2000` 作为 `baseStyle`。
+在“设置 → 界面风格”选择“Windows 2000 · 经典桌面”。主题包含灰色凹凸控件、深蓝标题与选中态、35 个配套彩色像素图标，并支持浅色、深色和跟随系统。它只改变外观，不改变项目数据；选择会在重启后保留。自定义主题 JSON 也可使用 `windows-2000` 作为 `baseStyle`。
 
-Ubuntu GTK/Yaru 主题：分别导入 `Samples/Ubuntu-Yaru/theme.json` 和 `Samples/Ubuntu-Yaru/icons.zip`，即可启用独立的 GTK/Yaru 风格控件与 34 个图标，支持浅色和深色。主题 JSON 使用 `baseStyle: "ubuntu-yaru"` 和 `Gtk` 材质字段，最低需要 preview.22；这套模板由 Avalonia 实现，不需要安装 GTK，也不加载 GTK CSS/XML。
+Ubuntu GTK/Yaru 主题：分别导入 `Samples/Ubuntu-Yaru/theme.json` 和 `Samples/Ubuntu-Yaru/icons.zip`，即可启用独立的 GTK/Yaru 风格控件与 35 个图标，支持浅色和深色。主题 JSON 使用 `baseStyle: "ubuntu-yaru"` 和 `Gtk` 材质字段，最低需要 preview.22；这套模板由 Avalonia 实现，不需要安装 GTK，也不加载 GTK CSS/XML。
 
 ## GitHub 更新
 
@@ -70,13 +72,13 @@ Ubuntu GTK/Yaru 主题：分别导入 `Samples/Ubuntu-Yaru/theme.json` 和 `Samp
 
 “设置”中的外观区域提供原版、经典 Apple、Windows XP 和 Windows 2000 风格。原版采用现代桌面外观，保留原版图标。独立现代桌面主题已移除，旧偏好自动转为原版。可选择浅色、深色或跟随系统，也可点击明暗切换按钮直接切换；外观选择自动保存，不修改工程文件。
 
-preview.15 完整重绘经典 Apple 的控件与 34 个功能图标，采用独立铂金浅色／石墨深色外观；Windows XP 也提供独立控件及 34 个配套图标。
+preview.15 完整重绘经典 Apple 的控件与 35 个功能图标，采用独立铂金浅色／石墨深色外观；Windows XP 也提供独立控件及 35 个配套图标。
 
 - 导入主题：以压缩包内 `Samples/Appearance/theme.json` 为模板，修改后在设置页选择“导入主题”。`version` 使用 `1`，`name` 为主题名称，`baseStyle` 指定内置基础风格；`light` 和 `dark` 分别为配色 token 对象，`radii` 为控件圆角配置。
 - 导入图标：以 `Samples/Appearance/icons-template.zip` 为模板，用同名 PNG 替换要修改的图标，重新打包为 ZIP，再选择“导入图标”。支持只提供部分图标，其余继续使用主题的内置图标。
 - 恢复默认：分别使用“移除自定义主题”和“恢复内置图标”。主题与图标独立管理，不删除原始导入文件，也不影响动画工程。
 
-切换内置主题会停用自定义配色和圆角，但自定义图标继续生效。导入内容复制到设置目录，重启后保留。完整格式、全部 token、34 个图标文件名及限制见随包 `Samples/Appearance/README.zh-CN.md`。
+切换内置主题会停用自定义配色和圆角，但自定义图标继续生效。导入内容复制到内置设置目录，重启后保留。完整格式、全部 token、35 个图标文件名及限制见随包 `Samples/Appearance/README.zh-CN.md`。
 
 ## CAST 合成预览
 

@@ -4,10 +4,10 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$version = '1.3.0-preview.28'
+$version = '1.3.0-preview.29'
 $repositoryRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
 $releaseRoot = [System.IO.Path]::GetFullPath((Join-Path $repositoryRoot 'release'))
-$publishDirectory = [System.IO.Path]::GetFullPath((Join-Path $repositoryRoot 'output\avalonia-aot-preview28'))
+$publishDirectory = [System.IO.Path]::GetFullPath((Join-Path $repositoryRoot 'output\avalonia-aot-preview29'))
 $stagingDirectory = [System.IO.Path]::GetFullPath((Join-Path $releaseRoot "Alchemy Stars $version"))
 $resolvedArchive = if ([string]::IsNullOrWhiteSpace($ArchivePath)) {
     [System.IO.Path]::GetFullPath((Join-Path $releaseRoot "AlchemyStars-$version-win-x64.zip"))
@@ -47,7 +47,8 @@ $rootFiles = @(
     @{ Source = 'LICENSE'; Target = 'LICENSE.txt' },
     @{ Source = 'THIRD_PARTY_NOTICES.md'; Target = 'THIRD_PARTY_NOTICES.md' },
     @{ Source = 'docs\dual-wield.zh-CN.md'; Target = 'Docs\DUAL-WIELD.zh-CN.md' },
-    @{ Source = 'docs\releases\1.3.0-preview.28.zh-CN.md'; Target = 'Docs\RELEASE-NOTES.zh-CN.md' },
+    @{ Source = 'docs\cod-weapon-db.zh-CN.md'; Target = 'Docs\COD-WEAPON-DB.zh-CN.md' },
+    @{ Source = 'docs\releases\1.3.0-preview.29.zh-CN.md'; Target = 'Docs\RELEASE-NOTES.zh-CN.md' },
     @{ Source = 'docs\samples\appearance\theme.json'; Target = 'Samples\Appearance\theme.json' },
     @{ Source = 'docs\samples\appearance\icons-template.zip'; Target = 'Samples\Appearance\icons-template.zip' },
     @{ Source = 'docs\samples\appearance\README.zh-CN.md'; Target = 'Samples\Appearance\README.zh-CN.md' },
@@ -107,7 +108,7 @@ Add-Type -AssemblyName System.IO.Compression
 $archive = [System.IO.Compression.ZipFile]::OpenRead($resolvedArchive)
 try {
     $names = @($archive.Entries.FullName -replace '\\', '/')
-    foreach ($required in @('AlchemyStars.Avalonia.exe', 'README.md', 'README.zh-CN.md', 'Example/manifest.json', 'MayaPlugin/castplugin.py', 'BlenderPlugin/io_scene_cast/__init__.py', 'BlenderPlugin/LICENSE', 'Converters/convert_cast.py', 'Docs/DUAL-WIELD.zh-CN.md', 'Docs/RELEASE-NOTES.zh-CN.md', 'Samples/Appearance/theme.json', 'Samples/Appearance/icons-template.zip', 'Samples/Appearance/README.zh-CN.md')) {
+    foreach ($required in @('AlchemyStars.Avalonia.exe', 'README.md', 'README.zh-CN.md', 'Example/manifest.json', 'MayaPlugin/castplugin.py', 'BlenderPlugin/io_scene_cast/__init__.py', 'BlenderPlugin/LICENSE', 'Converters/convert_cast.py', 'Docs/DUAL-WIELD.zh-CN.md', 'Docs/COD-WEAPON-DB.zh-CN.md', 'Docs/RELEASE-NOTES.zh-CN.md', 'Samples/Appearance/theme.json', 'Samples/Appearance/icons-template.zip', 'Samples/Appearance/README.zh-CN.md', 'CodWeaponDb/weapons.jsonl', 'CodWeaponDb/blueprints.json', 'CodWeaponDb/qa.json', 'CodWeaponDb/refresh-manifest.json', 'CodWeaponDb/README.md')) {
         if ($required -notin $names) { throw "Release archive is missing: $required" }
     }
     if (@($names | Where-Object { $_.EndsWith('.pdb', [System.StringComparison]::OrdinalIgnoreCase) }).Count -gt 0) {

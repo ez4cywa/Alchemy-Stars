@@ -19,7 +19,8 @@ internal static class DesktopSmoke
         var shell = window.FindControl<Grid>("ShellGrid")!;
         var navigation = window.GetVisualDescendants().OfType<Button>()
             .Where(b => b.Classes.Contains("activity")).ToArray();
-        var pages = new[] { WorkspacePage.Animations, WorkspacePage.ModelParts, WorkspacePage.DualAnimations, WorkspacePage.Settings, WorkspacePage.About };
+        // Must match the sidebar button order exactly; the loop clicks by index.
+        var pages = new[] { WorkspacePage.Animations, WorkspacePage.ModelParts, WorkspacePage.DualAnimations, WorkspacePage.CodWeaponDb, WorkspacePage.Settings, WorkspacePage.About };
         try
         {
             // Reproduce scrolling away from the inspector before selecting a real project layer.
@@ -102,15 +103,23 @@ internal static class DesktopSmoke
                 ((IToggleProvider)ControlAutomationPeer.CreatePeerForElement(checkBox)!).Toggle();
                 await Task.Delay(40);
                 Require(checkBox.IsChecked != originalCheck, "The checkbox no longer supports its native toggle action.");
-                var indicator = checkBox.GetVisualDescendants().OfType<Border>().Single(b => b.Name == "CheckIndicator");
+                // Every built-in theme draws its own checkbox and names the parts
+                // differently, so resolve the indicator instead of assuming the
+                // default theme's `CheckIndicator`.
+                var indicator = checkBox.GetVisualDescendants().OfType<Border>()
+                    .FirstOrDefault(b => b.Name is "CheckIndicator" or "AppleCheckBox" or "GtkCheckBox" or "Win2000Check" or "XpCheckBox")
+                    ?? throw new InvalidOperationException($"The first toggleable checkbox ('{checkBox.Name}' / '{checkBox.Content}') exposes no check indicator part.");
                 var content = checkBox.GetVisualDescendants().OfType<ContentPresenter>().Single(c => c.Name == "PART_ContentPresenter");
                 var indicatorCenter = indicator.TranslatePoint(new Point(0, indicator.Bounds.Height / 2), checkBox)!.Value.Y;
                 var contentCenter = content.TranslatePoint(new Point(0, content.Bounds.Height / 2), checkBox)!.Value.Y;
                 Require(Math.Abs(indicatorCenter - contentCenter) < 1, "Checkbox label and indicator are misaligned.");
                 checkBox.Focus(NavigationMethod.Tab);
                 await Task.Delay(40);
-                var focus = checkBox.GetVisualDescendants().OfType<Border>().Single(b => b.Name == "CheckFocus");
-                Require(checkBox.IsFocused && focus.BorderBrush is ISolidColorBrush brush && brush.Color.A > 0, "Checkbox keyboard focus is invisible.");
+                Require(checkBox.IsFocused, "The checkbox did not accept keyboard focus.");
+                // Only the default theme draws a dedicated focus ring; the older
+                // themes re-tint the indicator, which is not colour-comparable.
+                if (checkBox.GetVisualDescendants().OfType<Border>().FirstOrDefault(b => b.Name == "CheckFocus") is { } focus)
+                    Require(focus.BorderBrush is ISolidColorBrush focusBrush && focusBrush.Color.A > 0, "Checkbox keyboard focus is invisible.");
             }
             finally { checkBox.IsChecked = originalCheck; }
 

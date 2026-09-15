@@ -118,6 +118,8 @@ internal static class Windows2000Icons
                 Block(1, 1, 4, 4, 'b'); Pixels("ggg...../..gg..../..gg..../..gg..../..gg..g./...gggg./....ggg./......g.", 3, 3); break;
             case "weapon-processing-mode":
                 Block(5, 4, 2, 2, 's'); Block(2, 6, 8, 1, 's'); Block(2, 6, 1, 3, 's'); Block(9, 6, 1, 3, 's'); Block(4, 1, 4, 3, 'b'); Block(1, 8, 4, 3, 'y'); Block(7, 8, 4, 3, 'g'); break;
+            case "cod-weapon-database":
+                Pixels("..bbbbbbbb../.bccccccccb./.bbbbbbbbbb./.bccccccccb./.bbbbbbbbbb./.bccccccccb./.bbbbbbbbbb./.bccccccccb./..bbbbbbbb..", 0, 2); break;
             case "zoom-in":
             case "zoom-out":
                 Pixels("..bbbbb...../.bbcccbb..../bbcccccbb.../bbcccccbb.../bbcccccbb.../.bbcccbb..../..bbbbb...../......yy..../.......yy.../........yy..", 1, 1);

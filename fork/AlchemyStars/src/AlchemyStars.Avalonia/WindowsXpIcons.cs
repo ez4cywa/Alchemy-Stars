@@ -219,6 +219,13 @@ internal static class WindowsXpIcons
                 Shape("M3,16 L9,16 L9,21 L3,21 Z", Gold);
                 Shape("M15,16 L21,16 L21,21 L15,21 Z", Green);
                 break;
+            case "cod-weapon-database":
+                Shape("M4,6 L4,17 A8,3 0 0,0 20,17 L20,6 Z", Blue, "#2d5f9e");
+                Line("M4,10 A8,3 0 0,0 20,10", "#8ba5c3", 0.8);
+                Line("M4,13.6 A8,3 0 0,0 20,13.6", "#8ba5c3", 0.8);
+                Shape("M4,6 A8,3 0 1,0 20,6 A8,3 0 1,0 4,6 Z", Silver, "#8ba5c3");
+                Line("M7,4.8 Q12,3.4 17,4.8", "#ffffff");
+                break;
             case "zoom-in":
             case "zoom-out":
                 Shape("M14,13 L21,19 L19,21 L12,14 Z", Gold, "#9c7428");

@@ -12,6 +12,7 @@ public enum WorkspacePage
     Settings,
     About,
     DualAnimations,
+    CodWeaponDb,
 }
 
 public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDisposable
@@ -132,6 +133,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
         WorkspacePage.Settings => Text.Settings,
         WorkspacePage.About => Text.About,
         WorkspacePage.DualAnimations => Text.DualAnimations,
+        WorkspacePage.CodWeaponDb => Text.CodDbNavigation,
         _ => Text.AnimationBlend,
     };
     public string WindowTitle => $"{Text.ProductName} | {CurrentProjectLabel} | {Version}";
@@ -202,11 +204,12 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
         }
     }
     public bool HasSelectedLayer => SelectedLayer is not null;
-    public WorkspacePage SelectedPage { get => selectedPage; private set { selectedPage = value; if (value is WorkspacePage.Settings or WorkspacePage.About) Preview.Pause(); OnPropertyChanged(); RaisePageState(); } }
+    public WorkspacePage SelectedPage { get => selectedPage; private set { selectedPage = value; if (value is WorkspacePage.Settings or WorkspacePage.About or WorkspacePage.CodWeaponDb) Preview.Pause(); OnPropertyChanged(); RaisePageState(); } }
     public bool IsAnimationsPage => SelectedPage == WorkspacePage.Animations;
     public bool IsModelPartsPage => SelectedPage == WorkspacePage.ModelParts;
     public bool IsSettingsPage => SelectedPage == WorkspacePage.Settings;
     public bool IsAboutPage => SelectedPage == WorkspacePage.About;
+    public bool IsCodWeaponDbPage => SelectedPage == WorkspacePage.CodWeaponDb;
     public bool IsBusy { get => isBusy; private set { isBusy = value; OnPropertyChanged(); OnPropertyChanged(nameof(CanInteract)); OnPropertyChanged(nameof(CanExportSelectedAnimation)); OnPropertyChanged(nameof(CanExportBoundModel)); } }
     public string BusyMessage { get => busyMessage; private set { busyMessage = value; OnPropertyChanged(); } }
     public bool IsDialogOpen { get => isDialogOpen; private set { isDialogOpen = value; OnPropertyChanged(); OnPropertyChanged(nameof(CanInteract)); OnPropertyChanged(nameof(CanExportSelectedAnimation)); OnPropertyChanged(nameof(CanExportBoundModel)); } }
@@ -248,6 +251,9 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
     {
         if ((page == WorkspacePage.DualAnimations) != IsDualPage) Preview.Clear();
         SelectedPage = page;
+        // The weapon database is loaded lazily so startup never pays for parsing
+        // a several-megabyte snapshot the user may not open.
+        if (page == WorkspacePage.CodWeaponDb) _ = EnsureCodWeaponDbLoadedAsync();
     }
 
     public void NewProject()
@@ -687,6 +693,8 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
             selectedPart.PropertyChanged -= SelectedPartChanged;
         Timeline.Dispose();
         Preview.Dispose();
+        codIconService?.Dispose();
+        codIconBitmap?.Dispose();
     }
 
     public void ToggleLanguage()
@@ -923,6 +931,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
         OnPropertyChanged(nameof(IsModelPartsPage));
         OnPropertyChanged(nameof(IsSettingsPage));
         OnPropertyChanged(nameof(IsAboutPage));
+        OnPropertyChanged(nameof(IsCodWeaponDbPage));
     }
 
     private static string NormalizeLanguageMode(string? value) => value switch

@@ -1,6 +1,6 @@
 # 自定义主题和图标（preview.22）
 
-在“设置 → 外观”使用“导入主题 JSON”和“导入图标 ZIP”。本目录的 `theme.json` 是森林配色主题，`icons-template.zip` 包含 34 个可替换的 PNG 图标。主题与图标独立导入、独立移除；无需修改程序文件。
+在“设置 → 外观”使用“导入主题 JSON”和“导入图标 ZIP”。本目录的 `theme.json` 是森林配色主题，`icons-template.zip` 包含 35 个可替换的 PNG 图标。主题与图标独立导入、独立移除；无需修改程序文件。
 
 ## 主题 JSON
 
@@ -32,9 +32,9 @@
 | 值 | 内置基础风格 |
 | --- | --- |
 | `apple` | 原版 · 简洁 |
-| `classic-apple` | 经典 Apple：独立铂金浅色／石墨深色控件及 34 个重绘图标 |
+| `classic-apple` | 经典 Apple：独立铂金浅色／石墨深色控件及 35 个重绘图标 |
 | `windows-xp` | Windows XP · 经典蓝 |
-| `windows-2000` | Windows 2000 · 经典桌面：方形凹凸控件及 34 个彩色像素图标 |
+| `windows-2000` | Windows 2000 · 经典桌面：方形凹凸控件及 35 个彩色像素图标 |
 | `ubuntu-yaru` | Ubuntu GTK/Yaru 风格：独立按钮、输入框、下拉框、复选框、开关、菜单和滚动控件模板；需要 preview.22+ |
 
 旧文件中的 `neumorphic` 和 `modern-desktop` 自动映射为 `apple`，已定义的自定义颜色和圆角继续保留。
@@ -67,7 +67,7 @@
 
 ## PNG 图标 ZIP
 
-解压 `icons-template.zip`，编辑需要替换的图片。可删除不想覆盖的 PNG，只把需要的图标重新压缩为 ZIP 后导入。文件名使用以下 34 个名称之一，扩展名为 `.png`；名称及扩展名不区分大小写：
+解压 `icons-template.zip`，编辑需要替换的图片。可删除不想覆盖的 PNG，只把需要的图标重新压缩为 ZIP 后导入。文件名使用以下 35 个名称之一，扩展名为 `.png`；名称及扩展名不区分大小写：
 
 ```text
 about.png
@@ -77,6 +77,7 @@ animation-library.png
 batch-processing.png
 camera-view.png
 cast-preview.png
+cod-weapon-database.png
 delete.png
 dual-wield.png
 export-animation.png

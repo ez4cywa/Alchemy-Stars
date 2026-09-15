@@ -38,6 +38,7 @@ public sealed class ThemedIcon : Grid
         "batch-processing",
         "camera-view",
         "cast-preview",
+        "cod-weapon-database",
         "delete",
         "dual-wield",
         "export-animation",
@@ -147,6 +148,7 @@ public sealed class ThemedIcon : Grid
         set => SetValue(UseWindows2000GlyphProperty, value);
     }
     internal bool HasWindows2000Icon => win2000Host.IsVisible && win2000Host.Child is not null;
+    internal bool HasWindowsXpIcon => xpHost.IsVisible && xpHost.Child is not null;
 
     internal static IEnumerable<string> GlyphNames => Names;
 

@@ -24,10 +24,10 @@ internal static class UbuntuThemeSmoke
             CustomAppearance.Initialize(sandbox);
             vm.ImportAppearance(Path.Combine(samples, "theme.json"), false);
             vm.ImportAppearance(Path.Combine(samples, "icons.zip"), true);
-            Require(CustomAppearance.CurrentTheme?.BaseStyle == "ubuntu-yaru" && CustomAppearance.IconCount == 34,
-                "Ubuntu sample import must select GTK templates and all 34 icons.");
+            Require(CustomAppearance.CurrentTheme?.BaseStyle == "ubuntu-yaru" && CustomAppearance.IconCount == 35,
+                "Ubuntu sample import must select GTK templates and all 35 icons.");
             CustomAppearance.Initialize(sandbox);
-            Require(CustomAppearance.LoadError is null && CustomAppearance.IconCount == 34,
+            Require(CustomAppearance.LoadError is null && CustomAppearance.IconCount == 35,
                 "Ubuntu theme/icon reload failed.");
             foreach (var mode in new[] { 0, 1 })
             {
@@ -108,7 +108,7 @@ internal static class UbuntuThemeSmoke
                     Require(Application.Current.Styles.OfType<GtkYaruStyles>().Count() == 1, "GTK reselect lost or duplicated its skin.");
                 }
             }
-            Console.WriteLine("Ubuntu GTK/Yaru: import, 34 icons, reload, light/dark, checkbox states, button hover/pressed/disabled/focus, switch, four pages and skin isolation PASS.");
+            Console.WriteLine("Ubuntu GTK/Yaru: import, 35 icons, reload, light/dark, checkbox states, button hover/pressed/disabled/focus, switch, four pages and skin isolation PASS.");
         }
         finally
         {

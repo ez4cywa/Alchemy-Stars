@@ -1,0 +1,232 @@
+<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+ xmlns:local="using:AlchemyStars.Avalonia"
+ x:Class="AlchemyStars.Avalonia.CodWeaponDbView" x:DataType="local:MainWindowViewModel">
+  <Grid x:Name="CodDbEditor">
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="300" MinWidth="240" MaxWidth="420" />
+      <ColumnDefinition Width="4" />
+      <ColumnDefinition Width="*" MinWidth="280" />
+      <ColumnDefinition Width="4" />
+      <ColumnDefinition Width="380" MinWidth="300" MaxWidth="560" />
+    </Grid.ColumnDefinitions>
+
+    <!-- Search, filters and the weapon list. -->
+    <Border Classes="workspace-panel" Grid.Column="0">
+      <Grid RowDefinitions="44,Auto,32,*,Auto">
+        <Border Classes="dock-header"><Grid ColumnDefinitions="*,Auto">
+          <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+            <local:ThemedIcon Classes="product-icon" Glyph="cod-weapon-database" IsHitTestVisible="False" />
+            <TextBlock Text="{Binding Text.CodDbNavigation}" Classes="dock-title" />
+          </StackPanel>
+          <Button Grid.Column="1" Classes="panel-command" Click="ClearFiltersClick" ToolTip.Tip="{Binding Text.CodDbClearFilters}" AutomationProperties.Name="{Binding Text.CodDbClearFilters}">
+            <local:ThemedIcon Classes="product-icon" Glyph="restore-layout" IsHitTestVisible="False" Width="20" Height="20" />
+          </Button>
+        </Grid></Border>
+
+        <StackPanel Grid.Row="1" Spacing="8" Margin="14,10,14,6">
+          <TextBox x:Name="CodSearchBox" Text="{Binding CodSearch}" Watermark="{Binding Text.CodDbSearchWatermark}"
+              AutomationProperties.Name="{Binding Text.CodDbSearch}" AutomationProperties.HelpText="{Binding Text.CodDbSearchHelp}" />
+          <ComboBox x:Name="CodGamePicker" HorizontalAlignment="Stretch" ItemsSource="{Binding CodGameOptions}"
+              SelectedItem="{Binding CodGameFilter, Mode=TwoWay}" AutomationProperties.Name="{Binding Text.CodDbGameFilter}" />
+          <ComboBox x:Name="CodClassPicker" HorizontalAlignment="Stretch" ItemsSource="{Binding CodClassOptions}"
+              SelectedItem="{Binding CodClassFilter, Mode=TwoWay}" AutomationProperties.Name="{Binding Text.CodDbClassFilter}" />
+          <TextBox x:Name="CodPrefixBox" Text="{Binding CodPrefix}" Watermark="{Binding Text.CodDbPrefixWatermark}"
+              AutomationProperties.Name="{Binding Text.CodDbPrefixFilter}" />
+        </StackPanel>
+
+        <Grid Grid.Row="2" ColumnDefinitions="*,Auto" Margin="14,0">
+          <TextBlock Text="{Binding Text.CodDbWeapons}" Classes="field-label" VerticalAlignment="Center" />
+          <TextBlock x:Name="CodResultCount" Grid.Column="1" Text="{Binding CodResults.Count}" Classes="muted" VerticalAlignment="Center" />
+        </Grid>
+
+        <ListBox x:Name="CodResultList" Grid.Row="3" Classes="asset-list" ItemsSource="{Binding CodResults}"
+            SelectedItem="{Binding CodSelectedWeapon}" BorderThickness="0" AutomationProperties.Name="{Binding Text.CodDbWeapons}">
+          <ListBox.ItemTemplate>
+            <DataTemplate x:DataType="local:CodWeapon">
+              <Grid ColumnDefinitions="*,Auto" Margin="0,4">
+                <StackPanel VerticalAlignment="Center">
+                  <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Name}" />
+                  <TextBlock Text="{Binding Codename}" Classes="muted" FontSize="11" TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+                <TextBlock Grid.Column="1" Text="{Binding GameLabel}" Classes="muted" FontSize="11" Margin="8,0,0,0" VerticalAlignment="Center" />
+              </Grid>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+
+        <TextBlock Grid.Row="3" Text="{Binding Text.CodDbResultsEmpty}" IsVisible="{Binding !CodHasResults}"
+            Classes="muted" TextWrapping="Wrap" FontSize="12" Margin="14,16" IsHitTestVisible="False" />
+
+        <StackPanel Grid.Row="4" Background="{DynamicResource AlchemySurfaceBrush}">
+          <ProgressBar IsVisible="{Binding CodIsLoading}" IsIndeterminate="True" Height="3" />
+          <TextBlock Text="{Binding CodStatus}" Classes="muted" FontSize="11" Margin="14,6,14,8" TextWrapping="Wrap" />
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <GridSplitter Classes="column-divider" Grid.Column="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+        ResizeDirection="Columns" ResizeBehavior="PreviousAndNext" Focusable="True" KeyboardIncrement="16" Background="Transparent"
+        AutomationProperties.Name="{Binding Text.ResizePanels}" ToolTip.Tip="{Binding Text.ResizePanels}" />
+
+    <!-- Weapon details and blueprints. -->
+    <Border Classes="workspace-panel" Grid.Column="2">
+      <Grid RowDefinitions="44,*">
+        <Border Classes="dock-header"><Grid ColumnDefinitions="*,Auto">
+          <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+            <local:ThemedIcon Classes="product-icon" Glyph="output-naming" IsHitTestVisible="False" />
+            <TextBlock Text="{Binding Text.CodDbTitle}" Classes="dock-title" />
+          </StackPanel>
+          <Button x:Name="CodCopyCodenameButton" Grid.Column="1" Click="CopyCodenameClick" IsEnabled="{Binding CodHasSelection}"
+              Content="{Binding Text.CodDbCopyCodename}" AutomationProperties.Name="{Binding Text.CodDbCopyCodename}" />
+        </Grid></Border>
+
+        <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+          <StackPanel Margin="18,14,18,24" Spacing="16">
+            <TextBlock Text="{Binding Text.CodDbSelectHint}" IsVisible="{Binding !CodHasSelection}" Classes="muted" TextWrapping="Wrap" />
+
+            <StackPanel Spacing="4" IsVisible="{Binding CodHasSelection}">
+              <TextBlock Text="{Binding CodSelectedWeapon.Name}" Classes="display-title" FontSize="22" FontWeight="SemiBold" TextWrapping="Wrap" />
+              <TextBlock Text="{Binding CodSelectedWeapon.GameTitle}" Classes="muted" TextWrapping="Wrap" />
+            </StackPanel>
+
+            <Border Classes="subcard" IsVisible="{Binding CodHasSelection}">
+              <StackPanel Spacing="6">
+                <TextBlock Text="{Binding Text.CodDbCodename}" Classes="eyebrow" />
+                <TextBlock x:Name="CodCodenameValue" Text="{Binding CodCodenameDisplay}" FontSize="20" FontWeight="SemiBold"
+                    TextWrapping="Wrap" AutomationProperties.Name="{Binding Text.CodDbCodename}" />
+              </StackPanel>
+            </Border>
+
+            <Border Classes="subcard" IsVisible="{Binding CodHasSelection}">
+              <StackPanel Spacing="10">
+                <TextBlock Text="{Binding Text.CodDbDetails}" Classes="card-title" />
+                <Grid ColumnDefinitions="140,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" >
+                  <TextBlock Text="{Binding Text.CodDbGame}" Classes="field-label" />
+                  <TextBlock Grid.Column="1" Text="{Binding CodSelectedWeapon.GameTitle}" TextWrapping="Wrap" />
+                  <TextBlock Grid.Row="1" Text="{Binding Text.CodDbEngine}" Classes="field-label" IsVisible="{Binding CodSelectedWeapon.HasEngine}" />
+                  <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding CodSelectedWeapon.EngineCode}" IsVisible="{Binding CodSelectedWeapon.HasEngine}" />
+                  <TextBlock Grid.Row="2" Text="{Binding Text.CodDbClass}" Classes="field-label" />
+                  <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding CodSelectedWeapon.ClassLabel}" />
+                  <TextBlock Grid.Row="3" Text="{Binding Text.CodDbScope}" Classes="field-label" IsVisible="{Binding CodSelectedWeapon.HasScope}" />
+                  <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding CodSelectedWeapon.Scope}" IsVisible="{Binding CodSelectedWeapon.HasScope}" />
+                  <TextBlock Grid.Row="4" Text="{Binding Text.CodDbSection}" Classes="field-label" IsVisible="{Binding CodSelectedWeapon.HasSection}" />
+                  <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding CodSelectedWeapon.SectionTitle}" TextWrapping="Wrap" IsVisible="{Binding CodSelectedWeapon.HasSection}" />
+                  <TextBlock Grid.Row="5" Text="{Binding Text.CodDbRevision}" Classes="field-label" IsVisible="{Binding CodSelectedWeapon.HasRevision}" />
+                  <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding CodSelectedWeapon.RevisionDisplay}" IsVisible="{Binding CodSelectedWeapon.HasRevision}" />
+                </Grid>
+                <WrapPanel>
+                  <Button Classes="secondary" Margin="0,0,8,0" Click="OpenSourceClick" IsEnabled="{Binding CodHasSourceLink}"
+                      Content="{Binding CodSourceLabel}" ToolTip.Tip="{Binding CodSourceUrl}" AutomationProperties.Name="{Binding CodSourceLabel}" />
+                  <Border Classes="preview-badge" IsVisible="{Binding CodSelectedWeapon.HasManualRevision}" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding Text.CodDbManualRevision}" Classes="eyebrow" />
+                  </Border>
+                </WrapPanel>
+              </StackPanel>
+            </Border>
+
+            <Border Classes="subcard" IsVisible="{Binding CodHasBlueprints}">
+              <StackPanel Spacing="10">
+                <Grid ColumnDefinitions="*,Auto">
+                  <TextBlock Text="{Binding Text.CodDbBlueprints}" Classes="card-title" VerticalAlignment="Center" />
+                  <TextBlock Grid.Column="1" Text="{Binding CodBlueprints.Count}" Classes="muted" VerticalAlignment="Center" />
+                </Grid>
+                <ListBox x:Name="CodBlueprintList" Classes="asset-list" ItemsSource="{Binding CodBlueprints}"
+                    SelectedItem="{Binding CodSelectedBlueprint}" MaxHeight="320" BorderThickness="0"
+                    AutomationProperties.Name="{Binding Text.CodDbBlueprints}">
+                  <ListBox.ItemTemplate>
+                    <DataTemplate x:DataType="local:CodBlueprint">
+                      <StackPanel Margin="0,4" Spacing="2">
+                        <Grid ColumnDefinitions="*,Auto">
+                          <TextBlock Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding DisplayName}" />
+                          <TextBlock Grid.Column="1" Text="{Binding Rarity}" Classes="muted" FontSize="11" Margin="8,0,0,0" />
+                        </Grid>
+                        <TextBlock Text="{Binding Codename}" Classes="muted" FontSize="11" IsVisible="{Binding HasCodename}" />
+                        <TextBlock Text="{Binding HowToObtain}" Classes="muted" FontSize="11" TextWrapping="Wrap" IsVisible="{Binding HasObtain}" />
+                      </StackPanel>
+                    </DataTemplate>
+                  </ListBox.ItemTemplate>
+                </ListBox>
+                <TextBlock Text="{Binding Text.CodDbBlueprintImage}" Classes="muted" FontSize="11" TextWrapping="Wrap" />
+              </StackPanel>
+            </Border>
+
+            <TextBlock Text="{Binding Text.CodDbNoBlueprints}" IsVisible="{Binding CodShowNoBlueprints}" Classes="muted"
+                TextWrapping="Wrap" FontSize="12" />
+
+            <!-- Dataset provenance and swap. -->
+            <Border Classes="subcard">
+              <StackPanel Spacing="10">
+                <Grid ColumnDefinitions="*,Auto">
+                  <TextBlock Text="{Binding Text.CodDbDataset}" Classes="card-title" VerticalAlignment="Center" />
+                  <Border Grid.Column="1" Classes="preview-badge" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding CodDatasetLabel}" Classes="eyebrow" />
+                  </Border>
+                </Grid>
+                <TextBlock Text="{Binding CodDatasetDirectoryHelp}" Classes="muted" FontSize="11" TextWrapping="Wrap" IsVisible="{Binding CodHasExternalDatasetDirectory}" />
+                <TextBlock Text="{Binding Text.CodDbDatasetHelp}" Classes="muted" FontSize="11" TextWrapping="Wrap" />
+                <TextBlock Text="{Binding CodProvenanceSummary}" Classes="muted" FontSize="11" TextWrapping="Wrap" />
+                <WrapPanel>
+                  <Button x:Name="CodChooseDatasetButton" Classes="secondary" Margin="0,0,8,8" Click="ChooseDatasetClick"
+                      Content="{Binding Text.CodDbChooseDataset}" AutomationProperties.Name="{Binding Text.CodDbChooseDataset}" />
+                  <Button x:Name="CodRestoreDatasetButton" Classes="secondary" Margin="0,0,8,8" Click="RestoreDatasetClick"
+                      Content="{Binding Text.CodDbRestoreDataset}" IsEnabled="{Binding CodCanRestoreDataset}" AutomationProperties.Name="{Binding Text.CodDbRestoreDataset}" />
+                </WrapPanel>
+                <TextBlock Text="{Binding Text.CodDbAttributionHelp}" Classes="muted" FontSize="11" TextWrapping="Wrap" />
+              </StackPanel>
+            </Border>
+          </StackPanel>
+        </ScrollViewer>
+      </Grid>
+    </Border>
+
+    <GridSplitter Classes="column-divider" Grid.Column="3" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+        ResizeDirection="Columns" ResizeBehavior="PreviousAndNext" Focusable="True" KeyboardIncrement="16" Background="Transparent"
+        AutomationProperties.Name="{Binding Text.ResizePanels}" ToolTip.Tip="{Binding Text.ResizePanels}" />
+
+    <!-- Reference icon fetched from the Call of Duty Wiki. -->
+    <Border Classes="workspace-panel" Grid.Column="4">
+      <Grid RowDefinitions="44,*,Auto">
+        <Border Classes="dock-header">
+          <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+            <local:ThemedIcon Classes="product-icon" Glyph="camera-view" IsHitTestVisible="False" />
+            <TextBlock Text="{Binding Text.CodDbReference}" Classes="dock-title" />
+          </StackPanel>
+        </Border>
+
+        <Border Grid.Row="1" Margin="14,14,14,0" Padding="10" CornerRadius="8"
+            Background="{DynamicResource AlchemySubtleSurfaceBrush}" BorderBrush="{DynamicResource AlchemyBorderStrongBrush}" BorderThickness="1">
+          <Grid>
+            <Image x:Name="CodIconPreview" Source="{Binding CodIconBitmap}" Stretch="Uniform"
+                AutomationProperties.Name="{Binding CodReferenceTitle}" />
+            <TextBlock Text="{Binding Text.CodDbIconUnavailable}" IsVisible="{Binding !CodHasIcon}" Classes="muted"
+                TextWrapping="Wrap" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center" />
+            <ProgressBar IsVisible="{Binding CodIsFetchingIcon}" IsIndeterminate="True" Height="4" VerticalAlignment="Bottom" />
+          </Grid>
+        </Border>
+
+        <StackPanel Grid.Row="2" Margin="14" Spacing="10">
+          <StackPanel Spacing="2">
+            <TextBlock Text="{Binding CodReferenceTitle}" FontWeight="SemiBold" TextWrapping="Wrap" />
+            <TextBlock Text="{Binding CodReferenceSubtitle}" Classes="muted" FontSize="11" TextWrapping="Wrap" />
+          </StackPanel>
+          <TextBlock Text="{Binding Text.CodDbReferenceHelp}" Classes="muted" FontSize="11" TextWrapping="Wrap" />
+          <WrapPanel>
+            <Button x:Name="CodFetchIconButton" Classes="primary" Margin="0,0,8,8" Click="FetchIconClick" IsVisible="{Binding !CodHasIcon}"
+                IsEnabled="{Binding CodCanFetchIcon}" Content="{Binding Text.CodDbFetchIcon}" AutomationProperties.Name="{Binding Text.CodDbFetchIcon}" />
+            <Button x:Name="CodRefreshIconButton" Classes="secondary" Margin="0,0,8,8" Click="RefreshIconClick" IsVisible="{Binding CodHasIcon}"
+                IsEnabled="{Binding CodCanFetchIcon}" Content="{Binding Text.CodDbRefreshIcon}" AutomationProperties.Name="{Binding Text.CodDbRefreshIcon}" />
+            <Button x:Name="CodCompareButton" Classes="secondary" Margin="0,0,8,8" Click="CompareWindowClick" IsEnabled="{Binding CodHasIcon}"
+                Content="{Binding Text.CodDbOpenCompare}" AutomationProperties.Name="{Binding Text.CodDbOpenCompare}" />
+            <Button x:Name="CodSaveIconButton" Classes="secondary" Margin="0,0,8,8" Click="SaveIconClick" IsEnabled="{Binding CodCanSaveIcon}"
+                Content="{Binding Text.CodDbSaveImage}" AutomationProperties.Name="{Binding Text.CodDbSaveImage}" />
+            <Button x:Name="CodOpenWikiButton" Classes="secondary" Margin="0,0,8,8" Click="OpenWikiClick" IsEnabled="{Binding CodHasWikiLink}"
+                Content="{Binding Text.CodDbOpenWiki}" AutomationProperties.Name="{Binding Text.CodDbOpenWiki}" />
+          </WrapPanel>
+          <TextBlock Text="{Binding CodIconStatus}" Classes="muted" FontSize="11" TextWrapping="Wrap" />
+          <TextBlock Text="{Binding CodIconAttribution}" Classes="muted" FontSize="11" TextWrapping="Wrap" />
+          <TextBlock Text="{Binding Text.CodDbAttributionHelp}" Classes="muted" FontSize="11" TextWrapping="Wrap" />
+        </StackPanel>
+      </Grid>
+    </Border>
+  </Grid>
+</UserControl>

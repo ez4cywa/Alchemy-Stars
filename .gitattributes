@@ -1,0 +1,4 @@
+# The bundled CODWeaponDB snapshot ships byte-for-byte: refresh-manifest.json
+# records SHA-256 values for it, so line-ending conversion must not touch these.
+fork/AlchemyStars/src/AlchemyStars.Avalonia/CodWeaponDb/*.jsonl -text
+fork/AlchemyStars/src/AlchemyStars.Avalonia/CodWeaponDb/*.json -text

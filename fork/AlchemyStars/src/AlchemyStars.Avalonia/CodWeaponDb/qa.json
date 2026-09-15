@@ -1,0 +1,648 @@
+{
+  "blueprint_coverage": {
+    "blueprint_count": 4679,
+    "fetched_at": "2026-09-14T07:55:51.285933+00:00",
+    "schema_version": 1,
+    "source_scope": "wiki-blueprints-only",
+    "unmatched_weapons": [
+      "mw2019:AUG",
+      "mw2019:AX-50",
+      "mw2019:JOKR",
+      "mw2019:M91",
+      "mw2019:PILA",
+      "mw2019:RPG-7",
+      "mw2019:Strela-P",
+      "bocw:AUG",
+      "bocw:Cigma 2",
+      "bocw:Mace",
+      "bocw:Magnum",
+      "bocw:QBZ 83",
+      "bocw:RPG-7",
+      "bocw:Scythe",
+      "vanguard:Armaguerra 43",
+      "vanguard:Cooper Carbine",
+      "vanguard:Double Barrel",
+      "vanguard:FS Fighting Knife",
+      "vanguard:Gracey Auto",
+      "vanguard:H4 Blixen",
+      "vanguard:KG M40",
+      "vanguard:Lienna 57",
+      "vanguard:M1 Bazooka",
+      "vanguard:M1916",
+      "vanguard:Marco 5",
+      "vanguard:MK11 Launcher",
+      "vanguard:Machine Pistol",
+      "vanguard:Nikita AVT",
+      "vanguard:Owen Gun",
+      "vanguard:Panzerfaust",
+      "vanguard:Panzerschreck",
+      "vanguard:RA 225",
+      "vanguard:Sawtooth",
+      "vanguard:Skål Crusher",
+      "vanguard:Type 11",
+      "vanguard:Type 99",
+      "vanguard:UGM-8",
+      "vanguard:Valois Revolver",
+      "vanguard:Welgun",
+      "vanguard:Whitley",
+      "mwii:Chimera",
+      "mwii:EBR-14",
+      "mwii:FR Avancer",
+      "mwii:FSSHurricane",
+      "mwii:ISO 9mm",
+      "mwii:JOKR",
+      "mwii:MX Guardian",
+      "mwii:MX9",
+      "mwii:PILA",
+      "mwii:Pickaxe",
+      "mwii:RAPP H",
+      "mwii:RPG-7",
+      "mwii:STRELA-P",
+      "mwii:Riot Shield",
+      "mwiii:AMR9",
+      "mwiii:BAL27",
+      "mwiii:Gladiator",
+      "mwiii:Holger-556",
+      "mwiii:KV Inhibtor",
+      "mwiii:Rival 9",
+      "mwiii:Sidewinder",
+      "mwiii:Striker",
+      "mwiii:Striker-9",
+      "bo6:Boxing Gloves",
+      "bo6:Cigma 2B",
+      "bo6:Chainsaw",
+      "bo6:Goblin Mk 2",
+      "bo6:Power drill",
+      "bo6:XMG",
+      "bo7:Coda 9",
+      "bo7:Ryden 45k",
+      "bo7:Siren",
+      "mw4:Axion",
+      "mw4:Hyeon Burst",
+      "mw4:Oden",
+      "mw4:Patriot XMR",
+      "mw4:Vel 46",
+      "mw4:Wz.55 Striga",
+      "mw4:X-58 Nyx",
+      "mw4:FiNN LMG",
+      "mw4:Type 73",
+      "mw4:Handheld Railgun",
+      "mw4:Minigun",
+      "mw4:MAR-9",
+      "mw4:Mosin-Nagant",
+      "mw4:Signal 50",
+      "mw4:KG-7 Vulcan",
+      "mw4:.50 GS",
+      "mw4:Krait P68",
+      "mw4:Sang 9mm",
+      "mw4:JOKR",
+      "mw4:RPG-8",
+      "mw4:PILA",
+      "mw4:Defibrillator",
+      "mw4:Riotshield",
+      "mw4:Knife",
+      "mw4:Fists"
+    ]
+  },
+  "classification": {
+    "classified_record_count": 564,
+    "method": "explicit-codename-prefix",
+    "unclassified_reason": "GitHub table has no class column and codename has no recognized class prefix",
+    "unclassified_record_count": 687
+  },
+  "coverage": {
+    "game_count": 27,
+    "record_count": 1251,
+    "weapon_class_counts": {
+      "Assault Rifle": 117,
+      "Battle Rifle": 10,
+      "Handgun": 52,
+      "Launcher": 29,
+      "Light Machine Gun": 52,
+      "Marksman Rifle": 30,
+      "Melee": 69,
+      "Shotgun": 42,
+      "Sniper Rifle": 53,
+      "Special": 8,
+      "Submachine Gun": 102,
+      "Unknown": 687
+    }
+  },
+  "issue_count": 0,
+  "issues": [],
+  "primary_sources": [
+    {
+      "added_record_count": 1251,
+      "commit_sha": "c1b3b9fc6ef0b5787d31b32aa5740146cfd0a51c",
+      "commit_timestamp": "2026-08-27T16:32:00+01:00",
+      "conflict_count": 0,
+      "conflicts": [],
+      "corroborated_record_count": 0,
+      "duplicate_record_count": 0,
+      "input_record_count": 1251,
+      "license_status": "not_declared",
+      "repository": "SadSlothXL/COD-Weapon-codenames",
+      "source_id": "sadslothxl-cod-weapon-codenames",
+      "source_mode": "github-only",
+      "source_snapshot": {
+        "commit_sha": "c1b3b9fc6ef0b5787d31b32aa5740146cfd0a51c",
+        "commit_timestamp": "2026-08-27T16:32:00+01:00",
+        "file_count": 27,
+        "files": [
+          {
+            "blob_sha": "d489ec3bed3258b350944d1f3daf9178beedbb51",
+            "content_sha256": "6b3be8b7cbbcbcfeddef29e443630ca26d8a82c4663c45f7d4e5ed5ce1dfbc97",
+            "game_id": "cod",
+            "parsed_record_count": 17,
+            "path": "Games/IW CoD.md",
+            "skipped_unnamed_row_count": 0
+          },
+          {
+            "blob_sha": "7709a4660d90454b33fec59c999fcf21c146f0e7",
+            "content_sha256": "d2c5ea81d9dde0d198c0a3be317b0c0c52ffecbdaeebe42cff47cdc9228d3cd1",
+            "game_id": "cod2",
+            "parsed_record_count": 23,
+            "path": "Games/IW2 CoD2.md",
+            "skipped_unnamed_row_count": 0
+          },
+          {
+            "blob_sha": "d3a558e5043b199132fbab9b63d922a0edf6a578",
+            "content_sha256": "00da8f5bc5810c0f43c79ea56af49b351928a00cc9b4ad24ec207640bd1feabe",
+            "game_id": "cod3",
+            "parsed_record_count": 0,
+            "path": "Games/cod3.md",
+            "skipped_unnamed_row_count": 0
+          },
+          {
+            "blob_sha": "ad94d3029490388ed18eaf4477fd0129815a1c87",
+            "content_sha256": "75f097e86fdc8816c0f292323ce1a48209fcedeae90fc7378c658191311784c4",
+            "game_id": "cod4",
+            "parsed_record_count": 27,
+            "path": "Games/IW3 CoD4.md",
+            "skipped_unnamed_row_count": 0
+          },
+          {
+            "blob_sha": "baf8ef1fb498f79e45a8320d46debe224f93533b",
+            "content_sha256": "7e3a761cb9c4a0d597bd5c7061e157811a3e700be0e3578d396d53c19a242d16",
+            "game_id": "waw",
+            "parsed_record_count": 28,
+            "path": "Games/T4 WaW.md",
+            "skipped_unnamed_row_count": 0
+          },
+          {
+            "blob_sha": "aaca5fa4259e03121283b1bca32791a396f3bd1f",
+            "content_sha256": "46ee2f7dff0ca54cd9a2f2b01a2a5a580c70d2dcc640815c2576d4d58803e653",
+            "game_id": "mw2",
+            "parsed_record_count": 41,
+            "path": "Games/IW4 MW2.md",
+            "skipped_unnamed_row_count": 0
+          },
+          {
+            "blob_sha": "fc5aa17c426fbd30846dea970cebcf13bbad58cb",
+            "content_sha256": "0649c9810468b89ad4054763a09d84717d758b3d9d175de7e29d618ae423cef7",
+            "game_id": "bo",
+            "parsed_record_count": 42,
+            "path": "Games/T5 BO.md",
+            "skipped_unnamed_row_count": 0
+          },
+          {
+            "blob_sha": "dd4ad37f47d162c5a887b731a3e63da0b682d286",
+            "content_sha256": "8d8f038f86c373314b14e2ee99bb1337569ef6b34f06467d56af61d82ecbb1c5",
+            "game_id": "future_warfare",
+            "parsed_record_count": 0,
+            "path": "Games/NX1 FW.md",
+            "skipped_unnamed_row_count": 0
+          },
+          {
+            "blob_sha": "d7f6fc7af967d8ebbb8f9a2b2b3f684a8ab38c94",
+            "content_sha256": "f7ce131227ab11b75d324bcf66a5f5a84be64c637e99acebc9367c7253f834a3",
+            "game_id": "mw3",
+            "parsed_record_count": 50,
+            "path": "Games/IW5 MW3.md",
+            "skipped_unnamed_row_count": 0
+          },
+          {
+            "blob_sha": "864ff631faa8b7bdc7f21df859226b9992f044d1",
+            "content_sha256": "5a27ab461a2a601f180addc9c52f2ccfb46924cfc5cbe543d87d423bff391fd1",
+            "game_id": "bo2",
+            "parsed_record_count": 40,
+            "path": "Games/T6 BO2.md",
+            "skipped_unnamed_row_count": 0
+          },
+          {
+            "blob_sha": "373ff09fcd68fabb235a511a2a1de633b882b672",
+            "content_sha256": "900910b243d2183177f81e2d3ee76b6e2aa42bc82f4445135c5386985a2db32e",
+            "game_id": "ghosts",
+            "parsed_record_count": 44,
+            "path": "Games/IW6 Ghosts.md",
+            "skipped_unnamed_row_count": 0
+          },
+          {
+            "blob_sha": "46c6f5ede8abcf33721d37bc535fe70bcf7a07fe",
+            "content_sha256": "2f31e0e71ebb7cb72f2ca444ea2b22fa0407bf1c955604c2c98adb0e11cbf06e",
+            "game_id": "advanced_warfare",
+            "parsed_record_count": 50,
+            "path": "Games/S1 AW.md",
+            "skipped_unnamed_row_count": 0
+          },
+          {
+            "blob_sha": "8381b41d859e541735c51f3601a62552384804b0",
+            "content_sha256": "9a3ea4391c0071b9aefccbada3b90dcdfc7cb88a4af3354c2d5e2a73bd5c66c5",
+            "game_id": "bo3",
+            "parsed_record_count": 82,
+            "path": "Games/T7 BO3.md",
+            "skipped_unnamed_row_count": 0
+          },
+          {
+            "blob_sha": "e02c461ab1b70c632d6be331bcf01b2121b80ed7",
+            "content_sha256": "8ec683f5e8532ec128ef7ff559fc37ac5ddcc7d532262e8818a2a58acd6392da",
+            "game_id": "codo",
+            "parsed_record_count": 0,
+            "path": "Games/CODO.md",
+            "skipped_unnamed_row_count": 0
+          },
+          {
+            "blob_sha": "1c2198f2caab555fccea04abdbed93d03265e100",
+            "content_sha256": "976b4c5247c1629212df009338369251c101c630728f6cdd4e3e20ed3bfda175",
+            "game_id": "infinite_warfare",
+            "parsed_record_count": 51,
+            "path": "Games/IW7 IW.md",
+            "skipped_unnamed_row_count": 0
+          },
+          {
+            "blob_sha": "33cdc334bb6ea0e2493829bb81e825f5da656be7",
+            "content_sha256": "e3b2e32028d3eae62101712534d677b2567d0fefe1c98f07b5bff02e0c542b98",
+            "game_id": "mwr",
+            "parsed_record_count": 70,
+            "path": "Games/H1 MWR.md",
+            "skipped_unnamed_row_count": 0
+          },
+          {
+            "blob_sha": "8bd98a622f6dee36878c0cfead5048a59066e7a8",
+            "content_sha256": "cd79bed68b056b36f1e8d29e3104f7230b8079dcf2cbae2f7f56c94f9026cf34",
+            "game_id": "wwii",
+            "parsed_record_count": 81,
+            "path": "Games/S2 WW2.md",
+            "skipped_unnamed_row_count": 0
+          },
+          {
+            "blob_sha": "c539cd66bd4cc2976df2ef0571b7c9ddca526714",
+            "content_sha256": "9dcae60caf972716b18f9e13d26a61f3ec3dea20766a635d551b3314f03e407d",
+            "game_id": "bo4",
+            "parsed_record_count": 70,
+            "path": "Games/T8 BO4.md",
+            "skipped_unnamed_row_count": 0
+          },
+          {
+            "blob_sha": "bc5b66abed2dcbbb86d884b91124cdbe0845f8e7",
+            "content_sha256": "107ad8b193fb74edfd3905aacd4652554f45ef16f41246968ae530b5c1c3812a",
+            "game_id": "mw2019",
+            "parsed_record_count": 61,
+            "path": "Games/IW8 MW19.md",
+            "skipped_unnamed_row_count": 0
+          },
+          {
+            "blob_sha": "2b9c017a400c50f364961be0f1a184a4852cff68",
+            "content_sha256": "e1c4b6d0ff3e11215de632494966a9560800c852c5c5070fa4807f75530019b0",
+            "game_id": "bocw",
+            "parsed_record_count": 70,
+            "path": "Games/T9 BOCW.md",
+            "skipped_unnamed_row_count": 0
+          },
+          {
+            "blob_sha": "c4b1db40b7336286604eb95692811f22a10bf6ac",
+            "content_sha256": "952369a74a3085870eb8871869fa646bc39af4ac52fd7c7a56245cd52578393f",
+            "game_id": "mw2cr",
+            "parsed_record_count": 46,
+            "path": "Games/H2 MW2CR.md",
+            "skipped_unnamed_row_count": 0
+          },
+          {
+            "blob_sha": "1cf4e77ee173e92e1cd229141919aa36447a9801",
+            "content_sha256": "67f940459279f3ad5515efcf19b0a52f85287769c83f45daffdea484efd749bc",
+            "game_id": "vanguard",
+            "parsed_record_count": 61,
+            "path": "Games/S4 VG.md",
+            "skipped_unnamed_row_count": 0
+          },
+          {
+            "blob_sha": "05d4bfa596544da2bf1127cc921e6959d5963f76",
+            "content_sha256": "2f2de939d2a87ea4179083e1b4aacf98b6409e806fbd95836c20c8ffdd14d0a1",
+            "game_id": "mwii",
+            "parsed_record_count": 77,
+            "path": "Games/IW9 MW22.md",
+            "skipped_unnamed_row_count": 0
+          },
+          {
+            "blob_sha": "58918fe46392c48c6157f079b8028cf9c696e2c6",
+            "content_sha256": "00475feb810efbd0d3865dc1292e13fa2ceabbe1450aef8f238a32b30e02eb06",
+            "game_id": "mwiii",
+            "parsed_record_count": 63,
+            "path": "Games/JUP MW23.md",
+            "skipped_unnamed_row_count": 0
+          },
+          {
+            "blob_sha": "3c9294ef47e07aac97421bae96f12b6fe158bb8d",
+            "content_sha256": "0beccfad8d978f13cdfb4bcfc438255ffd6f9524a1604ff1fc64a46805b59b87",
+            "game_id": "bo6",
+            "parsed_record_count": 67,
+            "path": "Games/T10 BO6.md",
+            "skipped_unnamed_row_count": 0
+          },
+          {
+            "blob_sha": "813bb97f07a8e613d885877fd960f4817f915663",
+            "content_sha256": "077d01f2b1d9e6a259df60fce95e4224f04598a9d09a185e6bb5c958dbba3084",
+            "game_id": "bo7",
+            "parsed_record_count": 58,
+            "path": "Games/SAT BO7.md",
+            "skipped_unnamed_row_count": 0
+          },
+          {
+            "blob_sha": "984c1f0db5167b764ed17282ea8c514c00b99c3e",
+            "content_sha256": "0669c2abe0bbaec65e3db6c867787fa17d58072c781f10e0b1f8b70e29ca61bd",
+            "game_id": "mw4",
+            "parsed_record_count": 32,
+            "path": "Games/REX MW4.md",
+            "skipped_unnamed_row_count": 0
+          }
+        ],
+        "game_catalog": [
+          {
+            "engine_code": "IW",
+            "game_id": "cod",
+            "parsed_record_count": 17,
+            "path": "Games/IW CoD.md",
+            "release_year": 2003,
+            "short_name": "COD",
+            "title": "Call of Duty"
+          },
+          {
+            "engine_code": "IW2",
+            "game_id": "cod2",
+            "parsed_record_count": 23,
+            "path": "Games/IW2 CoD2.md",
+            "release_year": 2005,
+            "short_name": "COD2",
+            "title": "Call of Duty 2"
+          },
+          {
+            "engine_code": "COD3",
+            "game_id": "cod3",
+            "parsed_record_count": 0,
+            "path": "Games/cod3.md",
+            "release_year": 2006,
+            "short_name": "COD3",
+            "title": "Call of Duty 3"
+          },
+          {
+            "engine_code": "IW3",
+            "game_id": "cod4",
+            "parsed_record_count": 27,
+            "path": "Games/IW3 CoD4.md",
+            "release_year": 2007,
+            "short_name": "COD4",
+            "title": "Call of Duty 4: Modern Warfare"
+          },
+          {
+            "engine_code": "T4",
+            "game_id": "waw",
+            "parsed_record_count": 28,
+            "path": "Games/T4 WaW.md",
+            "release_year": 2008,
+            "short_name": "WaW",
+            "title": "Call of Duty: World at War"
+          },
+          {
+            "engine_code": "IW4",
+            "game_id": "mw2",
+            "parsed_record_count": 41,
+            "path": "Games/IW4 MW2.md",
+            "release_year": 2009,
+            "short_name": "MW2",
+            "title": "Call of Duty: Modern Warfare 2"
+          },
+          {
+            "engine_code": "T5",
+            "game_id": "bo",
+            "parsed_record_count": 42,
+            "path": "Games/T5 BO.md",
+            "release_year": 2010,
+            "short_name": "BO",
+            "title": "Call of Duty: Black Ops"
+          },
+          {
+            "engine_code": "NX1",
+            "game_id": "future_warfare",
+            "parsed_record_count": 0,
+            "path": "Games/NX1 FW.md",
+            "release_year": 2011,
+            "short_name": "FW",
+            "title": "Call of Duty:Future Warfare"
+          },
+          {
+            "engine_code": "IW5",
+            "game_id": "mw3",
+            "parsed_record_count": 50,
+            "path": "Games/IW5 MW3.md",
+            "release_year": 2011,
+            "short_name": "MW3",
+            "title": "Call of Duty: Modern Warfare 3"
+          },
+          {
+            "engine_code": "T6",
+            "game_id": "bo2",
+            "parsed_record_count": 40,
+            "path": "Games/T6 BO2.md",
+            "release_year": 2012,
+            "short_name": "BO2",
+            "title": "Call of Duty: Black Ops II"
+          },
+          {
+            "engine_code": "IW6",
+            "game_id": "ghosts",
+            "parsed_record_count": 44,
+            "path": "Games/IW6 Ghosts.md",
+            "release_year": 2013,
+            "short_name": "Ghosts",
+            "title": "Call of Duty: Ghosts"
+          },
+          {
+            "engine_code": "S1",
+            "game_id": "advanced_warfare",
+            "parsed_record_count": 50,
+            "path": "Games/S1 AW.md",
+            "release_year": 2014,
+            "short_name": "AW",
+            "title": "Call of Duty: Advanced Warfare"
+          },
+          {
+            "engine_code": "T7",
+            "game_id": "bo3",
+            "parsed_record_count": 82,
+            "path": "Games/T7 BO3.md",
+            "release_year": 2015,
+            "short_name": "BO3",
+            "title": "Call of Duty: Black Ops III"
+          },
+          {
+            "engine_code": "OL",
+            "game_id": "codo",
+            "parsed_record_count": 0,
+            "path": "Games/CODO.md",
+            "release_year": 2015,
+            "short_name": "CODO",
+            "title": "Call of Duty Online"
+          },
+          {
+            "engine_code": "IW7",
+            "game_id": "infinite_warfare",
+            "parsed_record_count": 51,
+            "path": "Games/IW7 IW.md",
+            "release_year": 2016,
+            "short_name": "IW",
+            "title": "Call of Duty: Infinite Warfare"
+          },
+          {
+            "engine_code": "H1",
+            "game_id": "mwr",
+            "parsed_record_count": 70,
+            "path": "Games/H1 MWR.md",
+            "release_year": 2016,
+            "short_name": "MWR",
+            "title": "Call of Duty: Modern Warfare Remastered"
+          },
+          {
+            "engine_code": "S2",
+            "game_id": "wwii",
+            "parsed_record_count": 81,
+            "path": "Games/S2 WW2.md",
+            "release_year": 2017,
+            "short_name": "WWII",
+            "title": "Call of Duty: WWII"
+          },
+          {
+            "engine_code": "T8",
+            "game_id": "bo4",
+            "parsed_record_count": 70,
+            "path": "Games/T8 BO4.md",
+            "release_year": 2018,
+            "short_name": "BO4",
+            "title": "Call of Duty: Black Ops 4"
+          },
+          {
+            "engine_code": "IW8",
+            "game_id": "mw2019",
+            "parsed_record_count": 61,
+            "path": "Games/IW8 MW19.md",
+            "release_year": 2019,
+            "short_name": "MW19",
+            "title": "Call of Duty: Modern Warfare"
+          },
+          {
+            "engine_code": "T9",
+            "game_id": "bocw",
+            "parsed_record_count": 70,
+            "path": "Games/T9 BOCW.md",
+            "release_year": 2020,
+            "short_name": "BOCW",
+            "title": "Call of Duty: Black Ops Cold War"
+          },
+          {
+            "engine_code": "H2",
+            "game_id": "mw2cr",
+            "parsed_record_count": 46,
+            "path": "Games/H2 MW2CR.md",
+            "release_year": 2020,
+            "short_name": "MW2CR",
+            "title": "Call of Duty: Modern Warfare 2 Campaign Remastered"
+          },
+          {
+            "engine_code": "S4",
+            "game_id": "vanguard",
+            "parsed_record_count": 61,
+            "path": "Games/S4 VG.md",
+            "release_year": 2021,
+            "short_name": "Vanguard",
+            "title": "Call of Duty: Vanguard"
+          },
+          {
+            "engine_code": "IW9",
+            "game_id": "mwii",
+            "parsed_record_count": 77,
+            "path": "Games/IW9 MW22.md",
+            "release_year": 2022,
+            "short_name": "MWII",
+            "title": "Call of Duty: Modern Warfare II (2022)"
+          },
+          {
+            "engine_code": "JUP",
+            "game_id": "mwiii",
+            "parsed_record_count": 63,
+            "path": "Games/JUP MW23.md",
+            "release_year": 2023,
+            "short_name": "MWIII",
+            "title": "Call of Duty: Modern Warfare III (2023)"
+          },
+          {
+            "engine_code": "T10",
+            "game_id": "bo6",
+            "parsed_record_count": 67,
+            "path": "Games/T10 BO6.md",
+            "release_year": 2024,
+            "short_name": "BO6",
+            "title": "Call of Duty: Black Ops 6"
+          },
+          {
+            "engine_code": "SAT",
+            "game_id": "bo7",
+            "parsed_record_count": 58,
+            "path": "Games/SAT BO7.md",
+            "release_year": 2025,
+            "short_name": "BO7",
+            "title": "Call of Duty: Black Ops 7"
+          },
+          {
+            "engine_code": "REX",
+            "game_id": "mw4",
+            "parsed_record_count": 32,
+            "path": "Games/REX MW4.md",
+            "release_year": 2026,
+            "short_name": "MW4",
+            "title": "Call of Duty: Modern Warfare 4"
+          }
+        ],
+        "game_count": 27,
+        "license_spdx": null,
+        "license_status": "not_declared",
+        "parsed_record_count": 1251,
+        "readme_blob_sha": "a8d9470542fce2f236aacebcca6ff34ed5f667ea",
+        "readme_sha256": "3b0278088f9984e8985bbde0c19be2c7f9443877566d69c716d1fd13094d8272",
+        "repository": "SadSlothXL/COD-Weapon-codenames",
+        "skipped_unnamed_row_count": 0,
+        "source_id": "sadslothxl-cod-weapon-codenames",
+        "unmatched_game_ids": []
+      }
+    }
+  ],
+  "resolved_issue_count": 0,
+  "snapshot": {
+    "blueprint_count": 4679,
+    "blueprint_fetched_at": "2026-09-14T07:55:51.285933+00:00",
+    "effective_as_of": "2026-08-27T16:32:00+01:00",
+    "github_supplemental_commit": "c1b3b9fc6ef0b5787d31b32aa5740146cfd0a51c",
+    "github_supplemental_commit_timestamp": "2026-08-27T16:32:00+01:00",
+    "github_supplemental_enabled": true,
+    "github_supplemental_game_catalog_json": "[{\"engine_code\":\"IW\",\"game_id\":\"cod\",\"parsed_record_count\":17,\"path\":\"Games/IW CoD.md\",\"release_year\":2003,\"short_name\":\"COD\",\"title\":\"Call of Duty\"},{\"engine_code\":\"IW2\",\"game_id\":\"cod2\",\"parsed_record_count\":23,\"path\":\"Games/IW2 CoD2.md\",\"release_year\":2005,\"short_name\":\"COD2\",\"title\":\"Call of Duty 2\"},{\"engine_code\":\"COD3\",\"game_id\":\"cod3\",\"parsed_record_count\":0,\"path\":\"Games/cod3.md\",\"release_year\":2006,\"short_name\":\"COD3\",\"title\":\"Call of Duty 3\"},{\"engine_code\":\"IW3\",\"game_id\":\"cod4\",\"parsed_record_count\":27,\"path\":\"Games/IW3 CoD4.md\",\"release_year\":2007,\"short_name\":\"COD4\",\"title\":\"Call of Duty 4: Modern Warfare\"},{\"engine_code\":\"T4\",\"game_id\":\"waw\",\"parsed_record_count\":28,\"path\":\"Games/T4 WaW.md\",\"release_year\":2008,\"short_name\":\"WaW\",\"title\":\"Call of Duty: World at War\"},{\"engine_code\":\"IW4\",\"game_id\":\"mw2\",\"parsed_record_count\":41,\"path\":\"Games/IW4 MW2.md\",\"release_year\":2009,\"short_name\":\"MW2\",\"title\":\"Call of Duty: Modern Warfare 2\"},{\"engine_code\":\"T5\",\"game_id\":\"bo\",\"parsed_record_count\":42,\"path\":\"Games/T5 BO.md\",\"release_year\":2010,\"short_name\":\"BO\",\"title\":\"Call of Duty: Black Ops\"},{\"engine_code\":\"NX1\",\"game_id\":\"future_warfare\",\"parsed_record_count\":0,\"path\":\"Games/NX1 FW.md\",\"release_year\":2011,\"short_name\":\"FW\",\"title\":\"Call of Duty:Future Warfare\"},{\"engine_code\":\"IW5\",\"game_id\":\"mw3\",\"parsed_record_count\":50,\"path\":\"Games/IW5 MW3.md\",\"release_year\":2011,\"short_name\":\"MW3\",\"title\":\"Call of Duty: Modern Warfare 3\"},{\"engine_code\":\"T6\",\"game_id\":\"bo2\",\"parsed_record_count\":40,\"path\":\"Games/T6 BO2.md\",\"release_year\":2012,\"short_name\":\"BO2\",\"title\":\"Call of Duty: Black Ops II\"},{\"engine_code\":\"IW6\",\"game_id\":\"ghosts\",\"parsed_record_count\":44,\"path\":\"Games/IW6 Ghosts.md\",\"release_year\":2013,\"short_name\":\"Ghosts\",\"title\":\"Call of Duty: Ghosts\"},{\"engine_code\":\"S1\",\"game_id\":\"advanced_warfare\",\"parsed_record_count\":50,\"path\":\"Games/S1 AW.md\",\"release_year\":2014,\"short_name\":\"AW\",\"title\":\"Call of Duty: Advanced Warfare\"},{\"engine_code\":\"T7\",\"game_id\":\"bo3\",\"parsed_record_count\":82,\"path\":\"Games/T7 BO3.md\",\"release_year\":2015,\"short_name\":\"BO3\",\"title\":\"Call of Duty: Black Ops III\"},{\"engine_code\":\"OL\",\"game_id\":\"codo\",\"parsed_record_count\":0,\"path\":\"Games/CODO.md\",\"release_year\":2015,\"short_name\":\"CODO\",\"title\":\"Call of Duty Online\"},{\"engine_code\":\"IW7\",\"game_id\":\"infinite_warfare\",\"parsed_record_count\":51,\"path\":\"Games/IW7 IW.md\",\"release_year\":2016,\"short_name\":\"IW\",\"title\":\"Call of Duty: Infinite Warfare\"},{\"engine_code\":\"H1\",\"game_id\":\"mwr\",\"parsed_record_count\":70,\"path\":\"Games/H1 MWR.md\",\"release_year\":2016,\"short_name\":\"MWR\",\"title\":\"Call of Duty: Modern Warfare Remastered\"},{\"engine_code\":\"S2\",\"game_id\":\"wwii\",\"parsed_record_count\":81,\"path\":\"Games/S2 WW2.md\",\"release_year\":2017,\"short_name\":\"WWII\",\"title\":\"Call of Duty: WWII\"},{\"engine_code\":\"T8\",\"game_id\":\"bo4\",\"parsed_record_count\":70,\"path\":\"Games/T8 BO4.md\",\"release_year\":2018,\"short_name\":\"BO4\",\"title\":\"Call of Duty: Black Ops 4\"},{\"engine_code\":\"IW8\",\"game_id\":\"mw2019\",\"parsed_record_count\":61,\"path\":\"Games/IW8 MW19.md\",\"release_year\":2019,\"short_name\":\"MW19\",\"title\":\"Call of Duty: Modern Warfare\"},{\"engine_code\":\"T9\",\"game_id\":\"bocw\",\"parsed_record_count\":70,\"path\":\"Games/T9 BOCW.md\",\"release_year\":2020,\"short_name\":\"BOCW\",\"title\":\"Call of Duty: Black Ops Cold War\"},{\"engine_code\":\"H2\",\"game_id\":\"mw2cr\",\"parsed_record_count\":46,\"path\":\"Games/H2 MW2CR.md\",\"release_year\":2020,\"short_name\":\"MW2CR\",\"title\":\"Call of Duty: Modern Warfare 2 Campaign Remastered\"},{\"engine_code\":\"S4\",\"game_id\":\"vanguard\",\"parsed_record_count\":61,\"path\":\"Games/S4 VG.md\",\"release_year\":2021,\"short_name\":\"Vanguard\",\"title\":\"Call of Duty: Vanguard\"},{\"engine_code\":\"IW9\",\"game_id\":\"mwii\",\"parsed_record_count\":77,\"path\":\"Games/IW9 MW22.md\",\"release_year\":2022,\"short_name\":\"MWII\",\"title\":\"Call of Duty: Modern Warfare II (2022)\"},{\"engine_code\":\"JUP\",\"game_id\":\"mwiii\",\"parsed_record_count\":63,\"path\":\"Games/JUP MW23.md\",\"release_year\":2023,\"short_name\":\"MWIII\",\"title\":\"Call of Duty: Modern Warfare III (2023)\"},{\"engine_code\":\"T10\",\"game_id\":\"bo6\",\"parsed_record_count\":67,\"path\":\"Games/T10 BO6.md\",\"release_year\":2024,\"short_name\":\"BO6\",\"title\":\"Call of Duty: Black Ops 6\"},{\"engine_code\":\"SAT\",\"game_id\":\"bo7\",\"parsed_record_count\":58,\"path\":\"Games/SAT BO7.md\",\"release_year\":2025,\"short_name\":\"BO7\",\"title\":\"Call of Duty: Black Ops 7\"},{\"engine_code\":\"REX\",\"game_id\":\"mw4\",\"parsed_record_count\":32,\"path\":\"Games/REX MW4.md\",\"release_year\":2026,\"short_name\":\"MW4\",\"title\":\"Call of Duty: Modern Warfare 4\"}]",
+    "github_supplemental_game_count": 27,
+    "github_supplemental_license_spdx": "",
+    "github_supplemental_license_status": "not_declared",
+    "github_supplemental_record_count": 1251,
+    "github_supplemental_repository": "SadSlothXL/COD-Weapon-codenames",
+    "manifest_sha256": "0d79bd6e0a4e4f2676ef07148ca9f516152c23c9bd2b1bc4e9e80fcfce7c257a",
+    "refresh_mode": "offline_cached",
+    "source_mode": "github-only",
+    "unclassified_record_count": 687,
+    "wiki_scope": "blueprints-only"
+  },
+  "source_mode": "github-only"
+}

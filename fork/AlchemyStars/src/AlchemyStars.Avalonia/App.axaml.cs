@@ -80,6 +80,10 @@ public sealed partial class App : Application
                         await WindowChromeSmoke.RunAsync(mainWindow, viewModel);
                     if (Program.SharedBaseBatchSmokeRequested)
                         await SharedBaseBatchUiSmoke.RunAsync(mainWindow);
+                    if (Program.CodWeaponDbUiSmokeRequested)
+                        await CodWeaponDbUiSmoke.RunAsync(mainWindow, viewModel);
+                    if (viewModel.IsCodWeaponDbPage)
+                        await viewModel.WaitForCodWeaponDbAsync(TimeSpan.FromSeconds(60));
                     if (Program.AppearanceSmokeRequested)
                         await AppearanceSmoke.RunAsync(mainWindow, viewModel);
                     if (Program.AppearanceSamplesSmokeRequested)

@@ -2,9 +2,11 @@
 
 # Alchemy Stars Avalonia preview quick guide
 
-This guide applies to `1.3.0-preview.28`. WPF v1.1.9 remains the supported release until .NET 11 GA.
+This guide applies to `1.3.0-preview.29`. WPF v1.1.9 remains the supported release until .NET 11 GA.
 
-The sidebar switches between Animation blend, Model parts, Dual merge, Settings and About. It shows icons and labels at normal widths and collapses to icons in narrow windows. The base-animation library sits on the left, a real CAST preview in the center, composition layers across the bottom, and collapsible properties on the right. Drag the dividers or focus them and use arrow keys to resize panels. Icon commands have localized tooltips and UI Automation names; the titlebar displays the current page, with window controls at the upper right.
+The sidebar switches between Animation blend, Model parts, Dual merge, COD weapon DB, Settings and About. It shows icons and labels at normal widths and collapses to icons in narrow windows. The base-animation library sits on the left, a real CAST preview in the center, composition layers across the bottom, and collapsible properties on the right. Drag the dividers or focus them and use arrow keys to resize panels. Icon commands have localized tooltips and UI Automation names; the titlebar displays the current page, with window controls at the upper right.
+
+COD weapon DB (Ctrl+6) looks weapon names and console codenames up offline and fetches reference icons from the Call of Duty Wiki for comparison. See the [COD weapon database guide (Chinese)](cod-weapon-db.zh-CN.md).
 
 1. Open **Model parts** and add view hands first, then the weapon and attachments. Each CAST is classified from its skeleton topology; the inspector shows confidence and evidence, recommends `tag_weapon` for weapons, and lets you override either field. Low-confidence or unreadable files retain a visible review path. Existing `.aprj` entries are not reclassified when opened.
 2. Open **Animation blend** and add the base animation. Paths remain editable and accept pasted Windows **Copy as path** values.
@@ -52,9 +54,9 @@ If a layer is selected, each file replaces that slot and retains its offset and 
 
 ## Windows 2000 classic desktop theme
 
-Choose **Windows 2000 · Classic desktop** in Settings → Interface style for gray beveled controls, navy title and selection states, and 34 matching pixel-grid icons. Light, dark and system modes are supported and persisted across restarts, without modifying projects. Custom theme JSON can also use `windows-2000` as its `baseStyle`.
+Choose **Windows 2000 · Classic desktop** in Settings → Interface style for gray beveled controls, navy title and selection states, and 35 matching pixel-grid icons. Light, dark and system modes are supported and persisted across restarts, without modifying projects. Custom theme JSON can also use `windows-2000` as its `baseStyle`.
 
-For Ubuntu GTK/Yaru controls, import `Samples/Ubuntu-Yaru/theme.json` and `Samples/Ubuntu-Yaru/icons.zip` separately. This enables independent GTK/Yaru-inspired Avalonia templates and 34 icons in light/dark modes. Theme JSON selects `baseStyle: "ubuntu-yaru"` and supports `Gtk` material tokens. Requires preview.22 or later; no GTK runtime or external GTK CSS/XML is loaded.
+For Ubuntu GTK/Yaru controls, import `Samples/Ubuntu-Yaru/theme.json` and `Samples/Ubuntu-Yaru/icons.zip` separately. This enables independent GTK/Yaru-inspired Avalonia templates and 35 icons in light/dark modes. Theme JSON selects `baseStyle: "ubuntu-yaru"` and supports `Gtk` material tokens. Requires preview.22 or later; no GTK runtime or external GTK CSS/XML is loaded.
 
 ## GitHub updates
 
@@ -68,13 +70,13 @@ Appearance settings are below Utilities in Settings.
 
 Settings provides the Original, Classic Apple and Windows XP styles. Original uses the modern desktop controls with its original icons. The standalone Modern desktop style has been removed; its saved preference migrates to Original. Choose light, dark or system appearance, or use the one-click light/dark switch. Appearance preferences are saved separately from animation projects.
 
-Preview.15 completely redraws Classic Apple controls and all 34 functional icons in an independent platinum-light/graphite-dark skin. Windows XP also has its own controls and 34 matching icons.
+Preview.15 completely redraws Classic Apple controls and all 35 functional icons in an independent platinum-light/graphite-dark skin. Windows XP also has its own controls and 35 matching icons.
 
 - Import a theme: edit the bundled `Samples/Appearance/theme.json`, then choose Import theme in Settings. Use `version: 1`, a theme `name` and a built-in `baseStyle`; `light` and `dark` contain color token values, while `radii` contains control corner radii.
 - Import icons: replace named PNG files in `Samples/Appearance/icons-template.zip`, repackage as ZIP, then choose Import icons. Partial packs are supported; omitted icons retain their built-in appearance.
 - Restore defaults: use Remove custom theme and Restore built-in icons separately. Themes and icon packs are independent; original import files and animation projects are not deleted.
 
-Selecting a built-in theme disables custom colors and radii but keeps custom icons active. Imports are copied into the settings directory and persist across restarts. The bundled `Samples/Appearance/README.zh-CN.md` documents every token, all 34 icon names and import limits in Chinese.
+Selecting a built-in theme disables custom colors and radii but keeps custom icons active. Imports are copied into the settings directory and persist across restarts. The bundled `Samples/Appearance/README.zh-CN.md` documents every token, all 35 icon names and import limits in Chinese.
 
 ## Merged CAST preview
 

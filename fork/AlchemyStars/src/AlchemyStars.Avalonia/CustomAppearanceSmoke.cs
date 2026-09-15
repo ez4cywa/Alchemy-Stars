@@ -196,7 +196,7 @@ internal static class CustomAppearanceSmoke
             vm.ImportAppearance(Path.Combine(sampleDirectory, "theme.json"), false);
             Require(CustomAppearance.CurrentTheme?.Name == "Forest / 森林", "Shipped theme sample is not the expected Forest theme.");
             vm.ImportAppearance(Path.Combine(sampleDirectory, "icons-template.zip"), true);
-            Require(CustomAppearance.IconCount == 34, "Shipped icon sample does not contain all 34 icons.");
+            Require(CustomAppearance.IconCount == 35, "Shipped icon sample does not contain all 35 icons.");
             foreach (var palette in new[] { 0, 1 })
             {
                 vm.ThemeModeIndex = palette;
@@ -206,7 +206,7 @@ internal static class CustomAppearanceSmoke
                 image.Render(window);
                 image.Save(Path.Combine(outputDirectory, $"forest-{(palette == 0 ? "light" : "dark")}.png"), PngBitmapEncoderOptions.Default);
             }
-            Console.WriteLine("Shipped appearance samples: JSON theme, 34 PNG icons, light/dark render PASS.");
+            Console.WriteLine("Shipped appearance samples: JSON theme, 35 PNG icons, light/dark render PASS.");
         }
         finally
         {

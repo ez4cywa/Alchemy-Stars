@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.3.0-preview.29 — 2026-09-14 (COD weapon database and wiki reference icons)
+
+Chinese release notes: [更新日志](docs/releases/1.3.0-preview.29.zh-CN.md). Includes the preview.28 changes below.
+
+- Add a left-sidebar COD weapon database page (Ctrl+6) that searches the bundled CODWeaponDB v0.12.0 snapshot offline: relevance-ranked codename lookup, codename-prefix/game/class filters, blueprint entries and per-record source links.
+- Add Import data folder to replace the bundled snapshot with any CODWeaponDB `dist` folder, remembered across restarts, and Restore bundled snapshot. Folders without `weapons.jsonl` and malformed records fail loudly instead of silently dropping data.
+- Add on-demand Call of Duty Wiki icons: the article lead image first, then a search fallback, then the alternate name; blueprint images resolve through their `File:` page. Downloads are cached per user and reused offline, and saving follows the real container because the CDN negotiates WebP behind `.png` URLs.
+- Add an always-on-top comparison window with 0.4-3x zoom that follows the selected weapon, so the reference icon can sit beside the CAST preview.
+- Add the `cod-weapon-database` glyph to all four built-in icon families and both sample icon packs (34 to 35 icons), with the Ubuntu/Yaru and Appearance packs regenerated.
+- Add `--asset-pair-smoke <hands.cast> <weapon.cast> <animation.cast> <out>` to check any arms + weapon pair against both the animation-blend and the attached dual-wield pipelines without committing private assets as fixtures. Verified with a 122-bone rex viewmodel arms asset and a 112-bone M4A1 weapon asset: the blend merge keeps 171,931 vertices and 234 bones in 79 frames and mounts `j_gun__weapon` under `tag_weapon`; attached dual keeps 258,178 vertices and 346 bones in the companion bound model and mounts `j_gun__left`/`j_gun__right` under `tag_weapon_left`/`tag_weapon_right`, with the 79-frame animated CAST carrying no mesh.
+- Fix the desktop smoke resolving one theme's checkbox part names, which reported false failures under Windows 2000, Windows XP and Classic Apple. Fix the COD filter pickers losing their selection when a language switch rebuilt the option lists.
+
 ## 1.3.0-preview.28 — 2026-09-13 (animation workflow, preview controls and bound-model export)
 
 Chinese release notes: [更新日志](docs/releases/1.3.0-preview.28.zh-CN.md).

@@ -32,6 +32,7 @@ public sealed partial class MainWindowViewModel
         Refresh(WeaponFollowOptions, Text.WeaponFollowModes);
         Refresh(DualModeOptions, Text.DualModes);
         OutputUpAxes[0].Label = Text.KeepSceneAxis;
+        RefreshCodLocalizedOptions();
         static void Refresh(IReadOnlyList<LocalizedOption> options, string[] labels)
         {
             for (var index = 0; index < options.Count; index++) options[index].Label = labels[index];

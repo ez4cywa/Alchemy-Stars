@@ -62,7 +62,8 @@ names={
  'output-naming':'blue','output-settings':'gray','pause':'green','play':'green',
  'previous-frame':'green','project-workspace':'orange','restore-layout':'gray','save':'blue',
  'save-as':'blue','timeline-playback':'purple','weapon-follow':'green',
- 'weapon-processing-mode':'gray','zoom-in':'gray','zoom-out':'gray'}
+ 'weapon-processing-mode':'gray','zoom-in':'gray','zoom-out':'gray',
+ 'cod-weapon-database':'blue'}
 images={}
 for name,c in names.items():
     v=Vector(COLORS[c])
@@ -117,6 +118,10 @@ for name,c in names.items():
         else:
             v.poly([(24,20),(42,31),(24,42)])
             if name=='next-frame':v.line([(45,20),(45,42)],w=3)
+    elif name=='cod-weapon-database':
+        # A stacked-disc cylinder reads as a database at 24 px.
+        for i,y in enumerate([37,27.5,18]):
+            v.rect(19,y,45,y+9.5,4.7,'#AAD6E4' if i==0 else '#D9F1F6',WHITE,1.5)
     elif name=='notification':
         v.line([(19,39),(23,34),(23,25),(27,19),(37,19),(41,25),(41,34),(45,39),(19,39)])
         v.line([(28,44),(36,44)])
@@ -157,7 +162,7 @@ with zipfile.ZipFile(OUT/'icons.zip','w',zipfile.ZIP_DEFLATED) as z:
 sheet=Image.new('RGB',(1120,730),'#F5F4F2');d=ImageDraw.Draw(sheet)
 font=ImageFont.truetype('C:/Windows/Fonts/segoeui.ttf',14)
 title=ImageFont.truetype('C:/Windows/Fonts/segoeuib.ttf',30)
-d.text((30,22),'Ubuntu / Yaru-inspired · 34 functional icons',font=title,fill='#292929')
+d.text((30,22),'Ubuntu / Yaru-inspired · 35 functional icons',font=title,fill='#292929')
 d.text((30,64),'64 × 64 transparent PNG · original vector sources · light / dark visibility',font=font,fill='#66615D')
 for i,(name,img) in enumerate(images.items()):
     x=24+(i%7)*156;y=110+(i//7)*120

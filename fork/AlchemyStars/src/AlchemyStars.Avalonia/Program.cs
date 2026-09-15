@@ -28,6 +28,9 @@ internal static class Program
     internal static bool InspectorSmokeRequested { get; private set; }
     internal static bool WindowChromeSmokeRequested { get; private set; }
     internal static bool SharedBaseBatchSmokeRequested { get; private set; }
+    internal static bool CodWeaponDbUiSmokeRequested { get; private set; }
+    /// <summary>Opt-in: the COD smokes additionally query the real Call of Duty Wiki.</summary>
+    internal static bool CodWeaponDbLiveRequested { get; private set; }
 
     [STAThread]
     public static int Main(string[] args)
@@ -58,6 +61,10 @@ internal static class Program
         if (combinedIndex >= 0) return CombinedDualSmoke.Run(args.Skip(combinedIndex + 1).ToArray());
         var dualIndex = Array.IndexOf(args, "--dual-smoke");
         if (dualIndex >= 0) return DualWieldSmoke.Run(args.Skip(dualIndex + 1).ToArray());
+        var codDbIndex = Array.IndexOf(args, "--cod-weapon-db-smoke");
+        if (codDbIndex >= 0) return CodWeaponDbSmoke.Run(args.Skip(codDbIndex + 1).ToArray());
+        var assetPairIndex = Array.IndexOf(args, "--asset-pair-smoke");
+        if (assetPairIndex >= 0) return AssetPairSmoke.Run(args.Skip(assetPairIndex + 1).ToArray());
         if (GetOption(args, "--preview-test") is { } previewTest)
             return SelfTest.RunPreview(previewTest, GetOption(args, "--skeleton-project"));
 
@@ -101,6 +108,8 @@ internal static class Program
         InspectorSmokeRequested = args.Contains("--inspector-smoke", StringComparer.OrdinalIgnoreCase);
         WindowChromeSmokeRequested = args.Contains("--window-chrome-smoke", StringComparer.OrdinalIgnoreCase);
         SharedBaseBatchSmokeRequested = args.Contains("--shared-base-batch-smoke", StringComparer.OrdinalIgnoreCase);
+        CodWeaponDbUiSmokeRequested = args.Contains("--cod-weapon-db-ui-smoke", StringComparer.OrdinalIgnoreCase);
+        CodWeaponDbLiveRequested = args.Contains("--cod-weapon-db-live", StringComparer.OrdinalIgnoreCase);
         StartupProjectPath = args
             .Where(argument => !argument.StartsWith("--", StringComparison.Ordinal))
             .FirstOrDefault(argument => string.Equals(Path.GetExtension(argument), ".aprj", StringComparison.OrdinalIgnoreCase) && File.Exists(argument));
@@ -144,6 +153,7 @@ internal static class Program
         "animations" => WorkspacePage.Animations,
         "parts" => WorkspacePage.ModelParts,
         "dual" => WorkspacePage.DualAnimations,
+        "cod-weapons" => WorkspacePage.CodWeaponDb,
         "settings" => WorkspacePage.Settings,
         "about" => WorkspacePage.About,
         _ => null,

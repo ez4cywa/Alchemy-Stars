@@ -1,0 +1,38 @@
+<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+ xmlns:local="using:AlchemyStars.Avalonia"
+ x:Class="AlchemyStars.Avalonia.CodIconReferenceWindow"
+ x:DataType="local:MainWindowViewModel"
+ Title="{Binding CodCompareTitleText}"
+ Width="440" Height="600" MinWidth="320" MinHeight="360"
+ WindowStartupLocation="Manual" Topmost="{Binding CodCompareTopmost, Mode=TwoWay}"
+ AutomationProperties.Name="{Binding CodCompareTitleText}">
+  <Grid RowDefinitions="Auto,*,Auto" Margin="14" >
+    <StackPanel Spacing="4">
+      <TextBlock Text="{Binding CodReferenceTitle}" Classes="display-title" FontSize="18" FontWeight="SemiBold" TextWrapping="Wrap" />
+      <TextBlock Text="{Binding CodReferenceSubtitle}" Classes="muted" FontSize="11" TextWrapping="Wrap" />
+    </StackPanel>
+
+    <Border Grid.Row="1" Margin="0,12" Padding="10" CornerRadius="8"
+        Background="{DynamicResource AlchemySubtleSurfaceBrush}" BorderBrush="{DynamicResource AlchemyBorderStrongBrush}" BorderThickness="1">
+      <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+        <Image x:Name="CompareImage" Source="{Binding CodIconBitmap}" Stretch="Uniform"
+            Width="{Binding CodCompareImageWidth}" Height="{Binding CodCompareImageHeight}"
+            AutomationProperties.Name="{Binding CodReferenceTitle}" />
+      </ScrollViewer>
+    </Border>
+
+    <StackPanel Grid.Row="2" Spacing="10">
+      <TextBlock Text="{Binding Text.CodDbCompareHint}" Classes="muted" FontSize="11" TextWrapping="Wrap" />
+      <Grid ColumnDefinitions="Auto,12,*">
+        <CheckBox x:Name="CompareTopmost" IsChecked="{Binding CodCompareTopmost, Mode=TwoWay}" Content="{Binding Text.CodDbCompareTopmost}"
+            AutomationProperties.Name="{Binding Text.CodDbCompareTopmost}" VerticalAlignment="Center" />
+        <StackPanel Grid.Column="2" Spacing="2">
+          <TextBlock Text="{Binding Text.CodDbCompareScale}" Classes="field-label" />
+          <Slider x:Name="CompareScale" Minimum="0.4" Maximum="3" TickFrequency="0.1" IsSnapToTickEnabled="True"
+              Value="{Binding CodCompareScale, Mode=TwoWay}" AutomationProperties.Name="{Binding Text.CodDbCompareScale}" />
+        </StackPanel>
+      </Grid>
+      <TextBlock Text="{Binding CodIconAttribution}" Classes="muted" FontSize="11" TextWrapping="Wrap" />
+    </StackPanel>
+  </Grid>
+</Window>

@@ -1,0 +1,20 @@
+{
+  "blueprints_sha256": "8245e39f30647f73ab2dfd8788928fa5afe8fecc8f115116a3846c11c4050ab5",
+  "manifest_sha256": "0d79bd6e0a4e4f2676ef07148ca9f516152c23c9bd2b1bc4e9e80fcfce7c257a",
+  "schema_version": 1,
+  "source_mode": "github-only",
+  "supplemental_sources": [
+    {
+      "commit_sha": "c1b3b9fc6ef0b5787d31b32aa5740146cfd0a51c",
+      "commit_timestamp": "2026-08-27T16:32:00+01:00",
+      "kind": "github",
+      "license_spdx": null,
+      "license_status": "not_declared",
+      "repository": "SadSlothXL/COD-Weapon-codenames",
+      "repository_url": "https://github.com/SadSlothXL/COD-Weapon-codenames",
+      "snapshot_relative_path": "supplemental/sadslothxl-cod-weapon-codenames/c1b3b9fc6ef0b5787d31b32aa5740146cfd0a51c.json",
+      "snapshot_sha256": "83d3faf7d6af3a508ed23185e4ca54d41b04d02fada6c4063cd132b0b09d98bb",
+      "source_id": "sadslothxl-cod-weapon-codenames"
+    }
+  ]
+}

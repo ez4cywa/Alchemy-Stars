@@ -6,11 +6,20 @@ namespace AlchemyStars.Avalonia;
 public sealed class AvaloniaFilePickerAdapter(
     Window owner,
     ApplicationPreferencesStore preferences,
-    Func<Uri, Task<bool>>? externalUriLaunch = null) : IWorkspaceFilePicker
+    Func<Uri, Task<bool>>? externalUriLaunch = null) : IWorkspaceFilePicker, IWorkspaceImageExporter
 {
     private static readonly FilePickerFileType CastFileType = new("CAST") { Patterns = ["*.cast"] };
     private static readonly FilePickerFileType ProjectFileType = new("Alchemy Stars project") { Patterns = ["*.aprj"] };
+    private static readonly FilePickerFileType PngFileType = new("PNG image") { Patterns = ["*.png"] };
     private static readonly FilePickerFileType AllFileType = new("All files") { Patterns = ["*.*"] };
+    private static readonly FilePickerFileType[] ImageFileTypes =
+    [
+        PngFileType,
+        new("WebP image") { Patterns = ["*.webp"] },
+        new("JPEG image") { Patterns = ["*.jpg", "*.jpeg"] },
+        new("GIF image") { Patterns = ["*.gif"] },
+        new("Bitmap image") { Patterns = ["*.bmp"] },
+    ];
 
     public async Task<IReadOnlyList<string>> PickFilesAsync(FilePickerPurpose purpose, bool allowMultiple)
     {
@@ -62,6 +71,29 @@ public sealed class AvaloniaFilePickerAdapter(
     public Task<bool> OpenUriAsync(Uri uri) => externalUriLaunch is not null
         ? externalUriLaunch(uri)
         : ExternalUriLauncher.OpenAsync(uri, owner.Launcher.LaunchUriAsync);
+
+    /// <summary>Saves a reference image downloaded from the Call of Duty Wiki.</summary>
+    public async Task<string?> SaveImageAsync(string suggestedFileName, byte[] bytes)
+    {
+        // The CDN negotiates the container, so the dialog follows the suggested name's extension.
+        var extension = Path.GetExtension(suggestedFileName).TrimStart('.').ToLowerInvariant();
+        var matched = ImageFileTypes.FirstOrDefault(type => type.Patterns?.Any(pattern =>
+            pattern.Equals("*." + extension, StringComparison.OrdinalIgnoreCase)) == true);
+        var file = await owner.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            Title = "Alchemy Stars | Save reference image",
+            SuggestedStartLocation = await ResolveStartLocationAsync("codwiki"),
+            SuggestedFileName = suggestedFileName,
+            DefaultExtension = extension.Length > 0 ? extension : "png",
+            FileTypeChoices = matched is null ? [PngFileType, AllFileType] : [matched, AllFileType],
+            ShowOverwritePrompt = true,
+        });
+        var path = file?.Path.LocalPath;
+        preferences.RememberDirectory("codwiki", path);
+        if (string.IsNullOrWhiteSpace(path)) return null;
+        await File.WriteAllBytesAsync(path, bytes);
+        return path;
+    }
 
     private async Task<IStorageFolder?> ResolveStartLocationAsync(string scope, string? currentPath = null)
     {

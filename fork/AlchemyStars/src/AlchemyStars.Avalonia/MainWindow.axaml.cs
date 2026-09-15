@@ -257,6 +257,7 @@ public sealed partial class MainWindow : Window
     private void PartsPageClick(object? sender, RoutedEventArgs e) => ViewModel.SelectPage(WorkspacePage.ModelParts);
     private void SettingsPageClick(object? sender, RoutedEventArgs e) => ViewModel.SelectPage(WorkspacePage.Settings);
     private void AboutPageClick(object? sender, RoutedEventArgs e) => ViewModel.SelectPage(WorkspacePage.About);
+    private void CodWeaponDbPageClick(object? sender, RoutedEventArgs e) => ViewModel.SelectPage(WorkspacePage.CodWeaponDb);
     private void LanguageClick(object? sender, RoutedEventArgs e) => ViewModel.ToggleLanguage();
     private void SystemLanguageClick(object? sender, RoutedEventArgs e) => ViewModel.UseSystemLanguage();
     private void SaveDefaultsClick(object? sender, RoutedEventArgs e) => ViewModel.SaveDefaults();

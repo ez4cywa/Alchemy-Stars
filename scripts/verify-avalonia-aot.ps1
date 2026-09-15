@@ -68,7 +68,17 @@ try {
     & $accessibilityScript -PublishDirectory $publishDirectory
 }
 
-foreach ($interactionTest in @('--shortcuts-smoke', '--textmenu-smoke', '--inspector-smoke', '--window-chrome-smoke', '--shared-base-batch-smoke')) {
+$codWeaponDbSmoke = Start-Process `
+    -FilePath $executable `
+    -ArgumentList '--cod-weapon-db-smoke' `
+    -WorkingDirectory $publishDirectory `
+    -WindowStyle Hidden `
+    -Wait `
+    -PassThru
+if ($codWeaponDbSmoke.ExitCode -ne 0) { throw "Native AOT COD weapon database smoke failed with exit code $($codWeaponDbSmoke.ExitCode)." }
+Write-Output 'Native AOT COD weapon database catalog/search/icon smoke: PASS'
+
+foreach ($interactionTest in @('--shortcuts-smoke', '--textmenu-smoke', '--inspector-smoke', '--window-chrome-smoke', '--shared-base-batch-smoke', '--cod-weapon-db-ui-smoke')) {
     $interactionProcess = Start-Process -FilePath $executable -ArgumentList ('--startup-smoke ' + $interactionTest) -WorkingDirectory $publishDirectory -WindowStyle Hidden -Wait -PassThru
     if ($interactionProcess.ExitCode -ne 0) { throw "Native AOT interaction test $interactionTest failed: $($interactionProcess.ExitCode)" }
     Write-Output "Native AOT interaction ${interactionTest}: PASS"
@@ -125,7 +135,8 @@ $renderCases = @(
     @{ Page = 'animations'; Culture = 'en-US'; Dialog = '' },
     @{ Page = 'parts'; Culture = 'zh-CN'; Dialog = '' },
     @{ Page = 'settings'; Culture = 'en-US'; Dialog = '' },
-    @{ Page = 'about'; Culture = 'zh-CN'; Dialog = 'success' }
+    @{ Page = 'about'; Culture = 'zh-CN'; Dialog = 'success' },
+    @{ Page = 'cod-weapons'; Culture = 'zh-CN'; Dialog = '' }
 )
 foreach ($renderCase in $renderCases) {
     $renderPath = Join-Path $renderDirectory ($renderCase.Page + '.png')
@@ -141,7 +152,7 @@ foreach ($renderCase in $renderCases) {
         throw "Native AOT render smoke failed for page '$($renderCase.Page)'."
     }
 }
-Write-Output 'Native AOT four-page and centered-dialog render smoke: PASS'
+Write-Output 'Native AOT five-page and centered-dialog render smoke: PASS'
 
 $verificationSettingsPath = $env:ALCHEMY_STARS_SETTINGS_PATH
 try {
