@@ -1,10 +1,27 @@
 [English](README.md) | **简体中文**
 
-# Alchemy Stars（炼金之星）
+<div align="center">
+
+# Alchemy Stars · 炼金之星
+
+**从武器部件到绑定模型，从动画混合到资产导出。**
+
+[![Stable](https://img.shields.io/github/v/release/ez4cywa/Alchemy-Stars?label=stable)](https://github.com/ez4cywa/Alchemy-Stars/releases/latest)
+[![Preview](https://img.shields.io/badge/preview-1.3.0--preview.31-orange)](https://github.com/ez4cywa/Alchemy-Stars/releases/tag/v1.3.0-preview.31)
+[![Windows x64](https://img.shields.io/badge/Windows-x64-0078D4)](https://github.com/ez4cywa/Alchemy-Stars/releases)
+[![GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-blue)](fork/AlchemyStars/LICENSE)
+
+[**下载安装包**](#选择版本) · [快速上手](#快速上手预览版) · [使用指南](https://github.com/ez4cywa/Alchemy-Stars/blob/codex/avalonia-aot/docs/avalonia-aot-user-guide.zh-CN.md) · [更新记录](https://github.com/ez4cywa/Alchemy-Stars/releases) · [问题反馈](https://github.com/ez4cywa/Alchemy-Stars/issues)
+
+</div>
 
 **面向第一人称武器动画与 CAST 模型处理的 Windows 桌面工具。**
 
 支持动画层混合、手部 IK、模型部件组装，以及 Maya / Blender 资产导出。Avalonia 预览版还提供多组合并、弹匣填弹、独立模型预览与 COD 武器库。
+
+![Alchemy Stars 预览版：左侧工作区与模型合并面板](docs/images/model-merger.png)
+
+*截图为 1.3.0-preview.31 实际界面，展示空白模型组；不是稳定版 WPF 界面。*
 
 ## 选择版本
 
@@ -14,6 +31,8 @@
 | 预览版 · 1.3.0-preview.31 · Avalonia / Native AOT | [下载预览版](https://github.com/ez4cywa/Alchemy-Stars/releases/tag/v1.3.0-preview.31) | [`codex/avalonia-aot`](https://github.com/ez4cywa/Alchemy-Stars/tree/codex/avalonia-aot) | `AlchemyStars.Avalonia.exe` |
 
 预览版为 Windows x64 自包含程序，无需安装 .NET 或 Rust；请完整解压并保留原生 DLL 和 `Converters` 目录。FBX 转换仍需本机安装 Blender 或 Maya。预览版新增功能**不包含在稳定版程序及 `main` 源码中**。
+
+稳定版需安装 [.NET 9 Desktop Runtime（x64）](https://dotnet.microsoft.com/download/dotnet/9.0)。预览版 ZIP 可在对应 Release 的 Assets 中下载；不要将源码压缩包当作程序安装包。
 
 ## 预览版工作区
 
@@ -31,7 +50,74 @@
 
 [预览版快速指南](https://github.com/ez4cywa/Alchemy-Stars/blob/codex/avalonia-aot/docs/avalonia-aot-user-guide.zh-CN.md) · [模型合并指南与功能对照](https://github.com/ez4cywa/Alchemy-Stars/blob/codex/avalonia-aot/docs/model-merger.zh-CN.md) · [更新日志与验证记录](https://github.com/ez4cywa/Alchemy-Stars/blob/codex/avalonia-aot/docs/releases/1.3.0-preview.31.zh-CN.md) · [问题反馈](https://github.com/ez4cywa/Alchemy-Stars/issues)
 
-## 稳定分支说明
+## 快速上手（预览版）
+
+1. 下载 `AlchemyStars-1.3.0-preview.31-win-x64.zip`，完整解压，启动 `AlchemyStars.Avalonia.exe`。
+2. 按目标选择工作区：处理动画进入「模型部件」和「动画混合」；拼装 CAST 部件进入左侧「模型合并」（`Ctrl+7`）。
+3. 导入自己的素材，明确选择输出目录，预览并导出。项目文件保存绝对路径，换电脑后需要重新选择素材；程序不附带游戏素材下载功能。
+
+| 想完成的任务 | 操作路线 |
+| --- | --- |
+| 给武器组合手臂与动画 | 模型部件导入手臂、武器、附件 → 动画混合添加基础动画和层 → 设置姿势与 IK → 导出动画及配套绑定模型 |
+| 合并多个武器部件 | 模型合并 → 每组加入 2–15 个 CAST → 自动识别或指定根模型 → 设置输出 → 合并已就绪组 |
+| 填充弹匣 | 模型合并 → 弹匣装填 → 选择武器与弹药 CAST → 分析槽位 → 按需选择备用弹匣 → 另存新文件 |
+| 查询武器代号与蓝图 | COD 武器库 → 离线搜索 → 需要时更新数据库或加载 Wiki 图标 |
+
+![真实 Hawk 填弹结果的独立 CAST 模型预览](docs/images/cast-preview.png)
+
+*实际 CAST 只读预览：38 个网格、86,528 个顶点、93,410 个三角面。当前显示无贴图几何，不代表游戏内最终材质效果。*
+
+## 格式与使用边界
+
+| 项目 | 当前行为 |
+| --- | --- |
+| 动画导出 | CAST、FBX、SMD、SEAnim；预览版动画 CAST 默认仅包含动画，绑定模型单独导出 |
+| 模型合并与填弹 | 读取和写出 CAST；填弹要求受支持的单骨骼 `tag_ammo` 弹药模型，详见合并指南 |
+| FBX 转换 | 依赖本机 Blender 或 Maya；不是发布包内置的转换运行环境 |
+| 独立模型预览 | 软件深度缓冲、最多显示 250,000 个三角面；显示抽样不修改源文件或导出几何，不等同于上游 wgpu 性能 |
+| Unity 使用 | 经 FBX 等受支持格式导入；本版不修改 Unity 工程，未进行 Unity 编辑器内验证 |
+| 网络与语言 | 资产处理在本机完成；更新和 Wiki 图标需要联网。主界面中英双语，合并模块另支持法、俄、西语 |
+
+稳定版 1.1.9 默认导出完整场景 CAST，与预览版的「动画和绑定模型分开导出」不同。不要将旧骨架与新动画仅按骨骼名称直接混用，应保持骨架和绑定姿势匹配。
+
+## 构建与验证
+
+下面的源码命令针对 **Avalonia 预览分支**。开发需要 Windows x64、仓库 `global.json` 指定的 .NET 11 Preview SDK、Rust MSVC 工具链，以及 Native AOT 所需的 Visual Studio C++ 构建工具。使用安装包不需要这些开发工具。
+
+```powershell
+git clone --recurse-submodules --branch codex/avalonia-aot https://github.com/ez4cywa/Alchemy-Stars.git
+cd Alchemy-Stars
+.\scripts\build-model-merger.ps1
+dotnet restore fork/AlchemyStars/src/AlchemyStars.Avalonia/AlchemyStars.Avalonia.csproj -r win-x64
+.\scripts\verify-avalonia-aot.ps1
+```
+
+preview.31 本地验证包括 38 项 Rust 测试、C# 服务与工作区检查、Native AOT 窗口和导出回归，以及真实 Hawk 部件合并、填弹和 Blender 4.0.2 FBX 往返检查。旧 Hawk 项目因素材路径缺失跳过后，另用本机真实素材验证；未验证贴图或 Unity 工程。Native AOT 仍有两条 Avalonia Win32 DComposition 编译器诊断。这里是发布时的验证记录，不是持续集成状态承诺。
+
+完整证据与限制见 [preview.31 发布记录](https://github.com/ez4cywa/Alchemy-Stars/blob/codex/avalonia-aot/docs/releases/1.3.0-preview.31.zh-CN.md)。稳定版的 .NET 9 构建方法保留在下方说明。
+
+## 源码导航与参与
+
+以下结构对应预览分支；`main` 保留稳定版实现。
+
+```text
+fork/AlchemyStars/src/AlchemyStars.Avalonia/  桌面工作区与预览界面
+fork/AlchemyStars/src/AlchemyStars.Engine/    共享处理引擎
+fork/RedFox/                                固定版本动画管线（子模块）
+third_party/modelmerger/                    ModelMergerGUI Rust 核心
+third_party/cast/                           CAST 格式与导入组件
+scripts/                                   构建、发布和回归验证
+docs/                                      使用指南与版本验证记录
+```
+
+欢迎提交 [Issue](https://github.com/ez4cywa/Alchemy-Stars/issues) 或 Pull Request。问题报告请附软件版本、所用工作区、复现步骤、错误日志及可分享的最小素材；素材无法公开时可先提供骨骼结构和相关参数。请注明改动面向 `main` 稳定版还是 `codex/avalonia-aot` 预览版。
+
+项目基于 [Scobalula/Alchemist](https://github.com/Scobalula/Alchemist) 与 RedFox，改进后的 Alchemist 源码采用 [GPL-3.0](fork/AlchemyStars/LICENSE)。CAST 组件及预览版集成的 [ModelMergerGUI](https://github.com/ez4cywa/ModelMergerGUI) 核心保留各自 MIT 许可证；完整来源与许可见 [稳定版第三方声明](THIRD_PARTY_NOTICES.md) 和 [预览版第三方声明](https://github.com/ez4cywa/Alchemy-Stars/blob/codex/avalonia-aot/THIRD_PARTY_NOTICES.md)。游戏素材不因工具许可证而获得再分发授权。
+
+## 稳定版 1.1.9 详细说明
+
+<details>
+<summary>展开 WPF 使用方法、原版改进、Maya 2025 验证与构建说明</summary>
 
 下文介绍稳定版 1.1.9 的功能和使用方法。Avalonia 界面与新增功能请查阅上方预览版指南。
 
@@ -79,7 +165,7 @@ Alchemy Stars 保留原版批处理、动画层、IK 与 RedFox 转换管线，�
 
 ## 直接使用
 
-从 [GitHub Releases](https://github.com/ez4cywa/Alchemy-Stars/releases) 下载最新版 ZIP，解压后运行：
+从 [稳定版 1.1.9 Release](https://github.com/ez4cywa/Alchemy-Stars/releases/tag/v1.1.9) 下载程序 ZIP，解压后运行：
 
 `Alchemy Stars.exe`
 
@@ -150,3 +236,5 @@ Alchemy Stars 保留原版批处理、动画层、IK 与 RedFox 转换管线，�
 - Maya CAST 插件：`third_party/cast`，MIT，详见 `THIRD_PARTY_NOTICES.md`。
 
 上游基线：Alchemist `d86da66536ed3bf304a5cb7142d360fb934f73fb`；RedFox `7031da79614d1d979b1f17cae9d4bda2c699fd53`。
+
+</details>

@@ -1,10 +1,27 @@
 [**English**](README.md) | [简体中文](README.zh-CN.md)
 
-# Alchemy Stars
+<div align="center">
+
+# Alchemy Stars · 炼金之星
+
+**From weapon parts to bound models. From animation layers to export-ready assets.**
+
+[![Stable](https://img.shields.io/github/v/release/ez4cywa/Alchemy-Stars?label=stable)](https://github.com/ez4cywa/Alchemy-Stars/releases/latest)
+[![Preview](https://img.shields.io/badge/preview-1.3.0--preview.31-orange)](https://github.com/ez4cywa/Alchemy-Stars/releases/tag/v1.3.0-preview.31)
+[![Windows x64](https://img.shields.io/badge/Windows-x64-0078D4)](https://github.com/ez4cywa/Alchemy-Stars/releases)
+[![GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-blue)](fork/AlchemyStars/LICENSE)
+
+[**Download**](#choose-your-release) · [Quick start](#quick-start-preview) · [User guide](https://github.com/ez4cywa/Alchemy-Stars/blob/codex/avalonia-aot/docs/avalonia-aot-user-guide.md) · [Release notes](https://github.com/ez4cywa/Alchemy-Stars/releases) · [Report an issue](https://github.com/ez4cywa/Alchemy-Stars/issues)
+
+</div>
 
 **A Windows desktop toolkit for first-person weapon animation and CAST model workflows.**
 
 Blend animation layers, solve hand IK, assemble model parts and export assets for Maya or Blender. The Avalonia preview also includes grouped model merging, ammunition filling, independent model previews and a COD weapon database.
+
+![Alchemy Stars preview: sidebar workspaces and model merger](docs/images/model-merger.png)
+
+*Actual 1.3.0-preview.31 interface with an empty model group, shown in Chinese. This is not the stable WPF interface.*
 
 ## Choose your release
 
@@ -14,6 +31,8 @@ Blend animation layers, solve hand IK, assemble model parts and export assets fo
 | Preview · 1.3.0-preview.31 · Avalonia / Native AOT | [Preview release](https://github.com/ez4cywa/Alchemy-Stars/releases/tag/v1.3.0-preview.31) | [`codex/avalonia-aot`](https://github.com/ez4cywa/Alchemy-Stars/tree/codex/avalonia-aot) | `AlchemyStars.Avalonia.exe` |
 
 The preview is a Windows x64 self-contained package: keep its native DLLs and `Converters` folder together; no .NET or Rust installation is required. FBX conversion requires a local Blender or Maya installation. Preview features are **not** included in the stable executable or the source on `main`.
+
+The stable build requires [.NET 9 Desktop Runtime (x64)](https://dotnet.microsoft.com/download/dotnet/9.0). Download the preview ZIP from its Release's Assets section; source-code archives are not runnable app packages.
 
 ## Preview workspace
 
@@ -31,7 +50,74 @@ The merger module supports Chinese, English, French, Russian and Spanish; the ho
 
 [Preview quick guide](https://github.com/ez4cywa/Alchemy-Stars/blob/codex/avalonia-aot/docs/avalonia-aot-user-guide.md) · [Model merger guide / 功能对照](https://github.com/ez4cywa/Alchemy-Stars/blob/codex/avalonia-aot/docs/model-merger.zh-CN.md) · [Release notes and validation](https://github.com/ez4cywa/Alchemy-Stars/blob/codex/avalonia-aot/docs/releases/1.3.0-preview.31.zh-CN.md) · [Report an issue](https://github.com/ez4cywa/Alchemy-Stars/issues)
 
-## Stable branch background
+## Quick start (preview)
+
+1. Download `AlchemyStars-1.3.0-preview.31-win-x64.zip`, extract the complete archive and run `AlchemyStars.Avalonia.exe`.
+2. Choose your workspace: **Model parts** and **Animation blend** for animation work, or **Model merger** (`Ctrl+7`) to assemble CAST parts.
+3. Add your assets, explicitly select an output folder, preview and export. Project files store absolute paths; reselect assets after moving computers. The app does not download game assets.
+
+| Task | Workflow |
+| --- | --- |
+| Combine hands, a weapon and animation | Import hands, weapon and attachments in Model parts → add base animation and layers → configure poses and IK → export animation and its companion bound model |
+| Merge weapon components | Model merger → add 2–15 CAST parts per group → detect or select the root → choose output → merge ready groups |
+| Fill a magazine | Model merger → ammunition filling → choose weapon and ammunition CAST → inspect slots → opt into spare magazines if needed → save a new file |
+| Find weapon codenames and blueprints | COD weapon DB → search offline → optionally update the database or load Wiki icons |
+
+![Independent CAST preview of a real filled Hawk model](docs/images/cast-preview.png)
+
+*Actual read-only CAST preview: 38 meshes, 86,528 vertices and 93,410 triangles. Untextured geometry does not represent final in-game materials.*
+
+## Formats and boundaries
+
+| Area | Current behavior |
+| --- | --- |
+| Animation export | CAST, FBX, SMD and SEAnim; preview animation CAST is animation-only, with bound models exported separately |
+| Model merging and filling | Reads and writes CAST; filling requires a supported single-bone `tag_ammo` ammunition model—see the merger guide |
+| FBX conversion | Requires a local Blender or Maya installation; a conversion runtime is not bundled |
+| Independent model preview | Software depth buffer, up to 250,000 displayed triangles; sampling changes neither source nor exported geometry and does not promise upstream wgpu performance |
+| Unity | Import through supported formats such as FBX; this release does not modify Unity projects and has not been validated inside the Unity Editor |
+| Network and languages | Asset processing is local; updates and Wiki icons need internet access. Chinese/English host UI, plus French/Russian/Spanish in the merger module |
+
+Stable 1.1.9 exports a full-scene CAST by default, unlike the preview's separate animation/model workflow. Matching bone names alone do not make an old skeleton compatible with a new animation: skeleton structure and bind pose must match.
+
+## Build and validation
+
+These commands target the **Avalonia preview branch**. Development requires Windows x64, the .NET 11 Preview SDK specified by `global.json`, the Rust MSVC toolchain and Visual Studio C++ build tools for Native AOT. End users do not need these tools.
+
+```powershell
+git clone --recurse-submodules --branch codex/avalonia-aot https://github.com/ez4cywa/Alchemy-Stars.git
+cd Alchemy-Stars
+.\scripts\build-model-merger.ps1
+dotnet restore fork/AlchemyStars/src/AlchemyStars.Avalonia/AlchemyStars.Avalonia.csproj -r win-x64
+.\scripts\verify-avalonia-aot.ps1
+```
+
+Local preview.31 validation covered 38 Rust tests, C# service/workspace checks, Native AOT window/export regressions, real Hawk merging and filling, and a Blender 4.0.2 FBX round trip. An old Hawk project with missing asset paths was skipped and replaced by checks using available local assets. Textures and Unity projects were not validated. Two Avalonia Win32 DComposition compiler diagnostics remain in Native AOT builds. These are release-time results, not a live CI status claim.
+
+See the [preview.31 validation record](https://github.com/ez4cywa/Alchemy-Stars/blob/codex/avalonia-aot/docs/releases/1.3.0-preview.31.zh-CN.md) for evidence and limitations. Stable .NET 9 build instructions remain in the expanded section below.
+
+## Source map and contributions
+
+This map describes the preview branch; `main` retains the stable implementation.
+
+```text
+fork/AlchemyStars/src/AlchemyStars.Avalonia/  Desktop workspaces and preview UI
+fork/AlchemyStars/src/AlchemyStars.Engine/    Shared processing engine
+fork/RedFox/                                Pinned animation pipeline submodule
+third_party/modelmerger/                    ModelMergerGUI Rust core
+third_party/cast/                           CAST format and import components
+scripts/                                   Build, release and regression checks
+docs/                                      Guides and release validation records
+```
+
+[Issues](https://github.com/ez4cywa/Alchemy-Stars/issues) and pull requests are welcome. Include the app version, workspace, reproduction steps, error logs and a shareable minimal asset. If assets cannot be shared, start with the skeleton structure and relevant settings. Specify whether your change targets stable `main` or preview `codex/avalonia-aot`.
+
+Based on [Scobalula/Alchemist](https://github.com/Scobalula/Alchemist) and RedFox. The improved Alchemist source uses [GPL-3.0](fork/AlchemyStars/LICENSE). CAST components and the preview's integrated [ModelMergerGUI](https://github.com/ez4cywa/ModelMergerGUI) core retain their MIT licenses. See the [stable notices](THIRD_PARTY_NOTICES.md) and [preview notices](https://github.com/ez4cywa/Alchemy-Stars/blob/codex/avalonia-aot/THIRD_PARTY_NOTICES.md). Tool licensing does not grant redistribution rights to game assets.
+
+## Stable 1.1.9 detailed guide
+
+<details>
+<summary>Expand WPF usage, upstream improvements, Maya 2025 validation and build instructions</summary>
 
 The sections below describe the stable 1.1.9 workflow. Use the preview guide above for the Avalonia interface and its newer features.
 
@@ -73,7 +159,7 @@ Alchemy Stars keeps the upstream animation-layer concepts intact. Attribution an
 
 ## Download and use
 
-Download the latest ZIP from [GitHub Releases](https://github.com/ez4cywa/Alchemy-Stars/releases), extract it, and run:
+Download the app ZIP from the [stable 1.1.9 release](https://github.com/ez4cywa/Alchemy-Stars/releases/tag/v1.1.9), extract it, and run:
 
 `Alchemy Stars.exe`
 
@@ -142,3 +228,5 @@ The 1.1.9 UI audit fixes the clipped About icon, toolbar overflow, cramped layer
 - Maya CAST plug-in: `third_party/cast`, MIT; see `THIRD_PARTY_NOTICES.md`.
 
 Upstream baseline: Alchemist `d86da66536ed3bf304a5cb7142d360fb934f73fb`; RedFox `7031da79614d1d979b1f17cae9d4bda2c699fd53`.
+
+</details>
