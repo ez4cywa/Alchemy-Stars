@@ -2,6 +2,39 @@
 
 # Alchemy Stars
 
+**A Windows desktop toolkit for first-person weapon animation and CAST model workflows.**
+
+Blend animation layers, solve hand IK, assemble model parts and export assets for Maya or Blender. The Avalonia preview also includes grouped model merging, ammunition filling, independent model previews and a COD weapon database.
+
+## Choose your release
+
+| Channel | Download | Source | Run after extracting |
+| --- | --- | --- | --- |
+| Stable · 1.1.9 · WPF | [Stable release](https://github.com/ez4cywa/Alchemy-Stars/releases/tag/v1.1.9) | [`main`](https://github.com/ez4cywa/Alchemy-Stars/tree/main) | `Alchemy Stars.exe` |
+| Preview · 1.3.0-preview.31 · Avalonia / Native AOT | [Preview release](https://github.com/ez4cywa/Alchemy-Stars/releases/tag/v1.3.0-preview.31) | [`codex/avalonia-aot`](https://github.com/ez4cywa/Alchemy-Stars/tree/codex/avalonia-aot) | `AlchemyStars.Avalonia.exe` |
+
+The preview is a Windows x64 self-contained package: keep its native DLLs and `Converters` folder together; no .NET or Rust installation is required. FBX conversion requires a local Blender or Maya installation. Preview features are **not** included in the stable executable or the source on `main`.
+
+## Preview workspace
+
+| Workspace | What it does |
+| --- | --- |
+| Animation blend | Animation layers, hand poses, IK, configurable frame rate and separate bound-model export |
+| Model parts | Classifies hands, weapons and attachments; preserves skeleton relationships and skin weights |
+| Dual-wield composition | Combines left/right animation tasks and exports paired weapon models |
+| Model merger · Ctrl+7 | ModelMergerGUI 2.2.2 core; 2–15 parts per group, automatic/manual root, two concurrent tasks, progress, cancellation and overwrite confirmation |
+| Ammunition filling | Magazine/slot inspection, opt-in extra slots and spare magazine replication; skips occupied slots and writes a new CAST |
+| Independent model preview | Multiple read-only windows, orbit/zoom/grid controls, u32 indices, up to 250,000 displayed triangles and software depth testing |
+| COD weapon database | Offline weapon/codename and blueprint lookup, online database updates and optional Wiki reference icons |
+
+The merger module supports Chinese, English, French, Russian and Spanish; the host interface supports Chinese and English. Preview sampling does not alter exported geometry. Existing Unity projects are not modified; export through the documented CAST/FBX workflow rather than treating CAST as a native Unity format.
+
+[Preview quick guide](https://github.com/ez4cywa/Alchemy-Stars/blob/codex/avalonia-aot/docs/avalonia-aot-user-guide.md) · [Model merger guide / 功能对照](https://github.com/ez4cywa/Alchemy-Stars/blob/codex/avalonia-aot/docs/model-merger.zh-CN.md) · [Release notes and validation](https://github.com/ez4cywa/Alchemy-Stars/blob/codex/avalonia-aot/docs/releases/1.3.0-preview.31.zh-CN.md) · [Report an issue](https://github.com/ez4cywa/Alchemy-Stars/issues)
+
+## Stable branch background
+
+The sections below describe the stable 1.1.9 workflow. Use the preview guide above for the Avalonia interface and its newer features.
+
 Alchemy Stars (炼金之星) is a production-focused improvement of [Scobalula/Alchemist](https://github.com/Scobalula/Alchemist) for Windows, first-person CAST weapon assets, and Autodesk Maya 2025. It retains Alchemist's WPF batch interface and RedFox animation pipeline while completing a reliable model-and-animation export workflow.
 
 The maintained source lives in `fork/AlchemyStars` and pins the matching RedFox revision to keep builds reproducible. The earlier standalone rewrite remains preserved on the `independent-rewrite-v1` branch and is no longer the active implementation.

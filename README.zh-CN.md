@@ -2,6 +2,39 @@
 
 # Alchemy Stars（炼金之星）
 
+**面向第一人称武器动画与 CAST 模型处理的 Windows 桌面工具。**
+
+支持动画层混合、手部 IK、模型部件组装，以及 Maya / Blender 资产导出。Avalonia 预览版还提供多组合并、弹匣填弹、独立模型预览与 COD 武器库。
+
+## 选择版本
+
+| 渠道 | 下载 | 源码分支 | 解压后运行 |
+| --- | --- | --- | --- |
+| 稳定版 · 1.1.9 · WPF | [下载稳定版](https://github.com/ez4cywa/Alchemy-Stars/releases/tag/v1.1.9) | [`main`](https://github.com/ez4cywa/Alchemy-Stars/tree/main) | `Alchemy Stars.exe` |
+| 预览版 · 1.3.0-preview.31 · Avalonia / Native AOT | [下载预览版](https://github.com/ez4cywa/Alchemy-Stars/releases/tag/v1.3.0-preview.31) | [`codex/avalonia-aot`](https://github.com/ez4cywa/Alchemy-Stars/tree/codex/avalonia-aot) | `AlchemyStars.Avalonia.exe` |
+
+预览版为 Windows x64 自包含程序，无需安装 .NET 或 Rust；请完整解压并保留原生 DLL 和 `Converters` 目录。FBX 转换仍需本机安装 Blender 或 Maya。预览版新增功能**不包含在稳定版程序及 `main` 源码中**。
+
+## 预览版工作区
+
+| 工作区 | 功能 |
+| --- | --- |
+| 动画混合 | 动画层、手部姿势、IK、可调输出帧率，以及独立绑定模型导出 |
+| 模型部件 | 识别手臂、武器与附件，保留骨骼关系和蒙皮权重 |
+| 双持合并 | 组合左右动画任务，导出配套双持武器模型 |
+| 模型合并 · Ctrl+7 | 整合 ModelMergerGUI 2.2.2 核心；每组 2–15 部件、自动/手动根模型、最多两项并行、进度、取消与覆盖确认 |
+| 弹匣填弹 | 识别弹匣和槽位，按需选择额外槽位及备用弹匣复制；跳过已占用槽位，另存新 CAST |
+| 独立模型预览 | 多个只读窗口、旋转/缩放/网格、32 位索引、最多 250,000 个显示三角面及软件深度缓冲 |
+| COD 武器库 | 离线查询武器名、代号和蓝图，在线更新数据库，按需获取 Wiki 对照图标 |
+
+模型合并模块支持中、英、法、俄、西五种语言，主界面支持中英双语。预览抽样不改变导出几何；软件不修改已有 Unity 工程，需按文档通过 CAST/FBX 导出流程使用资产，不能将 CAST 视为 Unity 原生格式。
+
+[预览版快速指南](https://github.com/ez4cywa/Alchemy-Stars/blob/codex/avalonia-aot/docs/avalonia-aot-user-guide.zh-CN.md) · [模型合并指南与功能对照](https://github.com/ez4cywa/Alchemy-Stars/blob/codex/avalonia-aot/docs/model-merger.zh-CN.md) · [更新日志与验证记录](https://github.com/ez4cywa/Alchemy-Stars/blob/codex/avalonia-aot/docs/releases/1.3.0-preview.31.zh-CN.md) · [问题反馈](https://github.com/ez4cywa/Alchemy-Stars/issues)
+
+## 稳定分支说明
+
+下文介绍稳定版 1.1.9 的功能和使用方法。Avalonia 界面与新增功能请查阅上方预览版指南。
+
 Alchemy Stars 是 [Scobalula/Alchemist](https://github.com/Scobalula/Alchemist) 的可用化改进版，面向 Windows、CAST 第一人称武器资产与 Autodesk Maya 2025。项目保留原版 Alchemist 的 WPF 批处理界面和 RedFox 动画管线，并补齐了原仓库尚未完成的模型/动画一体化导出。
 
 主源码位于 `fork/AlchemyStars`，固定使用与原项目同期的 RedFox 提交，避免上游变动破坏构建。先前的独立重写已保存在 Git 分支 `independent-rewrite-v1`，不再是当前实现。
