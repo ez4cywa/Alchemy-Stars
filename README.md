@@ -54,9 +54,9 @@ Alchemy Stars keeps the upstream animation-layer concepts intact. Attribution an
 
 ## Download and use
 
-Download the latest ZIP from [GitHub Releases](https://github.com/ez4cywa/Alchemy-Stars/releases), extract it, and run:
+Download and fully extract the [preview.31 ZIP](https://github.com/ez4cywa/Alchemy-Stars/releases/tag/v1.3.0-preview.31), then run `AlchemyStars.Avalonia.exe`. Keep its native DLLs and `Converters` folder together; no .NET or Rust installation is required.
 
-`Alchemy Stars.exe`
+For the WPF stable line, use [v1.1.9](https://github.com/ez4cywa/Alchemy-Stars/releases/tag/v1.1.9) and run `Alchemy Stars.exe`. The stable package does not include the preview-only Model merger, ammunition filling or COD database workspaces.
 
 The app starts with an empty batch. Use the toolbar buttons, the folder buttons beside path fields, or the context menus to select assets with the system file browser. Existing path boxes remain editable: type or paste a path, or drop a CAST file directly on its intended field. Dropping a file on an output-folder field uses that file's containing directory.
 

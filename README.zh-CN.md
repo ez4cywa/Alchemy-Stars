@@ -60,9 +60,9 @@ Alchemy Stars 保留原版批处理、动画层、IK 与 RedFox 转换管线，�
 
 ## 直接使用
 
-从 [GitHub Releases](https://github.com/ez4cywa/Alchemy-Stars/releases) 下载最新版 ZIP，解压后运行：
+下载并完整解压 [preview.31 ZIP](https://github.com/ez4cywa/Alchemy-Stars/releases/tag/v1.3.0-preview.31)，运行 `AlchemyStars.Avalonia.exe`。请保留原生 DLL 与 `Converters` 目录，无需安装 .NET 或 Rust。
 
-`Alchemy Stars.exe`
+如需 WPF 稳定版，请下载 [v1.1.9](https://github.com/ez4cywa/Alchemy-Stars/releases/tag/v1.1.9) 并运行 `Alchemy Stars.exe`。稳定包不包含预览版的模型合并、弹匣填弹和 COD 武器库工作区。
 
 程序以空白批处理启动。点击工具栏的动画与模型按钮，或使用每个路径字段右侧的文件夹按钮，通过系统文件浏览器选择文件；路径框也可直接输入或粘贴路径，并支持从资源管理器把 CAST 文件准确拖到目标路径框。向输出目录框拖入文件时会自动采用其所在目录；可选姿势文件旁的清除按钮可恢复为空。
 
