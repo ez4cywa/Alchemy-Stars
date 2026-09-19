@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -48,6 +48,11 @@ namespace Alchemist.InverseKinematics
         /// </summary>
         public SkeletonBone TargetBone { get; set; } = target;
 
+        /// <summary>Animated reload target, enabled only by its own notetrack weights.</summary>
+        public SkeletonBone? MoverTargetBone { get; set; }
+        public List<AnimationKeyFrame<float, float>> MoverWeights { get; } = [];
+        private int moverWeightsCursor;
+
         /// <summary>
         /// Gets or Sets the default weight
         /// </summary>
@@ -71,13 +76,34 @@ namespace Alchemist.InverseKinematics
 
             CurrentWeightsCursor = cursor;
 
+            var targetPosition = TargetBone.WorldTranslation;
+            var targetRotation = NormalizeSafe(TargetBone.WorldRotation);
+            if (MoverTargetBone is not null && MoverWeights.Count > 0)
+            {
+                var moverWeight = Math.Clamp(AnimationHelper.GetWeight(
+                    MoverWeights, time, 0f, 0f, ref moverWeightsCursor), 0f, 1f);
+                // A clip with only mover markers still returns to the normal
+                // grip outside that interval. Paired tracks retain their weights.
+                var gripWeight = Weights.Count == 0 ? 1f - moverWeight : Math.Clamp(weight, 0f, 1f);
+                var totalWeight = gripWeight + moverWeight;
+                if (totalWeight > 0f)
+                {
+                    var blend = moverWeight / totalWeight;
+                    targetPosition = Vector3.Lerp(targetPosition, MoverTargetBone.WorldTranslation, blend);
+                    targetRotation = NormalizeSafe(Quaternion.Slerp(targetRotation,
+                        NormalizeSafe(MoverTargetBone.WorldRotation), blend));
+                }
+                // Blend targets before solving, rather than solving the same arm
+                // twice and allowing the second constraint to overwrite the first.
+                weight = Math.Clamp(totalWeight, 0f, 1f);
+            }
+
             if (weight == 0)
                 return;
 
             var startPosition = StartBone.WorldTranslation;
             var middlePosition = MiddleBone.WorldTranslation;
             var endPosition = EndBone.WorldTranslation;
-            var targetPosition = TargetBone.WorldTranslation;
 
             var upperLength = Vector3.Distance(startPosition, middlePosition);
             var lowerLength = Vector3.Distance(middlePosition, endPosition);
@@ -114,9 +140,7 @@ namespace Alchemist.InverseKinematics
                 desiredUpperDirection,
                 FindPerpendicular(currentUpperDirection));
             var desiredStartWorld = NormalizeSafe(startDelta * StartBone.WorldRotation);
-            StartBone.WorldRotation = Quaternion.Slerp(StartBone.WorldRotation, desiredStartWorld, weight);
-            StartBone.GenerateCurrentLocalTransform();
-            StartBone.GenerateCurrentWorldTransforms();
+            ApplyWorldRotation(StartBone, Quaternion.Slerp(NormalizeSafe(StartBone.WorldRotation), desiredStartWorld, weight));
 
             var currentLowerDirection = NormalizeOr(
                 EndBone.WorldTranslation - MiddleBone.WorldTranslation,
@@ -129,23 +153,30 @@ namespace Alchemist.InverseKinematics
                 desiredLowerDirection,
                 FindPerpendicular(currentLowerDirection));
             var desiredMiddleWorld = NormalizeSafe(middleDelta * MiddleBone.WorldRotation);
-            MiddleBone.WorldRotation = Quaternion.Slerp(MiddleBone.WorldRotation, desiredMiddleWorld, weight);
-            MiddleBone.GenerateCurrentLocalTransform();
-            MiddleBone.GenerateCurrentWorldTransforms();
+            ApplyWorldRotation(MiddleBone, Quaternion.Slerp(NormalizeSafe(MiddleBone.WorldRotation), desiredMiddleWorld, weight));
 
-            EndBone.WorldRotation = Quaternion.Slerp(EndBone.WorldRotation, TargetBone.WorldRotation, weight);
-            EndBone.GenerateCurrentLocalTransform();
-            EndBone.GenerateCurrentWorldTransforms();
+            ApplyWorldRotation(EndBone, Quaternion.Slerp(NormalizeSafe(EndBone.WorldRotation), targetRotation, weight));
+        }
+
+        private static void ApplyWorldRotation(SkeletonBone bone, Quaternion rotation)
+        {
+            // A rotational IK solve must retain the sampled local translation
+            // (and therefore limb length). Reconstructing it through world space
+            // introduces drift when parent rotations are not exactly unit length.
+            rotation = NormalizeSafe(rotation);
+            bone.LocalRotation = bone.Parent is null ? rotation
+                : NormalizeSafe(Quaternion.Conjugate(NormalizeSafe(bone.Parent.WorldRotation)) * rotation);
+            bone.GenerateCurrentWorldTransforms();
         }
 
         private static Quaternion RotationFromTo(Vector3 from, Vector3 to, Vector3 fallbackAxis)
         {
             var dot = Math.Clamp(Vector3.Dot(from, to), -1f, 1f);
-            if (dot > 1f - 1e-6f)
-                return Quaternion.Identity;
             if (dot < -1f + 1e-6f)
                 return Quaternion.CreateFromAxisAngle(fallbackAxis, MathF.PI);
 
+            // The cross-product form remains stable near zero angle. Do not
+            // discard small corrections: they are the motion in an idle clip.
             return NormalizeSafe(new Quaternion(Vector3.Cross(from, to), 1f + dot));
         }
 

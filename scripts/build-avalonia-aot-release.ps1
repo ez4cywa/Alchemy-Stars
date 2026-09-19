@@ -4,10 +4,10 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$version = '1.3.0-preview.31'
+$version = '1.3.0-preview.32'
 $repositoryRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
 $releaseRoot = [System.IO.Path]::GetFullPath((Join-Path $repositoryRoot 'release'))
-$publishDirectory = [System.IO.Path]::GetFullPath((Join-Path $repositoryRoot 'output\avalonia-aot-preview31'))
+$publishDirectory = [System.IO.Path]::GetFullPath((Join-Path $repositoryRoot 'output\avalonia-aot-preview32'))
 $stagingDirectory = [System.IO.Path]::GetFullPath((Join-Path $releaseRoot "Alchemy Stars $version"))
 $resolvedArchive = if ([string]::IsNullOrWhiteSpace($ArchivePath)) {
     [System.IO.Path]::GetFullPath((Join-Path $releaseRoot "AlchemyStars-$version-win-x64.zip"))
@@ -31,7 +31,7 @@ if (-not $SkipVerification) {
     if ($LASTEXITCODE -ne 0) { throw "Native AOT verification failed with exit code $LASTEXITCODE." }
 }
 if (-not (Test-Path -LiteralPath (Join-Path $publishDirectory 'AlchemyStars.Avalonia.exe'))) {
-    throw "Verified Native AOT publish is missing: $publishDirectory"
+    throw "Native AOT publish is missing: $publishDirectory"
 }
 
 foreach ($target in @($stagingDirectory, $resolvedArchive)) {
@@ -48,7 +48,7 @@ $rootFiles = @(
     @{ Source = 'THIRD_PARTY_NOTICES.md'; Target = 'THIRD_PARTY_NOTICES.md' },
     @{ Source = 'docs\dual-wield.zh-CN.md'; Target = 'Docs\DUAL-WIELD.zh-CN.md' },
     @{ Source = 'docs\cod-weapon-db.zh-CN.md'; Target = 'Docs\COD-WEAPON-DB.zh-CN.md' },
-    @{ Source = 'docs\releases\1.3.0-preview.31.zh-CN.md'; Target = 'Docs\RELEASE-NOTES.zh-CN.md' },
+    @{ Source = 'docs\releases\1.3.0-preview.32.zh-CN.md'; Target = 'Docs\RELEASE-NOTES.zh-CN.md' },
     @{ Source = 'docs\model-merger.zh-CN.md'; Target = 'Docs\MODEL-MERGER.zh-CN.md' },
     @{ Source = 'third_party\modelmerger\README.md'; Target = 'Docs\MODEL-MERGER-UPSTREAM.md' },
     @{ Source = 'docs\samples\appearance\theme.json'; Target = 'Samples\Appearance\theme.json' },
@@ -90,17 +90,19 @@ foreach ($example in $manifest.StandardExamples) {
     }
 }
 
-$sampleOutput = Join-Path $repositoryRoot 'output\avalonia-aot-appearance-samples'
-[System.IO.Directory]::CreateDirectory($sampleOutput) | Out-Null
-$previousSettingsPath = $env:ALCHEMY_STARS_SETTINGS_PATH
-try {
-    $env:ALCHEMY_STARS_SETTINGS_PATH = Join-Path $sampleOutput 'settings.json'
-    $sampleArguments = '--appearance-samples-smoke --culture en-US --window-size 900x600 --render-smoke "' + (Join-Path $sampleOutput 'result.png') + '"'
-    $sampleTest = Start-Process -FilePath (Join-Path $stagingDirectory 'AlchemyStars.Avalonia.exe') -ArgumentList $sampleArguments -WorkingDirectory $stagingDirectory -WindowStyle Hidden -Wait -PassThru
-    if ($sampleTest.ExitCode -ne 0) { throw "Shipped appearance samples failed validation: $($sampleTest.ExitCode)" }
-    Write-Output 'Shipped appearance samples: native import and light/dark render PASS'
-} finally {
-    $env:ALCHEMY_STARS_SETTINGS_PATH = $previousSettingsPath
+if (-not $SkipVerification) {
+    $sampleOutput = Join-Path $repositoryRoot 'output\avalonia-aot-appearance-samples'
+    [System.IO.Directory]::CreateDirectory($sampleOutput) | Out-Null
+    $previousSettingsPath = $env:ALCHEMY_STARS_SETTINGS_PATH
+    try {
+        $env:ALCHEMY_STARS_SETTINGS_PATH = Join-Path $sampleOutput 'settings.json'
+        $sampleArguments = '--appearance-samples-smoke --culture en-US --window-size 900x600 --render-smoke "' + (Join-Path $sampleOutput 'result.png') + '"'
+        $sampleTest = Start-Process -FilePath (Join-Path $stagingDirectory 'AlchemyStars.Avalonia.exe') -ArgumentList $sampleArguments -WorkingDirectory $stagingDirectory -WindowStyle Hidden -Wait -PassThru
+        if ($sampleTest.ExitCode -ne 0) { throw "Shipped appearance samples failed validation: $($sampleTest.ExitCode)" }
+        Write-Output 'Shipped appearance samples: native import and light/dark render PASS'
+    } finally {
+        $env:ALCHEMY_STARS_SETTINGS_PATH = $previousSettingsPath
+    }
 }
 
 [System.IO.Directory]::CreateDirectory((Split-Path -Parent $resolvedArchive)) | Out-Null

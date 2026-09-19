@@ -84,8 +84,6 @@ public static class AnimationBlendTemplateAnalyzer
             || ContainsAny(stem, "grip", "vertgrip", "foregrip");
 
         WorkspacePaths.RequireCastAnimation(source);
-        var leftPose = FindPose(files, source, true, hasForegrip);
-        var rightPose = FindPose(files, source, false, hasForegrip);
         var baseFile = source;
         IReadOnlyList<string> layers = [];
         var idle = FindIdle(files, source);
@@ -95,6 +93,15 @@ public static class AnimationBlendTemplateAnalyzer
             layers = blendKind is "walk" or "jog" or "sprint"
                 ? [source, .. FindMatchingOffset(files, source, blendKind)]
                 : [source];
+        }
+        // Shared movement clips can belong to another weapon family. Resolve
+        // the held pose from the selected base, not the movement clip's name.
+        var leftPose = FindPose(files, baseFile, true, hasForegrip);
+        var rightPose = FindPose(files, baseFile, false, hasForegrip);
+        if (!string.Equals(baseFile, source, StringComparison.OrdinalIgnoreCase))
+        {
+            if (leftPose.Length == 0) leftPose = FindPose(files, source, true, hasForegrip);
+            if (rightPose.Length == 0) rightPose = FindPose(files, source, false, hasForegrip);
         }
         var leftTarget = string.Empty;
         var rightTarget = string.Empty;
@@ -125,14 +132,28 @@ public static class AnimationBlendTemplateAnalyzer
         var sourceStem = Path.GetFileNameWithoutExtension(source);
         var family = PrefixBeforeMovement(sourceStem);
         var candidates = files.Where(path => SameDirectory(path, source) && !IsSameStem(path, sourceStem) && IsPose(Path.GetFileNameWithoutExtension(path)))
-            .Where(path => PrefixBeforeMovement(Path.GetFileNameWithoutExtension(path)) is var prefix
-                && (prefix.Length == 0 || prefix.Equals(family, StringComparison.OrdinalIgnoreCase))).ToArray();
-        var scored = candidates
-            .Select(path => (path, score: PoseScore(Path.GetFileNameWithoutExtension(path), left, grip)))
-            .Where(item => item.score > 0)
-            .OrderByDescending(item => item.score)
-            .ToArray();
-        return scored.Length == 0 || scored.Length > 1 && scored[0].score == scored[1].score ? string.Empty : scored[0].path;
+            .Select(path => (path, family: PrefixBeforeMovement(Path.GetFileNameWithoutExtension(path)),
+                score: PoseScore(Path.GetFileNameWithoutExtension(path), left, grip)))
+            .Where(item => item.score > 0).ToArray();
+        var families = new List<string> { family };
+        // Magazine variants precede the action (akilo_drum_reload...), while
+        // their common hand pose is still named akilo_pose. Prefer an exact
+        // variant pose and only fall back across these known suffixes.
+        var familyTokens = family.Split('_').ToList();
+        while (familyTokens.Count > 0 && familyTokens[^1] is "drum" or "xmag")
+        {
+            familyTokens.RemoveAt(familyTokens.Count - 1);
+            families.Add(string.Join('_', familyTokens));
+        }
+        foreach (var candidateFamily in families)
+        {
+            var scored = candidates.Where(item => item.family.Equals(candidateFamily, StringComparison.OrdinalIgnoreCase))
+                .OrderByDescending(item => item.score).ToArray();
+            if (scored.Length == 0) continue;
+            return scored.Length > 1 && scored[0].score == scored[1].score ? string.Empty : scored[0].path;
+        }
+        var generic = candidates.Where(item => item.family.Length == 0).OrderByDescending(item => item.score).ToArray();
+        return generic.Length == 0 || generic.Length > 1 && generic[0].score == generic[1].score ? string.Empty : generic[0].path;
     }
 
     private static int PoseScore(string stem, bool left, bool grip)

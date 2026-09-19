@@ -1,4 +1,4 @@
-﻿using Alchemist.InverseKinematics;
+using Alchemist.InverseKinematics;
 using RedFox.Graphics3D;
 using RedFox.Graphics3D.Skeletal;
 using RedFox.Graphics3D.Translation;
@@ -44,6 +44,20 @@ namespace Alchemist.UI
             }
             if (!float.IsFinite(source.Framerate) || source.Framerate <= 0)
                 throw new InvalidDataException("Invalid source animation framerate: " + path);
+            // CAST quantization can leave slightly non-unit keys. Normalize
+            // before interpolation or additive composition, not only on export.
+            foreach (var target in source.Targets)
+            {
+                if (target.RotationFrames is not { } rotations) continue;
+                for (var index = 0; index < rotations.Count; index++)
+                {
+                    var frame = rotations[index];
+                    var lengthSquared = frame.Value.LengthSquared();
+                    if (!float.IsFinite(lengthSquared) || lengthSquared < 1e-10f)
+                        throw new InvalidDataException($"Invalid rotation for bone {target.BoneName}: {path}");
+                    rotations[index] = new(frame.Frame, Quaternion.Normalize(frame.Value));
+                }
+            }
             var sourceRate = float.IsFinite(source.Framerate) && source.Framerate > 0
                 ? source.Framerate : 30f;
             if (MathF.Abs(sourceRate - targetFramerate) < 0.0001f)
@@ -183,8 +197,8 @@ namespace Alchemist.UI
             SkeletonAnimationSampler? plSampler = null;
             SkeletonAnimationSampler? prSampler = null;
 
-            AnimationSamplerSolver? lSolver = null;
-            AnimationSamplerSolver? rSolver = null;
+            IKTwoBoneSolver? lSolver = null;
+            IKTwoBoneSolver? rSolver = null;
 
             var targetFramerate = animation.OutputFramerate;
             var mainAnimation = LoadAtFramerate(animation.Name, targetFramerate, mergePlan.UpAxis, mergePlan.NormalizeInputAxes);
@@ -268,7 +282,7 @@ namespace Alchemist.UI
                 mainSampler.Update(0, AnimationSampleType.AbsoluteFrameTime);
                 plSampler?.Update(0, AnimationSampleType.AbsoluteFrameTime);
                 prSampler?.Update(0, AnimationSampleType.AbsoluteFrameTime);
-                skeleton.Update();
+                NormalizeSampledRotations(skeleton);
                 if (skeleton.Bones.Any(b => Vector3.DistanceSquared(b.BaseScale, Vector3.One) > 1e-8f))
                     throw new InvalidDataException("武器跟随需要单位骨骼缩放 / Weapon follow requires unit bone scale.");
                 // Capture the original held pose, including its configured IK. The
@@ -323,6 +337,9 @@ namespace Alchemist.UI
                 Logging.Logger.Info($"Loaded layer: {layer.Name}");
             }
 
+            ConfigureMoverTarget(lSolver, "tag_ik_target_left_mover", "left", skeleton, player);
+            ConfigureMoverTarget(rSolver, "tag_ik_target_right_mover", "right", skeleton, player);
+
             // Pre-cache gesture layers
             var gestureLayers = player.Layers.FindAll(x =>
                 string.Equals(x.Name, "gesture", StringComparison.OrdinalIgnoreCase) ||
@@ -349,6 +366,22 @@ namespace Alchemist.UI
                 {
                     switch (note.Name)
                     {
+                        case "ik_in_end_left_hand_mover":
+                        case "ik_out_start_left_hand_mover":
+                            AddShiftedWeights(lSolver?.MoverWeights, note.KeyFrames, sampler.StartFrame, 1);
+                            break;
+                        case "ik_in_start_left_hand_mover":
+                        case "ik_out_end_left_hand_mover":
+                            AddShiftedWeights(lSolver?.MoverWeights, note.KeyFrames, sampler.StartFrame, 0);
+                            break;
+                        case "ik_in_end_right_hand_mover":
+                        case "ik_out_start_right_hand_mover":
+                            AddShiftedWeights(rSolver?.MoverWeights, note.KeyFrames, sampler.StartFrame, 1);
+                            break;
+                        case "ik_in_start_right_hand_mover":
+                        case "ik_out_end_right_hand_mover":
+                            AddShiftedWeights(rSolver?.MoverWeights, note.KeyFrames, sampler.StartFrame, 0);
+                            break;
                         case "ik_out_start_left_hand":
                         case "ik_in_end_left_hand":
                             Logging.Logger.Info($"Adding Left Hand IK 1.0 from: {note.Name} ({note.KeyFrames.Count} frames)");
@@ -407,6 +440,12 @@ namespace Alchemist.UI
             // Ensure the weights we just built are in-order
             player.Layers.ForEach(x => x.Weights.Sort((x, y) => x.Frame.CompareTo(y.Frame)));
             player.Solvers.ForEach(x => x.Weights.Sort((x, y) => x.Frame.CompareTo(y.Frame)));
+            foreach (var solver in player.Solvers.OfType<IKTwoBoneSolver>())
+            {
+                solver.MoverWeights.Sort((a, b) => a.Frame.CompareTo(b.Frame));
+                if (solver.MoverWeights.Count > 0 && solver.MoverWeights[0].Frame > 0)
+                    solver.MoverWeights.Insert(0, new(0, 0));
+            }
 
             //var v = new (Vector3, Quaternion)[skeleton.Bones.Count];
 
@@ -466,11 +505,12 @@ namespace Alchemist.UI
             for (int i = 0; i < player.FrameCount; i++)
             {
                 skeleton.InitializeAnimationTransforms();
-                if (followHand is null || followAnchor is null) player.Update(i, AnimationSampleType.AbsoluteFrameTime);
-                else
+                foreach (var layer in player.Layers) layer.Update(i, AnimationSampleType.AbsoluteFrameTime);
+                // IK and DCC import must evaluate the same rigid hierarchy.
+                // Composition can accumulate length error even with unit keys.
+                NormalizeSampledRotations(skeleton);
+                if (followHand is not null && followAnchor is not null)
                 {
-                    foreach (var layer in player.Layers) layer.Update(i, AnimationSampleType.AbsoluteFrameTime);
-                    skeleton.Update();
                     var handWorld = FollowWorld(followHand);
                     var position = handWorld.Position + Vector3.Transform(gripPosition, handWorld.Rotation);
                     var rotation = Quaternion.Normalize(handWorld.Rotation * gripRotation);
@@ -479,9 +519,9 @@ namespace Alchemist.UI
                     followAnchor.LocalTranslation = Vector3.Transform(position - parentWorld.Position, inverseParent);
                     followAnchor.LocalRotation = Quaternion.Normalize(inverseParent * rotation);
                     skeleton.Update();
-                    // The opposite hand can still solve against the now-moving weapon target.
-                    foreach (var solver in player.Solvers) solver.Update(i);
                 }
+                // In follow mode, the opposite hand solves against the updated weapon target.
+                foreach (var solver in player.Solvers) solver.Update(i);
 
                 if (bakeRelevantBonesOnly)
                 {
@@ -538,6 +578,14 @@ namespace Alchemist.UI
                 {
                     switch (note.Name)
                     {
+                        case "ik_in_start_left_hand_mover" when lSolver?.MoverTargetBone is not null:
+                        case "ik_in_end_left_hand_mover" when lSolver?.MoverTargetBone is not null:
+                        case "ik_out_start_left_hand_mover" when lSolver?.MoverTargetBone is not null:
+                        case "ik_out_end_left_hand_mover" when lSolver?.MoverTargetBone is not null:
+                        case "ik_in_start_right_hand_mover" when rSolver?.MoverTargetBone is not null:
+                        case "ik_in_end_right_hand_mover" when rSolver?.MoverTargetBone is not null:
+                        case "ik_out_start_right_hand_mover" when rSolver?.MoverTargetBone is not null:
+                        case "ik_out_end_right_hand_mover" when rSolver?.MoverTargetBone is not null:
                         case "ik_out_start_left_hand":
                         case "ik_in_end_left_hand":
                         case "ik_in_start_left_hand":
@@ -572,6 +620,42 @@ namespace Alchemist.UI
             }
 
             return newAnim;
+        }
+
+        private static void ConfigureMoverTarget(IKTwoBoneSolver? solver, string targetName,
+            string side, Skeleton skeleton, AnimationPlayer player)
+        {
+            if (solver is null) return;
+            var markerNames = new HashSet<string>(StringComparer.Ordinal)
+            {
+                $"ik_in_start_{side}_hand_mover", $"ik_in_end_{side}_hand_mover",
+                $"ik_out_start_{side}_hand_mover", $"ik_out_end_{side}_hand_mover",
+            };
+            // Do not constrain old clips to a static, unused bind-pose locator.
+            if (!player.Layers.Any(layer =>
+                layer.Animation is SkeletonAnimation clip
+                && clip.Actions?.Any(action => markerNames.Contains(action.Name) && action.KeyFrames.Count > 0) == true
+                && clip.Targets.Any(target => target.BoneName.Equals(targetName, StringComparison.OrdinalIgnoreCase)
+                    && (target.TranslationFrameCount > 0 || target.RotationFrameCount > 0)))) return;
+            if (!skeleton.TryGetBone(targetName, out var targetBone))
+            {
+                Logging.Logger.Warn($"Animated IK mover is missing from the model skeleton: {targetName}");
+                return;
+            }
+            if (targetBone == solver.StartBone || targetBone.IsDescendantOf(solver.StartBone))
+            {
+                Logging.Logger.Warn($"Rejected IK mover inside the solved arm chain: {targetName}");
+                return;
+            }
+            solver.MoverTargetBone = targetBone;
+            Logging.Logger.Info($"Enabled notetrack-driven IK mover: {solver.Name} -> {targetName}");
+        }
+
+        private static void NormalizeSampledRotations(Skeleton skeleton)
+        {
+            foreach (var bone in skeleton.Bones)
+                bone.LocalRotation = Quaternion.Normalize(bone.LocalRotation);
+            skeleton.Update();
         }
 
         internal static string SaveBaked(SkeletonMergePlan mergePlan, SkeletonAnimation newAnim,

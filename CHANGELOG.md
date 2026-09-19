@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.3.0-preview.32 — 2026-09-20 (Animation blending and hand IK)
+
+Chinese release notes: [更新日志](docs/releases/1.3.0-preview.32.zh-CN.md). Based on preview.31.
+
+- Normalize rotation keys before resampling and sampled bone rotations before IK; preserve local bone translations while applying normalized world-space rotations and retain small-angle corrections to address idle hand drift.
+- Blend hand IK targets using animated `tag_ik_target_left_mover` / `tag_ik_target_right_mover` tracks and matching hand mover notetracks during reloads. Bake supported mover markers into the resulting motion; retain the existing path when the required data is absent.
+- Auto-fill poses from the selected base animation before falling back to the imported animation. Prefer exact weapon families, then the base family for `drum` / `xmag` variants; leave ambiguous matches unresolved.
+- Make release packaging's `-SkipVerification` also skip the appearance sample runtime smoke check.
+- Validation scope: Native AOT compilation and archive inspection only; no functional, animation-export or UI tests were run for this release.
+
 ## 1.3.0-preview.31 — 2026-09-19 (ModelMerger workspace)
 
 Chinese release notes: [更新日志](docs/releases/1.3.0-preview.31.zh-CN.md). Based on preview.30; RF experimental work remains separate.
