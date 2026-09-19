@@ -11,9 +11,22 @@ namespace AlchemyStars.Avalonia;
 
 public sealed partial class MainWindow : Window
 {
+    private bool waitingForMergerShutdown;
+    private readonly List<ModelMergerPreviewWindow> mergerPreviews = [];
     public MainWindow()
     {
         InitializeComponent();
+        ModelMergerWorkspace.PreviewRequested += path =>
+        {
+            var preview = new ModelMergerPreviewWindow(path, ModelMergerWorkspace.Language);
+            mergerPreviews.Add(preview);
+            preview.Closed += (_, _) => mergerPreviews.Remove(preview);
+            preview.Show(this);
+        };
+        ModelMergerWorkspace.LanguageChanged += language =>
+        {
+            foreach (var preview in mergerPreviews) preview.UpdateLanguage(language);
+        };
         InitializeAccessibility();
         AddHandler(KeyDownEvent, WindowKeyDown, RoutingStrategies.Tunnel);
         PropertyChanged += (_, e) =>
@@ -77,6 +90,11 @@ public sealed partial class MainWindow : Window
         Closing += (_, eventArgs) =>
         {
             if (viewModel.IsUpdateHandoffInProgress) eventArgs.Cancel = true;
+            if (ModelMergerWorkspace.HasActiveTasks)
+            {
+                eventArgs.Cancel = true;
+                if (!waitingForMergerShutdown) _ = CloseAfterMergerAsync();
+            }
         };
         EventHandler appearanceChanged = (_, _) => viewModel.RefreshAppearanceLabel();
         ActualThemeVariantChanged += appearanceChanged;
@@ -105,7 +123,19 @@ public sealed partial class MainWindow : Window
     private void ForgetSavedArmsClick(object? sender, RoutedEventArgs e) => ViewModel.ForgetSavedArms();
     private async void CheckUpdateClick(object? sender, RoutedEventArgs e) => await ViewModel.CheckForUpdatesAsync(false);
     private async void DownloadUpdateClick(object? sender, RoutedEventArgs e) => await ViewModel.DownloadUpdateAsync();
-    private async void InstallUpdateClick(object? sender, RoutedEventArgs e) => await ViewModel.InstallUpdateAsync();
+    private async void InstallUpdateClick(object? sender, RoutedEventArgs e)
+    {
+        if (!ViewModel.CanInstallUpdate) return;
+        await ModelMergerWorkspace.ShutdownAsync();
+        await ViewModel.InstallUpdateAsync();
+    }
+
+    private async Task CloseAfterMergerAsync()
+    {
+        waitingForMergerShutdown = true;
+        try { await ModelMergerWorkspace.ShutdownAsync(); Close(); }
+        finally { waitingForMergerShutdown = false; }
+    }
     private void SkipUpdateClick(object? sender, RoutedEventArgs e) => ViewModel.SkipUpdate();
     private void CancelUpdateClick(object? sender, RoutedEventArgs e) => ViewModel.CancelUpdate();
     private void ToggleAppearanceClick(object? sender, RoutedEventArgs e) => ViewModel.ToggleAppearance();
@@ -153,6 +183,7 @@ public sealed partial class MainWindow : Window
         if (buttons.Length != 4) throw new InvalidOperationException("The project toolbar must expose four commands.");
         foreach (var button in buttons)
         {
+            if (!button.IsEffectivelyVisible) continue; // Model merger has its own task toolbar.
             var themedIcon = button.GetVisualDescendants().OfType<ThemedIcon>().SingleOrDefault();
             if (themedIcon is not null)
             {
@@ -258,6 +289,7 @@ public sealed partial class MainWindow : Window
     private void SettingsPageClick(object? sender, RoutedEventArgs e) => ViewModel.SelectPage(WorkspacePage.Settings);
     private void AboutPageClick(object? sender, RoutedEventArgs e) => ViewModel.SelectPage(WorkspacePage.About);
     private void CodWeaponDbPageClick(object? sender, RoutedEventArgs e) => ViewModel.SelectPage(WorkspacePage.CodWeaponDb);
+    private void ModelMergerPageClick(object? sender, RoutedEventArgs e) => ViewModel.SelectPage(WorkspacePage.ModelMerger);
     private void LanguageClick(object? sender, RoutedEventArgs e) => ViewModel.ToggleLanguage();
     private void SystemLanguageClick(object? sender, RoutedEventArgs e) => ViewModel.UseSystemLanguage();
     private void SaveDefaultsClick(object? sender, RoutedEventArgs e) => ViewModel.SaveDefaults();

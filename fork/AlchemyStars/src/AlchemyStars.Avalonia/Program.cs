@@ -29,6 +29,8 @@ internal static class Program
     internal static bool WindowChromeSmokeRequested { get; private set; }
     internal static bool SharedBaseBatchSmokeRequested { get; private set; }
     internal static bool CodWeaponDbUiSmokeRequested { get; private set; }
+    internal static bool ModelMergerUiSmokeRequested { get; private set; }
+    internal static string? ModelMergerPreviewUiPath { get; private set; }
     /// <summary>Opt-in: the COD smokes additionally query the real Call of Duty Wiki.</summary>
     internal static bool CodWeaponDbLiveRequested { get; private set; }
 
@@ -50,6 +52,13 @@ internal static class Program
 
         if (args.Contains("--self-test", StringComparer.OrdinalIgnoreCase))
             return SelfTest.Run();
+        if (args.Contains("--model-merger-preview-smoke", StringComparer.OrdinalIgnoreCase))
+            return ModelMergerPreviewSmoke.Run(args);
+        if (GetOption(args, "--model-merger-service-smoke") is { } mergerOutput)
+        {
+            try { ModelMergerServiceSmoke.RunAsync(mergerOutput).GetAwaiter().GetResult(); return 0; }
+            catch (Exception error) { Console.Error.WriteLine(error); return 1; }
+        }
         if (GetOption(args, "--axis-smoke") is { } axisDirectory)
         {
             try { CastAxisSmoke.Run(axisDirectory, args.Contains("--fbx")); return 0; }
@@ -109,6 +118,8 @@ internal static class Program
         WindowChromeSmokeRequested = args.Contains("--window-chrome-smoke", StringComparer.OrdinalIgnoreCase);
         SharedBaseBatchSmokeRequested = args.Contains("--shared-base-batch-smoke", StringComparer.OrdinalIgnoreCase);
         CodWeaponDbUiSmokeRequested = args.Contains("--cod-weapon-db-ui-smoke", StringComparer.OrdinalIgnoreCase);
+        ModelMergerUiSmokeRequested = args.Contains("--model-merger-ui-smoke", StringComparer.OrdinalIgnoreCase);
+        ModelMergerPreviewUiPath = GetOption(args, "--model-merger-preview-ui");
         CodWeaponDbLiveRequested = args.Contains("--cod-weapon-db-live", StringComparer.OrdinalIgnoreCase);
         StartupProjectPath = args
             .Where(argument => !argument.StartsWith("--", StringComparison.Ordinal))
@@ -154,6 +165,7 @@ internal static class Program
         "parts" => WorkspacePage.ModelParts,
         "dual" => WorkspacePage.DualAnimations,
         "cod-weapons" => WorkspacePage.CodWeaponDb,
+        "model-merger" => WorkspacePage.ModelMerger,
         "settings" => WorkspacePage.Settings,
         "about" => WorkspacePage.About,
         _ => null,

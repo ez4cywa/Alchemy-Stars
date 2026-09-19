@@ -17,10 +17,10 @@ public sealed partial class MainWindow
             Command = new ShortcutCommand(this, action, available),
         });
         Task Run(Action action) { action(); return Task.CompletedTask; }
-        Bind("Ctrl+N", () => Run(ViewModel.NewProject));
-        Bind("Ctrl+O", ViewModel.OpenProjectAsync);
-        Bind("Ctrl+S", () => ViewModel.SaveProjectAsync(false));
-        Bind("Ctrl+Shift+S", () => ViewModel.SaveProjectAsync(true));
+        Bind("Ctrl+N", () => Run(ViewModel.NewProject), () => !ViewModel.IsModelMergerPage);
+        Bind("Ctrl+O", ViewModel.OpenProjectAsync, () => !ViewModel.IsModelMergerPage);
+        Bind("Ctrl+S", () => ViewModel.SaveProjectAsync(false), () => !ViewModel.IsModelMergerPage);
+        Bind("Ctrl+Shift+S", () => ViewModel.SaveProjectAsync(true), () => !ViewModel.IsModelMergerPage);
         Bind("Ctrl+E", ViewModel.ExportAsync, () => ViewModel.IsAnimationsPage || ViewModel.IsDualPage);
         Bind("Ctrl+Shift+E", ViewModel.ExportSelectedAnimationAsync, () => ViewModel.CanExportSelectedAnimation);
         Bind("Ctrl+I", () => ViewModel.IsModelPartsPage ? ViewModel.AddPartsAsync() : ViewModel.AddAnimationsAsync(),
@@ -36,6 +36,7 @@ public sealed partial class MainWindow
         Bind("Ctrl+D4", () => Run(() => ViewModel.SelectPage(WorkspacePage.Settings)));
         Bind("Ctrl+D5", () => Run(() => ViewModel.SelectPage(WorkspacePage.About)));
         Bind("Ctrl+D6", () => Run(() => ViewModel.SelectPage(WorkspacePage.CodWeaponDb)));
+        Bind("Ctrl+D7", () => Run(() => ViewModel.SelectPage(WorkspacePage.ModelMerger)));
         Bind("F1", () => Run(ViewModel.ShowShortcuts));
     }
 

@@ -82,6 +82,10 @@ public sealed partial class App : Application
                         await SharedBaseBatchUiSmoke.RunAsync(mainWindow);
                     if (Program.CodWeaponDbUiSmokeRequested)
                         await CodWeaponDbUiSmoke.RunAsync(mainWindow, viewModel);
+                    if (Program.ModelMergerUiSmokeRequested)
+                        await ModelMergerUiSmoke.RunAsync(mainWindow, viewModel);
+                    if (Program.ModelMergerPreviewUiPath is { } mergerPreviewPath)
+                        await ModelMergerPreviewSmoke.RunUiAsync(mainWindow, mergerPreviewPath, Path.GetDirectoryName(Program.RenderSmokePath!)!);
                     if (viewModel.IsCodWeaponDbPage)
                         await viewModel.WaitForCodWeaponDbAsync(TimeSpan.FromSeconds(60));
                     if (Program.AppearanceSmokeRequested)

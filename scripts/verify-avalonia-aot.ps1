@@ -7,7 +7,7 @@ $ErrorActionPreference = 'Stop'
 $repositoryRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
 $project = Join-Path $repositoryRoot 'fork\AlchemyStars\src\AlchemyStars.Avalonia\AlchemyStars.Avalonia.csproj'
 $outputRoot = [System.IO.Path]::GetFullPath((Join-Path $repositoryRoot 'output'))
-$publishDirectory = [System.IO.Path]::GetFullPath((Join-Path $outputRoot 'avalonia-aot-preview30'))
+$publishDirectory = [System.IO.Path]::GetFullPath((Join-Path $outputRoot 'avalonia-aot-preview31'))
 $bundledDotnet = Join-Path $repositoryRoot 'output\dotnet-sdk\dotnet.exe'
 $dotnet = if (Test-Path -LiteralPath $bundledDotnet) { $bundledDotnet } else { 'dotnet' }
 function Assert-OutputChild([string]$Path) {
@@ -25,6 +25,9 @@ $env:DOTNET_CLI_TELEMETRY_OPTOUT = '1'
 $env:AVALONIA_TELEMETRY_OPTOUT = '1'
 $env:ALCHEMY_STARS_SETTINGS_PATH = Join-Path $outputRoot 'avalonia-aot-verification-settings.json'
 
+& (Join-Path $PSScriptRoot 'build-model-merger.ps1')
+if ($LASTEXITCODE -ne 0) { throw 'ModelMerger verification failed.' }
+
 & $dotnet publish $project `
     -c $Configuration `
     -r $RuntimeIdentifier `
@@ -39,6 +42,19 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 $executable = Join-Path $publishDirectory 'AlchemyStars.Avalonia.exe'
+& (Join-Path $PSScriptRoot 'verify-model-merger.ps1') -Executable (Join-Path $publishDirectory 'Converters\alchemy-model-merger.exe')
+if ($LASTEXITCODE -ne 0) { throw 'Packaged ModelMerger companion verification failed.' }
+$mergerChecks = Join-Path $outputRoot ('model-merger-native-' + [guid]::NewGuid().ToString('N'))
+[System.IO.Directory]::CreateDirectory($mergerChecks) | Out-Null
+$env:ALCHEMY_MODEL_MERGER_AMMO_FIXTURES = Join-Path $mergerChecks 'ammunition-fixture'
+& cargo run --manifest-path (Join-Path $repositoryRoot 'third_party\modelmerger\rust\Cargo.toml') --locked -p alchemy-model-merger --example generate_ammunition_fixture -- $env:ALCHEMY_MODEL_MERGER_AMMO_FIXTURES
+if ($LASTEXITCODE -ne 0) { throw 'Ammunition fixture generation failed.' }
+$mergerFixture = Join-Path $repositoryRoot 'third_party\modelmerger\tests\fixtures\rust-migration\golden-small\part-00.cast'
+$mergerPreviewCheck = Start-Process -FilePath $executable -ArgumentList ('--model-merger-preview-smoke --model-merger-preview-file "' + $mergerFixture + '"') -WorkingDirectory $publishDirectory -WindowStyle Hidden -Wait -PassThru
+if ($mergerPreviewCheck.ExitCode -ne 0) { throw 'Native ModelMerger depth/index/preview checks failed.' }
+$mergerUiCheck = Start-Process -FilePath $executable -ArgumentList ('--model-merger-ui-smoke --model-merger-preview-ui "' + $mergerFixture + '" --page model-merger --window-size 900x600 --render-smoke "' + (Join-Path $mergerChecks 'workspace.png') + '"') -WorkingDirectory $publishDirectory -WindowStyle Hidden -Wait -PassThru
+if ($mergerUiCheck.ExitCode -ne 0) { throw 'Native ModelMerger workspace/preview UI checks failed.' }
+Write-Output "ModelMerger Native AOT checks: PASS ($mergerChecks)"
 $accessibilityInteraction = Start-Process -FilePath $executable -ArgumentList '--startup-smoke --accessibility-interaction-smoke' -WindowStyle Hidden -Wait -PassThru
 if ($accessibilityInteraction.ExitCode -ne 0) { throw 'Native AOT accessibility interaction regression failed.' }
 $selfTest = Start-Process `

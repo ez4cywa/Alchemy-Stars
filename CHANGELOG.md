@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.3.0-preview.31 — 2026-09-19 (ModelMerger workspace)
+
+Chinese release notes: [更新日志](docs/releases/1.3.0-preview.31.zh-CN.md). Based on preview.30; RF experimental work remains separate.
+
+- Add Model merger to the left sidebar (Ctrl+7), using the pinned ModelMergerGUI 2.2.2 Rust codec/engine instead of reimplementing its attachment and bone logic.
+- Support multiple 2–15-part groups, automatic/manual root selection, output naming, two concurrent jobs, queued/running cancellation, resolved output claims, progress, logs and confirmation before overwriting.
+- Add magazine ammunition inspection/filling, opt-in extra slots and spare magazine replication, skipping occupied slots and requiring a new output path.
+- Add independent read-only previews with u32 indices, a 250,000-triangle display cap, per-pixel software depth testing, orbit/zoom/grid/reset controls, five languages and saved window placement. Sampling never changes output geometry.
+- Preserve the host's themes, update channel and existing animation/FBX export workflow. Bundle the native companion and MIT license; no Rust or additional .NET installation is required to run the package.
+- Make the asset-pair regression duration-aware when a 60 FPS source is resampled to the default 30 FPS; this corrects a test assumption without changing animation processing.
+
 ## 1.3.0-preview.30 — 2026-09-15 (COD weapon database online update)
 
 Chinese release notes: [更新日志](docs/releases/1.3.0-preview.30.zh-CN.md). Includes the preview.29 changes below.

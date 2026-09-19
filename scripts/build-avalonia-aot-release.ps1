@@ -4,10 +4,10 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$version = '1.3.0-preview.30'
+$version = '1.3.0-preview.31'
 $repositoryRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
 $releaseRoot = [System.IO.Path]::GetFullPath((Join-Path $repositoryRoot 'release'))
-$publishDirectory = [System.IO.Path]::GetFullPath((Join-Path $repositoryRoot 'output\avalonia-aot-preview30'))
+$publishDirectory = [System.IO.Path]::GetFullPath((Join-Path $repositoryRoot 'output\avalonia-aot-preview31'))
 $stagingDirectory = [System.IO.Path]::GetFullPath((Join-Path $releaseRoot "Alchemy Stars $version"))
 $resolvedArchive = if ([string]::IsNullOrWhiteSpace($ArchivePath)) {
     [System.IO.Path]::GetFullPath((Join-Path $releaseRoot "AlchemyStars-$version-win-x64.zip"))
@@ -48,7 +48,9 @@ $rootFiles = @(
     @{ Source = 'THIRD_PARTY_NOTICES.md'; Target = 'THIRD_PARTY_NOTICES.md' },
     @{ Source = 'docs\dual-wield.zh-CN.md'; Target = 'Docs\DUAL-WIELD.zh-CN.md' },
     @{ Source = 'docs\cod-weapon-db.zh-CN.md'; Target = 'Docs\COD-WEAPON-DB.zh-CN.md' },
-    @{ Source = 'docs\releases\1.3.0-preview.30.zh-CN.md'; Target = 'Docs\RELEASE-NOTES.zh-CN.md' },
+    @{ Source = 'docs\releases\1.3.0-preview.31.zh-CN.md'; Target = 'Docs\RELEASE-NOTES.zh-CN.md' },
+    @{ Source = 'docs\model-merger.zh-CN.md'; Target = 'Docs\MODEL-MERGER.zh-CN.md' },
+    @{ Source = 'third_party\modelmerger\README.md'; Target = 'Docs\MODEL-MERGER-UPSTREAM.md' },
     @{ Source = 'docs\samples\appearance\theme.json'; Target = 'Samples\Appearance\theme.json' },
     @{ Source = 'docs\samples\appearance\icons-template.zip'; Target = 'Samples\Appearance\icons-template.zip' },
     @{ Source = 'docs\samples\appearance\README.zh-CN.md'; Target = 'Samples\Appearance\README.zh-CN.md' },
@@ -113,6 +115,9 @@ try {
     }
     if (@($names | Where-Object { $_.EndsWith('.pdb', [System.StringComparison]::OrdinalIgnoreCase) }).Count -gt 0) {
         throw 'Release archive unexpectedly contains debug symbols.'
+    }
+    foreach ($required in @('Converters/alchemy-model-merger.exe', 'Licenses/ModelMergerGUI-LICENSE.txt', 'Docs/MODEL-MERGER.zh-CN.md', 'Docs/MODEL-MERGER-UPSTREAM.md')) {
+        if ($required -notin $names) { throw "Release archive is missing ModelMerger integration: $required" }
     }
     foreach ($required in @('Samples/Ubuntu-Yaru/theme.json', 'Samples/Ubuntu-Yaru/icons.zip', 'Samples/Ubuntu-Yaru/README.zh-CN.md')) {
         if ($required -notin $names) { throw "Release archive is missing Ubuntu theme input: $required" }

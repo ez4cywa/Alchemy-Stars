@@ -1,0 +1,14 @@
+[package]
+name = "alchemy-model-merger"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+model-merger-engine.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+
+[dev-dependencies]
+cast-codec.workspace = true

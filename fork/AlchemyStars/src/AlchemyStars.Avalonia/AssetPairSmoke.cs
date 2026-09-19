@@ -35,7 +35,16 @@ internal static class AssetPairSmoke
 
             var hashes = new[] { hands, weapon, animation }.ToDictionary(path => path, path => SHA256.HashData(File.ReadAllBytes(path)));
             var translator = new Graphics3DTranslatorFactory().WithDefaultTranslators();
-            var sourceFrames = Math.Max(1, (int)MathF.Ceiling(translator.Load<SkeletonAnimation>(animation).GetAnimationFrameCount()));
+            var sourceClip = translator.Load<SkeletonAnimation>(animation);
+            // The RedFox CAST translator does not populate Framerate; read the
+            // same CAST metadata used by the production resampler.
+            sourceClip.Framerate = CastReader.Load(animation).RootNodes.SelectMany(Walk).OfType<AnimationNode>().Single().Framerate;
+            var sourceFrames = Math.Max(1, (int)MathF.Ceiling(sourceClip.GetAnimationFrameCount()));
+            Require(float.IsFinite(sourceClip.Framerate) && sourceClip.Framerate > 0, "Source frame rate must be positive.");
+            // Both default pipelines resample to 30 FPS. Compare the resulting
+            // duration/frame grid, not the source frame count (e.g. 61 @ 60 -> 31 @ 30).
+            var expectedFrames = Math.Max(1, (int)MathF.Ceiling((sourceFrames - 1)
+                * WorkspacePaths.StandardAnimationFramerate / sourceClip.Framerate) + 1);
 
             var handsModel = Model(hands);
             var weaponModel = Model(weapon);
@@ -46,7 +55,7 @@ internal static class AssetPairSmoke
             var weaponRoot = weaponModel.Skeleton.Bones.Single(bone => bone.ParentIndex < 0).Name;
             Console.WriteLine($"Hands: {handsVertices} vertices, {handsBones} bones ({Path.GetFileName(hands)})");
             Console.WriteLine($"Weapon: {weaponVertices} vertices, {weaponBones} bones, root '{weaponRoot}' ({Path.GetFileName(weapon)})");
-            Console.WriteLine($"Animation: {sourceFrames} frames ({Path.GetFileName(animation)})");
+            Console.WriteLine($"Animation: {sourceFrames} frames @ {sourceClip.Framerate} FPS -> {expectedFrames} @ 30 FPS ({Path.GetFileName(animation)})");
 
             var handsClassification = ModelPartClassifier.Classify(hands);
             var weaponClassification = ModelPartClassifier.Classify(weapon);
@@ -61,10 +70,10 @@ internal static class AssetPairSmoke
             var mount = string.IsNullOrWhiteSpace(weaponClassification.RecommendedParentBone) ? "tag_weapon" : weaponClassification.RecommendedParentBone;
             var blendFrames = VerifyBlendPipeline(store, hands, weapon, animation, output, mount,
                 handsClassification.Kind, weaponClassification.Kind,
-                handsVertices + weaponVertices, handsBones + weaponBones, sourceFrames);
+                handsVertices + weaponVertices, handsBones + weaponBones, expectedFrames);
             var dualFrames = VerifyAttachedDualPipeline(hands, weapon, animation, output, mount,
                 handsClassification.Kind, weaponClassification.Kind,
-                handsVertices + 2 * weaponVertices, sourceFrames);
+                handsVertices + 2 * weaponVertices, expectedFrames);
 
             Require(dualFrames == blendFrames,
                 $"both pipelines must bake the same clip length, blend {blendFrames} vs dual {dualFrames}.");
@@ -85,7 +94,7 @@ internal static class AssetPairSmoke
     /// <summary>Merges the pair the way the Animations page does and checks the baked scene.</summary>
     private static int VerifyBlendPipeline(WorkspaceProjectStore store, string hands, string weapon, string animation,
         string output, string mount, ModelPartKind handsKind, ModelPartKind weaponKind,
-        int expectedVertices, int expectedBones, int sourceFrames)
+        int expectedVertices, int expectedBones, int expectedFrames)
     {
         var document = new WorkspaceDocument { OutputFormat = ".cast" };
         document.Parts.Add(new WorkspacePart { FilePath = hands, Type = handsKind });
@@ -114,8 +123,10 @@ internal static class AssetPairSmoke
             "the blend merge produced duplicate bone names.");
         Require(merged.Skeleton.Bones.Count(bone => bone.ParentIndex < 0) == 1, "the blend merge produced a disconnected rig.");
 
-        var frames = CastPreviewScene.Load(path).FrameCount;
-        Require(frames >= sourceFrames, $"the blend bake lost frames, source {sourceFrames}, output {frames}.");
+        var preview = CastPreviewScene.Load(path);
+        var frames = preview.FrameCount;
+        Require(frames == expectedFrames && preview.Framerate == WorkspacePaths.StandardAnimationFramerate,
+            $"the blend bake changed duration, expected {expectedFrames} @ 30 FPS, output {frames} @ {preview.Framerate}.");
         Console.WriteLine($"Blend: {vertices} vertices, {bones} bones, {frames} frames -> {Path.GetFileName(path)}");
         VerifyWeaponMount(merged, "blend", mount);
         return frames;
@@ -124,7 +135,7 @@ internal static class AssetPairSmoke
     /// <summary>Duplicates the weapon onto both mounts the way the Dual page does.</summary>
     private static int VerifyAttachedDualPipeline(string hands, string weapon, string animation,
         string output, string mount, ModelPartKind handsKind, ModelPartKind weaponKind,
-        int expectedVertices, int sourceFrames)
+        int expectedVertices, int expectedFrames)
     {
         var document = new WorkspaceDocument { OutputFormat = ".cast" };
         document.Parts.Add(new WorkspacePart { FilePath = hands, Type = handsKind });
@@ -166,7 +177,9 @@ internal static class AssetPairSmoke
         Require(vertices == expectedVertices, $"the dual merge must keep one hands and two weapon copies, expected {expectedVertices}, saw {vertices}.");
         Require(names.Distinct(StringComparer.OrdinalIgnoreCase).Count() == names.Length, "the dual merge produced duplicate bone names.");
         Require(merged.Skeleton.Bones.Count(bone => bone.ParentIndex < 0) == 1, "the dual merge produced a disconnected rig.");
-        Require(result.FrameCount >= sourceFrames, $"the dual bake lost frames, source {sourceFrames}, output {result.FrameCount}.");
+        var outputRate = CastReader.Load(result.OutputFile).RootNodes.SelectMany(Walk).OfType<AnimationNode>().Single().Framerate;
+        Require(result.FrameCount == expectedFrames && outputRate == WorkspacePaths.StandardAnimationFramerate,
+            $"the dual bake changed duration, expected {expectedFrames} @ 30 FPS, output {result.FrameCount}.");
         Require(!CastReader.Load(result.ModelFile!).RootNodes.SelectMany(Walk).OfType<AnimationNode>().Any(),
             "the dual companion model must not contain animation.");
         Require(!CastReader.Load(result.OutputFile).RootNodes.SelectMany(Walk).OfType<ModelNode>().Any(),

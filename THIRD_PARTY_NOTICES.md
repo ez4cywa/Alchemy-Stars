@@ -1,5 +1,14 @@
 # Third-party notices
 
+## ModelMergerGUI core
+
+The CAST codec, merge, ammunition filling and preview analysis core under
+`third_party/modelmerger` is from [ez4cywa/ModelMergerGUI](https://github.com/ez4cywa/ModelMergerGUI),
+version 2.2.2, pinned at `ac0bfeb577651c34b3de4fdbafa4b1f615e5f84f`, under the MIT License.
+The original license and provenance are retained in that directory. The new
+JSONL adapter and Avalonia workspace integrate it into Alchemy Stars. No upstream
+MiSans font or independent GUI updater is redistributed by this integration.
+
 ## Blender CAST plugin
 
 The Blender add-on and Python CAST library under `third_party/cast/blender` are

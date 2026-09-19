@@ -34,6 +34,7 @@
           <Button Classes="activity" Click="PartsPageClick" ToolTip.Tip="{Binding Text.ModelParts}" AutomationProperties.Name="{Binding Text.ModelParts}" Classes.selected="{Binding IsModelPartsPage}"><StackPanel Orientation="Horizontal"><local:ThemedIcon Classes="product-icon" Glyph="model-parts" IsHitTestVisible="False" /><TextBlock Classes="navigation-label" Text="{Binding Text.ModelParts}" /></StackPanel></Button>
           <Button Classes="activity" Click="DualPageClick" ToolTip.Tip="{Binding Text.DualAnimations}" AutomationProperties.Name="{Binding Text.DualAnimations}" Classes.selected="{Binding IsDualPage}"><StackPanel Orientation="Horizontal"><local:ThemedIcon Classes="product-icon" Glyph="dual-wield" IsHitTestVisible="False" /><TextBlock Classes="navigation-label" Text="{Binding Text.DualAnimations}" /></StackPanel></Button>
           <Button x:Name="CodDbNavigation" Classes="activity" Click="CodWeaponDbPageClick" ToolTip.Tip="{Binding Text.CodDbNavigation}" AutomationProperties.Name="{Binding Text.CodDbNavigation}" AutomationProperties.AcceleratorKey="Ctrl+6" Classes.selected="{Binding IsCodWeaponDbPage}"><StackPanel Orientation="Horizontal"><local:ThemedIcon Classes="product-icon" Glyph="cod-weapon-database" IsHitTestVisible="False" /><TextBlock Classes="navigation-label" Text="{Binding Text.CodDbNavigation}" /></StackPanel></Button>
+          <Button x:Name="ModelMergerNavigation" Classes="activity" Click="ModelMergerPageClick" ToolTip.Tip="{Binding Text.ModelMergerNavigation}" AutomationProperties.Name="{Binding Text.ModelMergerNavigation}" AutomationProperties.AcceleratorKey="Ctrl+7" Classes.selected="{Binding IsModelMergerPage}"><StackPanel Orientation="Horizontal"><local:ThemedIcon Classes="product-icon" Glyph="batch-processing" IsHitTestVisible="False" /><TextBlock Classes="navigation-label" Text="{Binding Text.ModelMergerNavigation}" /></StackPanel></Button>
         </StackPanel>
         <StackPanel Grid.Row="2" Spacing="2" Margin="0,0,0,8">
           <TextBlock Classes="navigation-section" Text="{Binding Text.DesktopPreferences}" />
@@ -55,7 +56,7 @@
             <TextBlock Text="{Binding CurrentProjectLabel}" Classes="muted command-text page-command-text" FontSize="11" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding CurrentProjectLabel}" />
           </StackPanel>
         </Grid>
-        <StackPanel Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Margin="0,0,12,0" Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
+        <StackPanel Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Margin="0,0,12,0" Orientation="Horizontal" Spacing="2" VerticalAlignment="Center" IsVisible="{Binding !IsModelMergerPage}">
           <Button Classes="toolbar" Click="NewProjectClick" ToolTip.Tip="{Binding Text.NewProjectShortcut}" AutomationProperties.Name="{Binding Text.NewProject}">
             <local:ThemedIcon Classes="product-icon" Glyph="project-workspace" IsHitTestVisible="False" Width="24" Height="24" />
           </Button>
@@ -186,6 +187,7 @@
     </Grid>
     <local:DualWieldView x:Name="DualWorkspace" Grid.Column="1" Grid.Row="1" IsVisible="{Binding IsDualPage}" />
     <local:CodWeaponDbView x:Name="CodDbWorkspace" Grid.Column="1" Grid.Row="1" IsVisible="{Binding IsCodWeaponDbPage}" />
+    <local:ModelMergerView x:Name="ModelMergerWorkspace" Grid.Column="1" Grid.Row="1" IsVisible="{Binding IsModelMergerPage}" />
     <!-- Settings workspace -->
     <ScrollViewer Grid.Column="1" Grid.Row="1" IsVisible="{Binding IsSettingsPage}" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
       <StackPanel x:Name="SettingsContent" Margin="14,12,14,28" Spacing="14" MaxWidth="1080">

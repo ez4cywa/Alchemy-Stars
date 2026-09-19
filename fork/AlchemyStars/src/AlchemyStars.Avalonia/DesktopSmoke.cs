@@ -20,7 +20,7 @@ internal static class DesktopSmoke
         var navigation = window.GetVisualDescendants().OfType<Button>()
             .Where(b => b.Classes.Contains("activity")).ToArray();
         // Must match the sidebar button order exactly; the loop clicks by index.
-        var pages = new[] { WorkspacePage.Animations, WorkspacePage.ModelParts, WorkspacePage.DualAnimations, WorkspacePage.CodWeaponDb, WorkspacePage.Settings, WorkspacePage.About };
+        var pages = new[] { WorkspacePage.Animations, WorkspacePage.ModelParts, WorkspacePage.DualAnimations, WorkspacePage.CodWeaponDb, WorkspacePage.ModelMerger, WorkspacePage.Settings, WorkspacePage.About };
         try
         {
             // Reproduce scrolling away from the inspector before selecting a real project layer.
