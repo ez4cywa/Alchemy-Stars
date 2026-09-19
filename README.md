@@ -114,6 +114,29 @@ docs/                                      Guides and release validation records
 
 Based on [Scobalula/Alchemist](https://github.com/Scobalula/Alchemist) and RedFox. The improved Alchemist source uses [GPL-3.0](fork/AlchemyStars/LICENSE). CAST components and the preview's integrated [ModelMergerGUI](https://github.com/ez4cywa/ModelMergerGUI) core retain their MIT licenses. See the [stable notices](THIRD_PARTY_NOTICES.md) and [preview notices](https://github.com/ez4cywa/Alchemy-Stars/blob/codex/avalonia-aot/THIRD_PARTY_NOTICES.md). Tool licensing does not grant redistribution rights to game assets.
 
+## Contributors & acknowledgements
+
+### Project maintainer
+
+[**@ez4cywa**](https://github.com/ez4cywa) maintains Alchemy Stars and the integrated [ModelMergerGUI](https://github.com/ez4cywa/ModelMergerGUI) project, guiding the workflows, integration and releases.
+
+### Upstream authors and projects
+
+| Author / project | Contribution used by Alchemy Stars |
+| --- | --- |
+| [Scobalula](https://github.com/Scobalula) · [Alchemist](https://github.com/Scobalula/Alchemist) | Original application, batch composition workflow and foundation of this fork |
+| [Scobalula](https://github.com/Scobalula) · [RedFox](https://github.com/Scobalula/RedFox) | Animation processing and conversion pipeline, including the project's CAST integration |
+| [dtzxporter](https://github.com/dtzxporter) · [CAST](https://github.com/dtzxporter/cast) | CAST format library and Maya / Blender import components |
+| [ez4cywa](https://github.com/ez4cywa) · [ModelMergerGUI](https://github.com/ez4cywa/ModelMergerGUI) | CAST merging, ammunition filling and preview analysis core integrated in preview.31 |
+
+Upstream attribution is separate from direct contributions to this repository. Original copyright notices and license texts remain with the vendored sources; see the third-party notices above.
+
+### Contribute
+
+Code fixes, reproducible bug reports, documentation, translations and asset-compatibility checks are welcome. Submit an [Issue](https://github.com/ez4cywa/Alchemy-Stars/issues) or [Pull Request](https://github.com/ez4cywa/Alchemy-Stars/pulls) with the target release channel and verification steps. Contributors with merged commits are recorded in [GitHub's contribution history](https://github.com/ez4cywa/Alchemy-Stars/graphs/contributors).
+
+GitHub generates the sidebar Contributors list from commit attribution. This acknowledgement section does not add upstream authors to that list or assign repository commits to them.
+
 ## Stable 1.1.9 detailed guide
 
 <details>

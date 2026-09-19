@@ -114,6 +114,29 @@ docs/                                      使用指南与版本验证记录
 
 项目基于 [Scobalula/Alchemist](https://github.com/Scobalula/Alchemist) 与 RedFox，改进后的 Alchemist 源码采用 [GPL-3.0](fork/AlchemyStars/LICENSE)。CAST 组件及预览版集成的 [ModelMergerGUI](https://github.com/ez4cywa/ModelMergerGUI) 核心保留各自 MIT 许可证；完整来源与许可见 [稳定版第三方声明](THIRD_PARTY_NOTICES.md) 和 [预览版第三方声明](https://github.com/ez4cywa/Alchemy-Stars/blob/codex/avalonia-aot/THIRD_PARTY_NOTICES.md)。游戏素材不因工具许可证而获得再分发授权。
 
+## Contributors · 贡献者与致谢
+
+### 项目维护者
+
+[**@ez4cywa**](https://github.com/ez4cywa)：维护 Alchemy Stars 及集成来源 [ModelMergerGUI](https://github.com/ez4cywa/ModelMergerGUI)，负责工作流方向、功能整合与版本发布。
+
+### 上游作者与项目
+
+| 作者 / 项目 | 本项目使用的贡献 |
+| --- | --- |
+| [Scobalula](https://github.com/Scobalula) · [Alchemist](https://github.com/Scobalula/Alchemist) | 原始应用、批处理组合工作流，以及本项目的改进基础 |
+| [Scobalula](https://github.com/Scobalula) · [RedFox](https://github.com/Scobalula/RedFox) | 动画处理与转换管线，包括项目使用的 CAST 集成 |
+| [dtzxporter](https://github.com/dtzxporter) · [CAST](https://github.com/dtzxporter/cast) | CAST 格式库及 Maya / Blender 导入组件 |
+| [ez4cywa](https://github.com/ez4cywa) · [ModelMergerGUI](https://github.com/ez4cywa/ModelMergerGUI) | preview.31 集成的 CAST 合并、弹匣填弹与预览分析核心 |
+
+上游致谢与本仓库直接提交贡献分开列示。原始版权声明和许可证保留在对应源码目录中，完整归属见上方第三方声明。
+
+### 参与贡献
+
+欢迎提交代码修复、可复现的问题报告、文档、翻译与素材兼容性验证。通过 [Issue](https://github.com/ez4cywa/Alchemy-Stars/issues) 或 [Pull Request](https://github.com/ez4cywa/Alchemy-Stars/pulls) 参与时，请说明目标版本渠道和验证步骤。已合入提交的贡献记录可在 [GitHub 贡献历史](https://github.com/ez4cywa/Alchemy-Stars/graphs/contributors) 查看。
+
+GitHub 侧栏的 Contributors 由提交归属自动生成；本节致谢不会把上游作者加入该统计，也不将本仓库提交归到他们名下。
+
 ## 稳定版 1.1.9 详细说明
 
 <details>
