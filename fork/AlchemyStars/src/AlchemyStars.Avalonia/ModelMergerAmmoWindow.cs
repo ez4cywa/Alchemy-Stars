@@ -99,7 +99,7 @@ public sealed class ModelMergerAmmoWindow : Window
     private void SetWeapon(string path)
     {
         weapon = path; inspectedWeapon = ""; magazines.Clear(); extras.Clear(); spares.Clear(); source = null; result = null;
-        if (!string.IsNullOrWhiteSpace(path)) output = Path.Combine(Path.GetDirectoryName(path) ?? "", Path.GetFileNameWithoutExtension(path) + "_filled.cast");
+        if (!string.IsNullOrWhiteSpace(path)) output = ModelMergerNaming.FillOutputName(Path.GetDirectoryName(path) ?? "", path);
     }
     private void AddPath(StackPanel body, string key, string value, Action<string> changed, Func<Task> browse)
     {

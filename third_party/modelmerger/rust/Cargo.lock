@@ -4,7 +4,7 @@ version = 4
 
 [[package]]
 name = "alchemy-model-merger"
-version = "2.2.2"
+version = "2.5.0"
 dependencies = [
  "cast-codec",
  "model-merger-engine",
@@ -14,7 +14,7 @@ dependencies = [
 
 [[package]]
 name = "cast-codec"
-version = "2.2.2"
+version = "2.5.0"
 
 [[package]]
 name = "itoa"
@@ -30,7 +30,7 @@ checksum = "cf8baf1c55e62ffcace7a9f06f4bd9cd3f0c4beb022d3b367256b91b87513d98"
 
 [[package]]
 name = "model-merger-engine"
-version = "2.2.2"
+version = "2.5.0"
 dependencies = [
  "cast-codec",
  "windows-sys",

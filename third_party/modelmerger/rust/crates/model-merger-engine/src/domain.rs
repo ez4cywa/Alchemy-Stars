@@ -6,8 +6,29 @@ pub(crate) struct Model {
     pub(crate) name: String,
     pub(crate) bones: Vec<Bone>,
     pub(crate) meshes: Vec<Mesh>,
-    pub(crate) materials: Vec<String>,
+    pub(crate) materials: Vec<MaterialInfo>,
     pub(crate) shapes: Vec<String>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub(crate) struct MaterialInfo {
+    pub(crate) name: String,
+    pub(crate) slots: Vec<(String, MaterialSlotValue)>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub(crate) enum MaterialSlotValue {
+    File(String),
+    Color([f32; 4]),
+}
+
+impl MaterialSlotValue {
+    pub(crate) fn file_path(&self) -> Option<&str> {
+        match self {
+            Self::File(path) => Some(path),
+            Self::Color(_) => None,
+        }
+    }
 }
 
 impl Model {
@@ -161,7 +182,7 @@ pub(crate) fn merge_model(
         let index = root
             .materials
             .iter()
-            .position(|current| current == &material)
+            .position(|current| current.name == material.name && current.slots == material.slots)
             .unwrap_or_else(|| {
                 root.materials.push(material);
                 root.materials.len() - 1
@@ -209,5 +230,59 @@ pub(crate) fn check_cancelled(observer: &impl MergeObserver) -> Result<(), Merge
         Err(MergeError::Cancelled)
     } else {
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::NoopObserver;
+
+    fn material(name: &str, albedo: &str) -> MaterialInfo {
+        MaterialInfo {
+            name: name.to_owned(),
+            slots: vec![(
+                "albedo".to_owned(),
+                MaterialSlotValue::File(albedo.to_owned()),
+            )],
+        }
+    }
+
+    fn model_with_materials(materials: Vec<MaterialInfo>) -> Model {
+        Model {
+            name: "part".to_owned(),
+            bones: Vec::new(),
+            meshes: Vec::new(),
+            materials,
+            shapes: Vec::new(),
+        }
+    }
+
+    #[test]
+    fn same_name_materials_with_different_textures_are_kept_separate() {
+        let mut root = model_with_materials(vec![material("shared", "root.png")]);
+        let source = model_with_materials(vec![material("shared", "other.png")]);
+
+        merge_model(&mut root, source, &NoopObserver).unwrap();
+
+        assert_eq!(2, root.materials.len());
+        assert_eq!(
+            "root.png",
+            root.materials[0].slots[0].1.file_path().unwrap()
+        );
+        assert_eq!(
+            "other.png",
+            root.materials[1].slots[0].1.file_path().unwrap()
+        );
+    }
+
+    #[test]
+    fn identical_materials_still_merge() {
+        let mut root = model_with_materials(vec![material("shared", "same.png")]);
+        let source = model_with_materials(vec![material("shared", "same.png")]);
+
+        merge_model(&mut root, source, &NoopObserver).unwrap();
+
+        assert_eq!(1, root.materials.len());
     }
 }

@@ -18,11 +18,13 @@ public sealed class ModelMergerView : UserControl
     private readonly List<MergeGroup> groups = [];
     private readonly HashSet<Task> tasks = [];
     private readonly List<ModelMergerAmmoWindow> ammoWindows = [];
+    private readonly List<ModelMergerAssemblyWindow> assemblyWindows = [];
     private readonly ModelMergerText text = new();
     private StackPanel groupList = null!;
     private TextBlock notice = null!;
     private string defaultFolder = "";
     private bool defaultManual;
+    private bool defaultArmAssembly;
     private int nextId;
     private bool shuttingDown;
     private Task? shutdownTask;
@@ -31,7 +33,7 @@ public sealed class ModelMergerView : UserControl
     public event Action<string>? PreviewRequested;
     public event Action<int>? LanguageChanged;
     public int Language => text.Language;
-    public bool HasActiveTasks => tasks.Count != 0 || ammoWindows.Any(w => w.HasActiveTask);
+    public bool HasActiveTasks => tasks.Count != 0 || ammoWindows.Any(w => w.HasActiveTask) || assemblyWindows.Any(w => w.HasActiveTask);
     internal int GroupCount => groups.Count;
     internal ModelMergerText Text => text;
     internal ModelMergerService Service => service;
@@ -69,6 +71,7 @@ public sealed class ModelMergerView : UserControl
     {
         foreach (var group in groups) group.Cancellation?.Cancel();
         foreach (var window in ammoWindows.ToArray()) window.Cancel();
+        foreach (var window in assemblyWindows.ToArray()) window.Cancel();
     }
 
     public Task ShutdownAsync()
@@ -76,6 +79,7 @@ public sealed class ModelMergerView : UserControl
         if (shutdownTask is { IsCompleted: false }) return shutdownTask;
         shuttingDown = true; IsEnabled = false;
         foreach (var window in ammoWindows) window.SetShuttingDown(true);
+        foreach (var window in assemblyWindows) window.SetShuttingDown(true);
         return shutdownTask = ShutdownCoreAsync();
     }
     private async Task ShutdownCoreAsync()
@@ -83,11 +87,12 @@ public sealed class ModelMergerView : UserControl
         try
         {
             CancelAll();
-            await Task.WhenAll(tasks.ToArray().Concat(ammoWindows.Select(w => w.WaitForCompletionAsync())));
+            await Task.WhenAll(tasks.ToArray().Concat(ammoWindows.Select(w => w.WaitForCompletionAsync())).Concat(assemblyWindows.Select(w => w.WaitForCompletionAsync())));
         }
         finally
         {
             foreach (var window in ammoWindows) window.SetShuttingDown(false);
+            foreach (var window in assemblyWindows) window.SetShuttingDown(false);
             IsEnabled = true; shuttingDown = false;
         }
     }
@@ -99,6 +104,10 @@ public sealed class ModelMergerView : UserControl
         toolbar.Children.Add(Button("new", () => NewGroup()));
         toolbar.Children.Add(AsyncButton("openPreview", OpenPreview));
         toolbar.Children.Add(Button("ammo", () => OpenAmmo(null)));
+        var armAssembly = new CheckBox { Content = text["armAssembly"], IsChecked = defaultArmAssembly, Margin = new Thickness(4, 0) };
+        ToolTip.SetTip(armAssembly, text["armAssemblyHint"]);
+        armAssembly.IsCheckedChanged += (_, _) => { defaultArmAssembly = armAssembly.IsChecked == true; SaveSettings(false); RenderGroups(); };
+        toolbar.Children.Add(armAssembly);
         toolbar.Children.Add(Button("save", SaveSettings));
         toolbar.Children.Add(Button("reset", () => { defaultFolder = ""; defaultManual = false; ChangeLanguage(0); SaveSettings(false); }));
         toolbar.Children.Add(AsyncButton("about", About));
@@ -139,6 +148,7 @@ public sealed class ModelMergerView : UserControl
     {
         text.Language = Math.Clamp(language, 0, 4); Render();
         foreach (var window in ammoWindows) window.Relocalize();
+        foreach (var window in assemblyWindows) window.Relocalize();
         LanguageChanged?.Invoke(text.Language);
     }
 
@@ -152,6 +162,7 @@ public sealed class ModelMergerView : UserControl
             var commands = new WrapPanel();
             commands.Children.Add(AsyncButton("add", async () => { AddPaths(group, await PickFiles(group.RecentFolder)); RenderGroups(); }, enabled: !group.Busy && group.Parts.Count < 15));
             commands.Children.Add(Button("ammo", () => OpenAmmo(group), enabled: !group.Busy));
+            if (defaultArmAssembly) commands.Children.Add(Button("armAssembly", () => OpenAssembly(group), enabled: !group.Busy));
             commands.Children.Add(Button("deleteGroup", () => { groups.Remove(group); RenderGroups(); }, enabled: !group.Busy));
             body.Children.Add(commands);
             var slots = new global::Avalonia.Controls.Primitives.UniformGrid { Columns = 5, Rows = 3 };
@@ -193,7 +204,7 @@ public sealed class ModelMergerView : UserControl
             Grid.SetColumn(browse, 1); output.Children.Add(browse);
             body.Children.Add(Label("folder")); body.Children.Add(output);
             body.Children.Add(Label("name"));
-            var name = Input(group.OutputName, "name", value => group.OutputName = value); name.IsEnabled = !group.Busy; body.Children.Add(name);
+            var name = Input(group.OutputName, "name", value => group.OutputName = value); name.IsEnabled = !group.Busy; group.NameInput = name; body.Children.Add(name);
             var taskCommands = new WrapPanel();
             taskCommands.Children.Add(Button("run", () => Start(group), "primary", !group.Busy));
             taskCommands.Children.Add(Button("cancel", () => group.Cancellation?.Cancel(), enabled: group.Busy));
@@ -312,6 +323,14 @@ public sealed class ModelMergerView : UserControl
         if (!IsReady(group)) { group.Status = "invalid"; group.Detail = ""; UpdateStatus(group); return; }
         group.Cancellation = new CancellationTokenSource();
         group.Status = "queued"; group.Detail = ""; group.Result = null; group.Progress = 0; group.Log.Clear();
+        // Automatic names derive from the weapon code and never overwrite: conflicts
+        // get the differing-segment prefix, then a numeric ladder (see ModelMergerNaming).
+        if (string.IsNullOrWhiteSpace(group.OutputName) && !string.IsNullOrWhiteSpace(group.Folder))
+        {
+            group.OutputName = ModelMergerNaming.MergeOutputName(group.Folder, group.Parts);
+            var nameInput = group.NameInput;
+            if (nameInput is not null) nameInput.Text = group.OutputName;
+        }
         var request = ModelMergerService.Json(w =>
         {
             w.WriteString("command", "merge"); ModelMergerService.Strings(w, "input_files", group.Parts);
@@ -391,6 +410,14 @@ public sealed class ModelMergerView : UserControl
         ammoWindows.Add(window); window.Closed += (_, _) => ammoWindows.Remove(window);
         if (TopLevel.GetTopLevel(this) is Window owner) window.Show(owner); else window.Show();
     }
+    private void OpenAssembly(MergeGroup? group)
+    {
+        if (shuttingDown) return;
+        var weapon = group?.Result is { } result && File.Exists(result) ? result : group?.Root ?? group?.Parts.FirstOrDefault();
+        var window = new ModelMergerAssemblyWindow(this, weapon);
+        assemblyWindows.Add(window); window.Closed += (_, _) => assemblyWindows.Remove(window);
+        if (TopLevel.GetTopLevel(this) is Window owner) window.Show(owner); else window.Show();
+    }
 
     internal async Task<string[]> PickFiles(string recent, bool multiple = true)
     {
@@ -460,6 +487,7 @@ public sealed class ModelMergerView : UserControl
             if (root.TryGetProperty("language", out var l)) text.Language = Math.Clamp(l.GetInt32(), 0, 4);
             if (root.TryGetProperty("output_directory", out var f)) defaultFolder = f.GetString() ?? "";
             if (root.TryGetProperty("manual_root", out var m)) defaultManual = m.GetBoolean();
+            if (root.TryGetProperty("arm_assembly", out var a)) defaultArmAssembly = a.GetBoolean();
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException or InvalidOperationException) { Report("settingsError", " · " + ex.Message); }
     }
@@ -471,7 +499,7 @@ public sealed class ModelMergerView : UserControl
             if (copyGroup && groups.FirstOrDefault() is { } group) { defaultFolder = group.Folder; defaultManual = group.Manual; }
             Directory.CreateDirectory(Path.GetDirectoryName(SettingsPath)!);
             var temp = SettingsPath + ".tmp";
-            File.WriteAllText(temp, ModelMergerService.Json(w => { w.WriteNumber("language", text.Language); w.WriteString("output_directory", defaultFolder); w.WriteBoolean("manual_root", defaultManual); }));
+            File.WriteAllText(temp, ModelMergerService.Json(w => { w.WriteNumber("language", text.Language); w.WriteString("output_directory", defaultFolder); w.WriteBoolean("manual_root", defaultManual); w.WriteBoolean("arm_assembly", defaultArmAssembly); }));
             File.Move(temp, SettingsPath, true); Report("saved");
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { Report("settingsError", " · " + ex.Message); }
@@ -503,7 +531,7 @@ public sealed class ModelMergerView : UserControl
         public bool Busy => Cancellation is not null;
         public TextBlock? StatusLabel;
         public ProgressBar? ProgressBar;
-        public TextBox? LogBox;
+        public TextBox? LogBox, NameInput;
         public List<(string Key, string Detail)> Log = [];
     }
 }

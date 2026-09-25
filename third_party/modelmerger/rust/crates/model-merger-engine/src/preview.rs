@@ -1,4 +1,5 @@
 use crate::cast_model;
+use crate::domain::{MaterialInfo, MaterialSlotValue};
 use crate::math::Vec3;
 use std::collections::{HashMap, HashSet};
 use std::fmt;
@@ -17,6 +18,196 @@ pub struct PreviewData {
     pub is_simplified: bool,
     pub bounds: PreviewBounds,
     pub meshes: Vec<PreviewMesh>,
+    pub materials: Vec<PreviewMaterial>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct PreviewMaterial {
+    pub name: String,
+    pub profile: PreviewMaterialProfile,
+    pub albedo: Option<PathBuf>,
+    pub nog: Option<PathBuf>,
+    pub opacity: Option<PathBuf>,
+    pub base_color: Option<[f32; 4]>,
+}
+
+/// Render profiles mirroring the ez4cywa COD shader research
+/// (`scripts/profiles.json` plus the optic glass master group).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PreviewMaterialProfile {
+    Generic,
+    Weapon,
+    Glass,
+    Skin,
+    HairCard,
+    Eye,
+    Cornea,
+    Tearline,
+    Oral,
+    Cloth,
+    Overlay,
+}
+
+/// Techset and material-name rules transcribed from the shader project's
+/// `profiles.json` (they are content hashes and match across exports of the
+/// same game materials).
+const SKIN_TECHSETS: &[&str] = &["techset_7c5b347b60d04806"];
+const HAIR_TECHSETS: &[&str] = &["techset_3aab5a7986d884a7", "techset_638b48a267927efa"];
+const OVERLAY_TECHSETS: &[&str] = &["techset_3aa45554dfc644e0"];
+const EYE_MATERIALS: &[&str] = &["material_5b519c79a23de53d"];
+const CORNEA_MATERIALS: &[&str] = &["material_3c5852033a98fa18"];
+const TEARLINE_MATERIALS: &[&str] = &["material_3e715c391e870b93"];
+const ORAL_MATERIALS: &[&str] = &["material_6aa474a8a6fc0d71"];
+
+impl PreviewMaterialProfile {
+    /// Classifies a material by name and asset (file stem), following the
+    /// research project's first-match-wins rule order.
+    pub fn classify(name: &str, asset: &str) -> Self {
+        Self::classify_with(name, asset, None, &[])
+    }
+
+    /// Full rule set: techsets from `_mat_info` tables and resolved texture
+    /// paths (a "lens"/"glass" texture marks optic glass) refine the
+    /// name-based heuristics for hashed material names.
+    pub fn classify_with(
+        name: &str,
+        asset: &str,
+        techset: Option<&str>,
+        texture_paths: &[&str],
+    ) -> Self {
+        let lowered = name.to_ascii_lowercase();
+        let asset_lowered = asset.to_ascii_lowercase();
+        // Glass must win over the weapon rule: optic lenses inside weapon
+        // assets render as thin-wall glass, not metal. Lens/glass hints in
+        // texture names identify hashed lens materials.
+        let texture_hint_glass = texture_paths.iter().any(|path| {
+            let lowered_path = path.to_ascii_lowercase();
+            lowered_path.contains("glass") || lowered_path.contains("lens")
+        });
+        if lowered.contains("glass") || lowered.contains("lens") || texture_hint_glass {
+            return Self::Glass;
+        }
+        let weapon_name = ["wpn_", "_vm_", "_attachment", "attachment_"]
+            .iter()
+            .any(|hint| lowered.contains(hint));
+        let weapon_asset = ["wpn_", "vm_", "attachment"]
+            .iter()
+            .any(|hint| asset_lowered.contains(hint));
+        if weapon_name || weapon_asset {
+            return Self::Weapon;
+        }
+        if let Some(techset) = techset {
+            if SKIN_TECHSETS.contains(&techset) {
+                return Self::Skin;
+            }
+            if HAIR_TECHSETS.contains(&techset) {
+                return Self::HairCard;
+            }
+            if OVERLAY_TECHSETS.contains(&techset) {
+                return Self::Overlay;
+            }
+        }
+        if EYE_MATERIALS.iter().any(|hint| lowered.contains(hint)) {
+            return Self::Eye;
+        }
+        if CORNEA_MATERIALS.iter().any(|hint| lowered.contains(hint)) {
+            return Self::Cornea;
+        }
+        if TEARLINE_MATERIALS.iter().any(|hint| lowered.contains(hint)) {
+            return Self::Tearline;
+        }
+        if ORAL_MATERIALS.iter().any(|hint| lowered.contains(hint)) {
+            return Self::Oral;
+        }
+        // Character sub-profile name hints (generalized from the research
+        // asset classifications in profiles.json).
+        if lowered.contains("skin") {
+            return Self::Skin;
+        }
+        if lowered.contains("hair") {
+            return Self::HairCard;
+        }
+        if lowered.contains("cornea") {
+            return Self::Cornea;
+        }
+        if lowered.contains("tear") {
+            return Self::Tearline;
+        }
+        if lowered.contains("eye") || lowered.contains("iris") {
+            return Self::Eye;
+        }
+        if lowered.contains("oral") || lowered.contains("teeth") || lowered.contains("gum") {
+            return Self::Oral;
+        }
+        if lowered.contains("cloth")
+            || ["_body_mp_", "_head_mp_"]
+                .iter()
+                .any(|hint| asset_lowered.contains(hint))
+        {
+            return Self::Cloth;
+        }
+        Self::Generic
+    }
+}
+
+/// Parsed `_mat_info/<material>.txt` sidecar: techset plus the
+/// `unk_semantic_XX,image_stem` table (47 = color, 48 = packed NOG,
+/// 4a = opacity coverage; `$`-prefixed stems are programmatic sentinels).
+struct MatInfo {
+    techset: Option<String>,
+    semantics: Vec<(String, String)>,
+}
+
+fn load_mat_info(cast_dir: &Path, material_name: &str) -> Option<MatInfo> {
+    let path = cast_dir
+        .join("_mat_info")
+        .join(format!("{}.txt", material_name.replace('/', "_")));
+    let text = std::fs::read_to_string(path).ok()?;
+    let mut techset = None;
+    let mut semantics = Vec::new();
+    for line in text.lines() {
+        let line = line.trim();
+        if let Some(value) = line.strip_prefix("Techset:") {
+            techset = Some(value.trim().to_owned());
+        } else if let Some(value) = line.strip_prefix("unk_semantic_")
+            && let Some((semantic, stem)) = value.split_once(',')
+        {
+            semantics.push((semantic.trim().to_owned(), stem.trim().to_owned()));
+        }
+    }
+    Some(MatInfo { techset, semantics })
+}
+
+fn semantic_stem<'a>(table: &'a MatInfo, semantic: &str) -> Option<&'a str> {
+    table
+        .semantics
+        .iter()
+        .find(|(key, _)| key == semantic)
+        .map(|(_, stem)| stem.as_str())
+        .filter(|stem| !stem.starts_with('$'))
+}
+
+/// Finds the texture for a semantic stem: matching cast slot file first
+/// (cross-validation, as in the shader project's cast_spec.py), then the
+/// exported `_images/<stem>.png` fallback.
+fn resolve_semantic_texture(
+    table: &MatInfo,
+    semantic: &str,
+    slots: &[(String, MaterialSlotValue)],
+    cast_dir: &Path,
+) -> Option<PathBuf> {
+    let stem = semantic_stem(table, semantic)?;
+    for (_, value) in slots {
+        if let Some(path) = value.file_path()
+            && Path::new(path)
+                .file_stem()
+                .is_some_and(|candidate| candidate == stem)
+        {
+            return Some(PathBuf::from(path));
+        }
+    }
+    let fallback = cast_dir.join("_images").join(format!("{stem}.png"));
+    fallback.is_file().then_some(fallback)
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -29,6 +220,8 @@ pub struct PreviewBounds {
 pub struct PreviewMesh {
     pub positions: Vec<[f32; 3]>,
     pub normals: Vec<[f32; 3]>,
+    pub uvs: Vec<[f32; 2]>,
+    pub material_index: Option<usize>,
     pub triangle_indices: Vec<u32>,
 }
 
@@ -142,10 +335,12 @@ pub fn load_preview(
             continue;
         }
 
+        let material_index = mesh.material_indices.first().copied();
         let selected_ordinals = select_triangle_ordinals(valid_triangle_count, quota);
         let mut vertex_map = HashMap::new();
         let mut positions = Vec::new();
         let mut normals = Vec::new();
+        let mut uvs = Vec::new();
         let mut triangle_indices = Vec::new();
         let mut valid_ordinal = 0;
         for face in mesh.faces.chunks_exact(3) {
@@ -168,6 +363,7 @@ pub fn load_preview(
                         } else {
                             [0.0; 3]
                         });
+                        uvs.push(mesh.uvs.get(source_index).copied().unwrap_or([0.0, 0.0]));
                         vertex_map.insert(source_index, preview_index);
                         preview_index
                     };
@@ -180,6 +376,8 @@ pub fn load_preview(
             meshes.push(PreviewMesh {
                 positions,
                 normals,
+                uvs,
+                material_index,
                 triangle_indices,
             });
         }
@@ -193,6 +391,12 @@ pub fn load_preview(
         .map(|mesh| mesh.triangle_indices.len() / 3)
         .sum();
     let bounds = calculate_bounds(&meshes);
+    let cast_dir = path.parent().unwrap_or(Path::new(""));
+    let materials = model
+        .materials
+        .iter()
+        .map(|material| preview_material(material, &model.name, cast_dir))
+        .collect();
     Ok(PreviewData {
         file_path: path.to_path_buf(),
         model_name: model.name,
@@ -203,7 +407,72 @@ pub fn load_preview(
         is_simplified: displayed_triangle_count < source_triangle_count,
         bounds,
         meshes,
+        materials,
     })
+}
+
+/// Resolves material textures and profile, mirroring the shader project's
+/// cast_spec.py: `_mat_info` semantics first (47 = color, 48 = packed NOG,
+/// 4a = opacity), named cast slots second (albedo/diffuse/basecolor,
+/// normal/nog, opacity).
+fn preview_material(material: &MaterialInfo, asset: &str, cast_dir: &Path) -> PreviewMaterial {
+    let table = load_mat_info(cast_dir, &material.name);
+    let file_slot = |names: &[&str]| {
+        material
+            .slots
+            .iter()
+            .find(|(slot, value)| {
+                value.file_path().is_some()
+                    && names.iter().any(|name| slot.eq_ignore_ascii_case(name))
+            })
+            .and_then(|(_, value)| value.file_path())
+            .map(PathBuf::from)
+    };
+    let color_slot = |names: &[&str]| {
+        material
+            .slots
+            .iter()
+            .find(|(slot, value)| {
+                matches!(value, MaterialSlotValue::Color(_))
+                    && names.iter().any(|name| slot.eq_ignore_ascii_case(name))
+            })
+            .and_then(|(_, value)| match value {
+                MaterialSlotValue::Color(rgba) => Some(*rgba),
+                MaterialSlotValue::File(_) => None,
+            })
+    };
+    let semantic = |semantic: &str| {
+        table
+            .as_ref()
+            .and_then(|table| resolve_semantic_texture(table, semantic, &material.slots, cast_dir))
+    };
+    let albedo_names = ["albedo", "diffuse", "basecolor"];
+    let albedo = semantic("47").or_else(|| file_slot(&albedo_names));
+    let base_color = if albedo.is_none() {
+        color_slot(&albedo_names)
+    } else {
+        None
+    };
+    let nog = semantic("48").or_else(|| file_slot(&["normal", "nog"]));
+    let opacity = semantic("4a").or_else(|| file_slot(&["opacity"]));
+    let texture_hints: Vec<&str> = material
+        .slots
+        .iter()
+        .filter_map(|(_, value)| value.file_path())
+        .collect();
+    PreviewMaterial {
+        name: material.name.clone(),
+        profile: PreviewMaterialProfile::classify_with(
+            &material.name,
+            asset,
+            table.as_ref().and_then(|table| table.techset.as_deref()),
+            &texture_hints,
+        ),
+        albedo,
+        nog,
+        opacity,
+        base_color,
+    }
 }
 
 fn read_file(path: &Path, is_cancelled: &impl Fn() -> bool) -> Result<Vec<u8>, PreviewError> {

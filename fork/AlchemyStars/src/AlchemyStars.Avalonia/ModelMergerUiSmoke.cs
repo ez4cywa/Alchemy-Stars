@@ -28,9 +28,29 @@ internal static class ModelMergerUiSmoke
         ammunitionWindow.Show(window);
         try { await ammunitionWindow.VerifyWorkflowAsync(ammunitionFixture, output); }
         finally { await ammunitionWindow.WaitForCompletionAsync(); ammunitionWindow.Close(); }
+        VerifyNaming(output);
+        var assemblyWindow = new ModelMergerAssemblyWindow(view, null);
+        assemblyWindow.Show(window);
+        try { await assemblyWindow.VerifyAssemblyWorkflowAsync(ModelMergerServiceSmoke.FindFixtures(), output); }
+        finally { await assemblyWindow.WaitForCompletionAsync(); assemblyWindow.Close(); }
         await view.VerifyShutdownAsync(ModelMergerServiceSmoke.FindFixtures(), output);
         ModelMergerServiceSmoke.Require(!view.HasActiveTasks, "Workflow left active tasks.");
         Console.WriteLine("MODEL_MERGER_UI_SMOKE_OK: sidebar, new group, add/replace/remove/root, language/state, settings privacy, native scheduling.");
+    }
+
+    private static void VerifyNaming(string output)
+    {
+        ModelMergerServiceSmoke.Require(ModelMergerNaming.WeaponCode("att_sat_vm_ar_eagle_rec_LOD0") == "eagle", "Weapon code derivation failed.");
+        ModelMergerServiceSmoke.Require(ModelMergerNaming.WeaponCode("sat_vm_ar_hawk_barl_v3") == "hawk", "Weapon code version stripping failed.");
+        ModelMergerServiceSmoke.Require(ModelMergerNaming.WeaponCode("plain_name") == "plain_name", "Weapon code fallback failed.");
+        ModelMergerServiceSmoke.Require(ModelMergerNaming.MergeOutputName(output, ["att_sat_vm_ar_eagle_rec_LOD0.cast", "att_sat_vm_ar_eagle_mag_LOD0.cast"]) == "eagle.cast", "Free merge name should use the plain weapon code.");
+        File.WriteAllText(Path.Combine(output, "eagle.cast"), string.Empty);
+        ModelMergerServiceSmoke.Require(ModelMergerNaming.MergeOutputName(output, ["att_sat_vm_ar_eagle_rec_LOD0.cast", "att_sat_vm_ar_eagle_mag_LOD0.cast"]) == "rec_mag_eagle.cast", "Conflicting merge name should prefix the differing part segments.");
+        File.WriteAllText(Path.Combine(output, "rec_mag_eagle.cast"), string.Empty);
+        ModelMergerServiceSmoke.Require(ModelMergerNaming.MergeOutputName(output, ["att_sat_vm_ar_eagle_rec_LOD0.cast", "att_sat_vm_ar_eagle_mag_LOD0.cast"]) == "rec_mag_eagle_2.cast", "Second conflict should climb the numeric ladder.");
+        File.WriteAllText(Path.Combine(output, "hawk_filled.cast"), string.Empty);
+        ModelMergerServiceSmoke.Require(ModelMergerNaming.FillOutputName(output, "D:\\models\\sat_vm_ar_hawk_rec_LOD0.cast") == "hawk_filled_2.cast", "Conflicting fill name should climb the numeric ladder.");
+        ModelMergerServiceSmoke.Require(ModelMergerNaming.AssemblyOutputName(output, "D:\\models\\sat_vm_ar_hawk_rec_LOD0.cast") == "hawk_viewhands.cast", "Assembly name should use the viewhands suffix.");
     }
 
     private static string FindAmmunitionFixture()

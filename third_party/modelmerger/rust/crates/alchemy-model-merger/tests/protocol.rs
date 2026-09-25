@@ -277,6 +277,48 @@ fn ammo_fixtures(directory: &Path) -> (PathBuf, PathBuf) {
     (weapon_path, ammo_path)
 }
 
+fn assemble_fixtures(directory: &Path) -> (PathBuf, PathBuf) {
+    let arms_path = directory.join("arms.cast");
+    std::fs::copy(fixture(0), &arms_path).unwrap();
+    let weapon_path = directory.join("weapon.cast");
+    std::fs::copy(fixture(1), &weapon_path).unwrap();
+    (arms_path, weapon_path)
+}
+
+#[test]
+fn arms_inspection_and_assembly_round_trip() {
+    let directory = Directory::new();
+    let (arms, weapon) = assemble_fixtures(&directory.0);
+    let mut inspect = Session::new();
+    inspect.send(json!({"command":"inspect_arms","file_path":arms}));
+    let analysis = inspect.until("analysis");
+    let bones = analysis["bones"].as_array().unwrap().clone();
+    assert!(!bones.is_empty());
+    inspect.finish(true);
+
+    let output = directory.0.join("hawk_viewhands.cast");
+    let mut assemble = Session::new();
+    assemble.send(json!({"command":"assemble","arms":arms,"weapon":weapon,
+        "output":output,"target_bone":bones[0]}));
+    let completed = assemble.until("completed");
+    assert_eq!(completed["target_bone"], bones[0]);
+    assert!(completed["attached_meshes"].as_u64().unwrap() >= 1);
+    assemble.finish(true);
+    CastFile::decode(&std::fs::read(&output).unwrap()).unwrap();
+
+    let mut again = Session::new();
+    again.send(json!({"command":"assemble","arms":arms,"weapon":weapon,
+        "output":output,"target_bone":null}));
+    assert_eq!(again.until("error")["code"], "engine");
+    again.finish(false);
+
+    let mut missing_bone = Session::new();
+    missing_bone.send(json!({"command":"assemble","arms":arms,"weapon":weapon,
+        "output":directory.0.join("other.cast"),"target_bone":"j_missing"}));
+    assert_eq!(missing_bone.until("error")["code"], "engine");
+    missing_bone.finish(false);
+}
+
 #[test]
 fn ammunition_inspect_fill_replicas_and_no_overwrite_round_trip() {
     let directory = Directory::new();

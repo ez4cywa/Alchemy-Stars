@@ -1,5 +1,5 @@
 use model_merger_engine::{
-    MergeError, MergeObserver, MergeRequest, MergeStage, RootSelection, ammunition,
+    MergeError, MergeObserver, MergeRequest, MergeStage, RootSelection, ammunition, armature,
 };
 use serde::Deserialize;
 use serde_json::{Value, json};
@@ -33,6 +33,16 @@ enum Command {
         extra_slots: Vec<String>,
         #[serde(default)]
         replicas: Vec<Replica>,
+    },
+    InspectArms {
+        file_path: PathBuf,
+    },
+    Assemble {
+        arms: PathBuf,
+        weapon: PathBuf,
+        output: PathBuf,
+        #[serde(default)]
+        target_bone: Option<String>,
     },
     Preview {
         file_path: PathBuf,
@@ -202,6 +212,29 @@ fn run(
             )
             .map_err(engine_error)?;
             json!({"event":"completed","output_path":result.output,"inserted":result.inserted,"skipped":result.skipped})
+        }
+        Command::InspectArms { file_path } => {
+            let bones = armature::inspect_arms(&file_path, observer).map_err(engine_error)?;
+            json!({"event":"analysis","bones":bones})
+        }
+        Command::Assemble {
+            arms,
+            weapon,
+            output,
+            target_bone,
+        } => {
+            let result = armature::assemble(
+                armature::AssembleRequest {
+                    arms,
+                    weapon,
+                    output,
+                    target_bone,
+                },
+                observer,
+            )
+            .map_err(engine_error)?;
+            json!({"event":"completed","output_path":result.output,"target_bone":result.target_bone,
+                "attached_meshes":result.attached_meshes})
         }
         Command::Preview {
             file_path,

@@ -1,5 +1,5 @@
 use crate::MergeError;
-use crate::domain::{Bone, Mesh, Model, ShapeDelta};
+use crate::domain::{Bone, MaterialInfo, MaterialSlotValue, Mesh, Model, ShapeDelta};
 use crate::math::Vec3;
 use cast_codec::{CastFile, CastNode, CastProperty, PropertyValues};
 use std::collections::HashMap;
@@ -62,7 +62,7 @@ pub(crate) fn decode_model_with_cancel(
         .collect();
     let materials = material_nodes
         .iter()
-        .map(|node| string_property(node, "n"))
+        .map(|node| decode_material(node))
         .collect::<Result<Vec<_>, _>>()?;
     let material_by_hash: HashMap<u64, usize> = material_nodes
         .iter()
@@ -114,6 +114,41 @@ fn check_decode_cancelled(is_cancelled: &impl Fn() -> bool) -> Result<(), MergeE
     } else {
         Ok(())
     }
+}
+
+fn decode_material(node: &CastNode) -> Result<MaterialInfo, MergeError> {
+    let name = string_property(node, "n")?;
+    let mut file_paths: HashMap<u64, String> = HashMap::new();
+    for child in &node.children {
+        if child.identifier == FILE
+            && let Ok(path) = string_property(child, "p")
+        {
+            file_paths.entry(child.hash).or_insert(path);
+        }
+    }
+    let mut slots = Vec::new();
+    for cast_property in &node.properties {
+        if cast_property.name == "n" || cast_property.name == "t" {
+            continue;
+        }
+        match &cast_property.values {
+            PropertyValues::Integer64(values) => {
+                if let Some(path) = values.first().and_then(|hash| file_paths.get(hash)) {
+                    slots.push((
+                        cast_property.name.clone(),
+                        MaterialSlotValue::File(path.clone()),
+                    ));
+                }
+            }
+            PropertyValues::Vector4(values) => {
+                if let Some(rgba) = values.first() {
+                    slots.push((cast_property.name.clone(), MaterialSlotValue::Color(*rgba)));
+                }
+            }
+            _ => {}
+        }
+    }
+    Ok(MaterialInfo { name, slots })
 }
 
 fn decode_bone(node: &CastNode) -> Result<Bone, MergeError> {
@@ -278,13 +313,23 @@ fn decode_mesh(
 pub(crate) fn encode_model(model: &Model) -> Result<Vec<u8>, MergeError> {
     let mut model_children = Vec::new();
     model_children.push(encode_skeleton(model));
-    let material_hashes: Vec<u64> = model.materials.iter().map(|name| fnv1a(name)).collect();
+    let mut material_hashes = Vec::with_capacity(model.materials.len());
+    let mut used_hashes = HashMap::new();
+    for material in &model.materials {
+        let mut hash = fnv1a(&material.name);
+        let mut suffix = 0u64;
+        while used_hashes.insert(hash, ()).is_some() {
+            hash = fnv1a(&format!("{}\u{1f}{suffix}", material.name));
+            suffix += 1;
+        }
+        material_hashes.push(hash);
+    }
     model_children.extend(
         model
             .materials
             .iter()
             .zip(&material_hashes)
-            .map(|(name, hash)| encode_material(name, *hash)),
+            .map(|(material, hash)| encode_material(material, *hash)),
     );
     for (index, mesh) in model.meshes.iter().enumerate() {
         let mesh_name = if index == 0 {
@@ -354,27 +399,52 @@ fn encode_skeleton(model: &Model) -> CastNode {
     }
 }
 
-fn encode_material(name: &str, hash: u64) -> CastNode {
+fn encode_material(material: &MaterialInfo, hash: u64) -> CastNode {
     let empty_hash = fnv1a("");
+    let mut properties = vec![
+        prop("n", PropertyValues::String(material.name.clone())),
+        prop("t", PropertyValues::String("pbr".to_owned())),
+    ];
+    let mut children: Vec<CastNode> = Vec::new();
+    if material.slots.is_empty() {
+        for slot in ["albedo", "gloss", "normal", "specular"] {
+            properties.push(prop(slot, PropertyValues::Integer64(vec![empty_hash])));
+        }
+        children.extend((0..4).map(|_| CastNode {
+            identifier: FILE,
+            hash: empty_hash,
+            properties: vec![prop("p", PropertyValues::String(String::new()))],
+            children: Vec::new(),
+        }));
+    } else {
+        let mut file_hashes: HashMap<String, u64> = HashMap::new();
+        for (slot_name, value) in &material.slots {
+            match value {
+                MaterialSlotValue::File(path) => {
+                    let file_hash = *file_hashes
+                        .entry(path.clone())
+                        .or_insert_with(|| fnv1a(path));
+                    properties.push(prop(slot_name, PropertyValues::Integer64(vec![file_hash])));
+                    if !children.iter().any(|child| child.hash == file_hash) {
+                        children.push(CastNode {
+                            identifier: FILE,
+                            hash: file_hash,
+                            properties: vec![prop("p", PropertyValues::String(path.clone()))],
+                            children: Vec::new(),
+                        });
+                    }
+                }
+                MaterialSlotValue::Color(rgba) => {
+                    properties.push(prop(slot_name, PropertyValues::Vector4(vec![*rgba])));
+                }
+            }
+        }
+    }
     CastNode {
         identifier: MATERIAL,
         hash,
-        properties: vec![
-            prop("albedo", PropertyValues::Integer64(vec![empty_hash])),
-            prop("gloss", PropertyValues::Integer64(vec![empty_hash])),
-            prop("n", PropertyValues::String(name.to_owned())),
-            prop("normal", PropertyValues::Integer64(vec![empty_hash])),
-            prop("specular", PropertyValues::Integer64(vec![empty_hash])),
-            prop("t", PropertyValues::String("pbr".to_owned())),
-        ],
-        children: (0..4)
-            .map(|_| CastNode {
-                identifier: FILE,
-                hash: empty_hash,
-                properties: vec![prop("p", PropertyValues::String(String::new()))],
-                children: Vec::new(),
-            })
-            .collect(),
+        properties,
+        children,
     }
 }
 
@@ -620,4 +690,184 @@ fn fnv1a(value: &str) -> u64 {
         .fold(0xcbf29ce484222325, |hash, byte| {
             (hash ^ u64::from(*byte)).wrapping_mul(0x100000001b3)
         })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn model_with_materials(materials: Vec<MaterialInfo>) -> Model {
+        Model {
+            name: "test".to_owned(),
+            bones: Vec::new(),
+            meshes: Vec::new(),
+            materials,
+            shapes: Vec::new(),
+        }
+    }
+
+    fn slot_of<'a>(material: &'a MaterialInfo, name: &str) -> Option<&'a MaterialSlotValue> {
+        material
+            .slots
+            .iter()
+            .find(|(slot, _)| slot == name)
+            .map(|(_, value)| value)
+    }
+
+    #[test]
+    fn material_texture_paths_survive_an_encode_decode_roundtrip() {
+        let model = model_with_materials(vec![MaterialInfo {
+            name: "m/wpn_test".to_owned(),
+            slots: vec![
+                (
+                    "albedo".to_owned(),
+                    MaterialSlotValue::File("images/wpn_c.png".to_owned()),
+                ),
+                (
+                    "normal".to_owned(),
+                    MaterialSlotValue::File("images/wpn_n.png".to_owned()),
+                ),
+                (
+                    "specular".to_owned(),
+                    MaterialSlotValue::Color([0.5, 0.6, 0.7, 1.0]),
+                ),
+            ],
+        }]);
+
+        let bytes = encode_model(&model).unwrap();
+        let decoded = decode_model(&bytes, Path::new("test.cast")).unwrap();
+
+        assert_eq!(1, decoded.materials.len());
+        let material = &decoded.materials[0];
+        assert_eq!("m/wpn_test", material.name);
+        assert_eq!(3, material.slots.len());
+        assert_eq!(
+            Some(&MaterialSlotValue::File("images/wpn_c.png".to_owned())),
+            slot_of(material, "albedo")
+        );
+        assert_eq!(
+            Some(&MaterialSlotValue::File("images/wpn_n.png".to_owned())),
+            slot_of(material, "normal")
+        );
+        assert_eq!(
+            Some(&MaterialSlotValue::Color([0.5, 0.6, 0.7, 1.0])),
+            slot_of(material, "specular")
+        );
+    }
+
+    #[test]
+    fn materials_without_slots_keep_the_legacy_empty_file_nodes() {
+        let model = model_with_materials(vec![MaterialInfo {
+            name: "plain".to_owned(),
+            slots: Vec::new(),
+        }]);
+
+        let bytes = encode_model(&model).unwrap();
+        let decoded = decode_model(&bytes, Path::new("test.cast")).unwrap();
+
+        let material = &decoded.materials[0];
+        assert_eq!(4, material.slots.len());
+        for slot in ["albedo", "gloss", "normal", "specular"] {
+            assert!(matches!(
+                slot_of(material, slot),
+                Some(MaterialSlotValue::File(path)) if path.is_empty()
+            ));
+        }
+    }
+
+    #[test]
+    fn duplicate_material_names_get_distinct_node_hashes() {
+        let model = model_with_materials(vec![
+            MaterialInfo {
+                name: "same".to_owned(),
+                slots: vec![(
+                    "albedo".to_owned(),
+                    MaterialSlotValue::File("a.png".to_owned()),
+                )],
+            },
+            MaterialInfo {
+                name: "same".to_owned(),
+                slots: vec![(
+                    "albedo".to_owned(),
+                    MaterialSlotValue::File("b.png".to_owned()),
+                )],
+            },
+        ]);
+
+        let bytes = encode_model(&model).unwrap();
+        let file = CastFile::decode(&bytes).unwrap();
+        let model_node = file.roots[0]
+            .children
+            .iter()
+            .find(|node| node.identifier == MODEL)
+            .unwrap();
+        let hashes: Vec<u64> = model_node
+            .children
+            .iter()
+            .filter(|node| node.identifier == MATERIAL)
+            .map(|node| node.hash)
+            .collect();
+
+        assert_eq!(2, hashes.len());
+        assert_ne!(hashes[0], hashes[1]);
+    }
+
+    #[test]
+    fn file_slot_hashes_reference_their_own_file_nodes() {
+        let model = model_with_materials(vec![MaterialInfo {
+            name: "wired".to_owned(),
+            slots: vec![
+                (
+                    "albedo".to_owned(),
+                    MaterialSlotValue::File("textures/shared.png".to_owned()),
+                ),
+                (
+                    "gloss".to_owned(),
+                    MaterialSlotValue::File("textures/shared.png".to_owned()),
+                ),
+            ],
+        }]);
+
+        let bytes = encode_model(&model).unwrap();
+        let file = CastFile::decode(&bytes).unwrap();
+        let model_node = file.roots[0]
+            .children
+            .iter()
+            .find(|node| node.identifier == MODEL)
+            .unwrap();
+        let material = model_node
+            .children
+            .iter()
+            .find(|node| node.identifier == MATERIAL)
+            .unwrap();
+
+        let albedo_hash = match &material
+            .properties
+            .iter()
+            .find(|property| property.name == "albedo")
+            .unwrap()
+            .values
+        {
+            PropertyValues::Integer64(values) => values[0],
+            _ => panic!("albedo slot should be an integer64 file reference"),
+        };
+        let gloss_hash = match &material
+            .properties
+            .iter()
+            .find(|property| property.name == "gloss")
+            .unwrap()
+            .values
+        {
+            PropertyValues::Integer64(values) => values[0],
+            _ => panic!("gloss slot should be an integer64 file reference"),
+        };
+        assert_eq!(albedo_hash, gloss_hash);
+        let file_nodes: Vec<&CastNode> = material
+            .children
+            .iter()
+            .filter(|node| node.identifier == FILE)
+            .collect();
+        assert_eq!(1, file_nodes.len());
+        assert_eq!(albedo_hash, file_nodes[0].hash);
+    }
 }

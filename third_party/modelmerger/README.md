@@ -1,7 +1,7 @@
 # ModelMerger native integration
 
 Vendored from https://github.com/ez4cywa/ModelMergerGUI at commit
-`ac0bfeb577651c34b3de4fdbafa4b1f615e5f84f` (workspace version 2.2.2).
+`7cc474e707b1e3d971bfe2cb4855ec8a7df34e1d` (workspace version 2.5.0).
 `rust/crates/cast-codec`, `rust/crates/model-merger-engine`, and
 `tests/fixtures/rust-migration` are upstream sources/fixtures. The only core
 integration patch is `PreparedMerge::with_overwrite(bool)` in engine `src/lib.rs`:
@@ -22,15 +22,29 @@ resolved output path and waits for `execute` so the host can claim that path.
 work. Do not terminate processes during writes. Outputs use upstream temporary
 write/readback/atomic commit. Ammunition filling never replaces an existing file.
 
-Commands: `merge`, `inspect_ammunition`, `fill_ammunition`, `preview`; control commands:
-`execute`, `cancel`. Events: `progress`, `prepared`, `analysis`, `completed`,
-`error`. Errors include an additive `code` field (`cancelled`, `protocol`,
-`OutputAlreadyExists`, other engine validation codes, or `engine`). Protocol
-errors terminate with exit status 1. Input JSON lines are limited to 1 MiB.
-Preview responses contain upstream mesh positions, normals, u32 triangle indices,
-bounds, original geometry statistics, and sampled geometry statistics. The
-triangle limit defaults to 250,000 and is capped at that value; previews are
-read-only. Response lines may exceed 1 MiB because they contain geometry.
+Commands: `merge`, `inspect_ammunition`, `fill_ammunition`, `inspect_arms`,
+`assemble`, `preview`; control commands: `execute`, `cancel`. Events: `progress`,
+`prepared`, `analysis`, `completed`, `error`. Errors include an additive `code`
+field (`cancelled`, `protocol`, `OutputAlreadyExists`, other engine validation
+codes, or `engine`). Protocol errors terminate with exit status 1. Input JSON
+lines are limited to 1 MiB. Preview responses contain upstream mesh positions,
+normals, u32 triangle indices, bounds, original geometry statistics, and sampled
+geometry statistics. The triangle limit defaults to 250,000 and is capped at
+that value; previews are read-only. Response lines may exceed 1 MiB because they
+contain geometry.
+
+`inspect_arms` lists the bone names of an arms (viewhands) CAST. `assemble`
+takes `arms`, `weapon`, `output` and an optional `target_bone` (auto-detected
+`tag_weapon` when omitted), splices the weapon root bone onto the arms skeleton
+as a zero-offset child with `_wpn` collision suffixes and absolute texture
+paths, verifies the result by readback, and publishes it atomically as a new
+file; an existing output is rejected.
+
+Output file names are resolved by the Alchemy Stars host (see `ModelMergerNaming`
+in the Avalonia project): automatic names derive from the weapon code and never
+overwrite existing files - on conflicts the segments that differ across the input
+part names become a prefix, then a numeric ladder applies. The adapter and engine
+accept whatever final name the host resolves.
 
 For overwrite confirmation after automatic root selection, send `merge` with
 `overwrite:true`; `prepared` also reports `output_exists`. This grants permission
@@ -42,8 +56,9 @@ Cancel leaves existing output unchanged.
 
 The integration test suite exercises the actual executable protocol, preparation
 barrier, cancellation/EOF cleanup, overwrite preservation, bounded preview,
-invalid commands, and ammunition inspection/fill/replication/no-overwrite. The
-unmodified upstream codec/merge/preview/ammunition tests run in the same workspace.
+invalid commands, ammunition inspection/fill/replication/no-overwrite, and arms
+inspection/assembly round trips. The unmodified upstream codec/merge/preview/
+ammunition/armature tests run in the same workspace.
 
 Generate small synthetic ammunition fixtures for host smoke tests into a new
 directory (existing files are rejected):

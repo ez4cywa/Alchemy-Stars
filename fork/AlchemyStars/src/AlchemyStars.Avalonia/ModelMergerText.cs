@@ -32,7 +32,7 @@ root|设为根|Set as root|Définir la racine|Сделать корнем|Establ
 auto|自动识别根模型|Automatic root|Racine automatique|Автоматический корень|Raíz automática
 manual|手动指定根模型|Manual root|Racine manuelle|Корень вручную|Raíz manual
 folder|输出文件夹|Output folder|Dossier de sortie|Папка вывода|Carpeta de salida
-name|输出文件名（留空沿用根模型）|Output name (blank = root name)|Nom de sortie (vide = racine)|Имя файла (пустое = корень)|Nombre de salida (vacío = raíz)
+name|输出文件名（留空 = 武器代号）|Output name (blank = weapon code)|Nom de sortie (vide = code de l'arme)|Имя файла (пустое = код оружия)|Nombre de salida (vacío = código del arma)
 browse|浏览…|Browse…|Parcourir…|Обзор…|Examinar…
 run|开始合并|Merge|Fusionner|Объединить|Fusionar
 runAll|合并所有已就绪组|Merge all ready groups|Fusionner tous les groupes prêts|Объединить готовые группы|Fusionar grupos preparados
@@ -74,7 +74,7 @@ empty|未识别到可用目标|No recognized targets|Aucune cible reconnue|Це�
 slots|槽位 / 已占用|Slots / occupied|Emplacements / occupés|Места / занято|Huecos / ocupados
 inserted|已装填 / 跳过|Inserted / skipped|Insérés / ignorés|Добавлено / пропущено|Insertados / omitidos
 about|关于与许可|About and licenses|À propos et licences|О программе и лицензиях|Acerca de y licencias
-aboutText|集成 ModelMergerGUI 2.2.2 的原生合并与填弹引擎。MIT：Philip / Scobalula、echo000、ez4cywa。主题、软件更新与主窗口设置沿用 Alchemy Stars。|Native merge and ammunition engine from ModelMergerGUI 2.2.2. MIT: Philip / Scobalula, echo000, ez4cywa. Theme, application updates and main-window settings are managed by Alchemy Stars.|Moteur natif ModelMergerGUI 2.2.2. MIT : Philip / Scobalula, echo000, ez4cywa. Thème, mises à jour et fenêtre gérés par Alchemy Stars.|Нативный движок ModelMergerGUI 2.2.2. MIT: Philip / Scobalula, echo000, ez4cywa. Тема, обновления и окно управляются Alchemy Stars.|Motor nativo ModelMergerGUI 2.2.2. MIT: Philip / Scobalula, echo000, ez4cywa. Tema, actualizaciones y ventana gestionados por Alchemy Stars.
+aboutText|集成 ModelMergerGUI 2.5.0 的原生合并、填弹与手臂拼接引擎。MIT：Philip / Scobalula、echo000、ez4cywa。主题、软件更新与主窗口设置沿用 Alchemy Stars。|Native merge, ammunition and arm-assembly engine from ModelMergerGUI 2.5.0. MIT: Philip / Scobalula, echo000, ez4cywa. Theme, application updates and main-window settings are managed by Alchemy Stars.|Moteur natif ModelMergerGUI 2.5.0 : fusion, munitions et assemblage des bras. MIT : Philip / Scobalula, echo000, ez4cywa. Thème, mises à jour et fenêtre gérés par Alchemy Stars.|Нативный движок ModelMergerGUI 2.5.0: слияние, магазины и сборка рук. MIT: Philip / Scobalula, echo000, ez4cywa. Тема, обновления и окно управляются Alchemy Stars.|Motor nativo ModelMergerGUI 2.5.0: fusión, munición y ensamblado de brazos. MIT: Philip / Scobalula, echo000, ez4cywa. Tema, actualizaciones y ventana gestionados por Alchemy Stars.
 repository|项目主页|Repository|Dépôt|Репозиторий|Repositorio
 issues|反馈问题|Report an issue|Signaler un problème|Сообщить о проблеме|Informar problema
 releases|下载与更新|Downloads and updates|Téléchargements|Загрузки и обновления|Descargas y actualizaciones
@@ -88,5 +88,14 @@ cancelAll|取消全部任务|Cancel all tasks|Annuler toutes les tâches|Отм�
 rootSelected|根模型|Root model|Modèle racine|Корневая модель|Modelo raíz
 settingsError|设置无法读取或写入|Cannot read or save settings|Impossible de lire ou enregistrer les réglages|Ошибка чтения или записи настроек|No se pueden leer o guardar ajustes
 cancelBeforeClose|仍有任务运行，请先取消或等待完成。|Tasks are active. Cancel them or wait before closing.|Des tâches sont actives. Annulez-les ou attendez.|Есть активные задачи. Отмените их или дождитесь завершения.|Hay tareas activas. Cancélelas o espere antes de cerrar.
+armAssembly|手臂武器拼接|Attach weapon to arms|Fixer l'arme aux bras|Прикрепить оружие к рукам|Acoplar arma a los brazos
+armAssemblyHint|启用后，每个模型组出现"手臂武器拼接"按钮。|When enabled, each group gains an "Attach weapon to arms" button.|Une fois activé, chaque groupe gagne un bouton « Fixer l'arme aux bras ».|После включения у каждой группы появляется кнопка «Прикрепить оружие к рукам».|Al activarlo, cada grupo obtiene un botón «Acoplar arma a los brazos».
+arms|手臂模型（viewhands）|Arms model (viewhands)|Modèle de bras (viewhands)|Модель рук (viewhands)|Modelo de brazos (viewhands)
+weaponModel|武器模型|Weapon model|Modèle d'arme|Модель оружия|Modelo de arma
+targetBone|目标骨骼（自动探测 tag_weapon，可改选）|Target bone (auto-detects tag_weapon, overridable)|Os cible (tag_weapon détecté, modifiable)|Целевая кость (авто tag_weapon, можно изменить)|Hueso de destino (tag_weapon automático, modificable)
+autoBone|自动（tag_weapon）|Auto (tag_weapon)|Auto (tag_weapon)|Авто (tag_weapon)|Automático (tag_weapon)
+assemblyHint|把手臂与武器拼接成完整的第一人称模型：武器根骨骼零位移挂接到手臂的 tag_weapon，另存新 CAST。|Assemble the arms and weapon into a first-person model: the weapon root bone is zeroed onto the arms' tag_weapon and saved as a new CAST.|Assemblez les bras et l'arme en un modèle à la première personne : l'os racine de l'arme est aligné sur le tag_weapon des bras et enregistré dans un nouveau CAST.|Соберите руки и оружие в модель от первого лица: корневая кость оружия обнуляется на tag_weapon рук и сохраняется в новый CAST.|Ensambla brazos y arma en un modelo en primera persona: el hueso raíz del arma se alinea con el tag_weapon de los brazos y se guarda en un CAST nuevo.
+attachedMeshes|已拼接网格|Attached meshes|Maillages assemblés|Присоединено сеток|Mallas acopladas
+armAssemblyInvalid|先识别手臂骨骼，选择武器模型及尚不存在的输出文件。|Inspect the arms, choose a weapon model, and pick a new output file.|Analysez les bras, choisissez une arme et un nouveau fichier.|Проанализируйте руки, выберите оружие и новый файл.|Analice los brazos, elija un arma y un archivo nuevo.
 """;
 }

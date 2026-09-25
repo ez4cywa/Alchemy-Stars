@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.3.0-preview.33 — 2026-09-25 (ModelMerger 2.5.0 engine, arm assembly, conflict-safe naming)
+
+Chinese release notes: [更新日志](docs/releases/1.3.0-preview.33.zh-CN.md). Based on preview.32; RF experimental work remains separate.
+
+- Upgrade the vendored Model merger engine from ModelMergerGUI 2.2.2 to 2.5.0 (pinned commit `7cc474e`): materials with the same name but different textures stay separate when merging, and the preview data model carries upstream material information (the depth-tested software preview keeps neutral-gray shading).
+- Add the opt-in arm + weapon assembly tool (off by default; enable with the workspace toolbar checkbox): each group gains an assembly button, the weapon root bone splices onto the arms' `tag_weapon` as a zero-offset child (auto-detected, overridable per file), weapon hierarchy and skin weights are preserved with `_wpn` collision suffixes and absolute texture paths, and the new CAST is verified by readback before an atomic publish.
+- Derive output names from the weapon code like upstream 2.5.0: merges default to `<code>.cast`, magazine fills to `<code>_filled.cast`, arm assembly to `<code>_viewhands.cast`, falling back to the full file stem and always editable.
+- Resolve naming conflicts automatically (this fork's improvement over upstream): when the derived name already exists in the output folder, the segments that differ across the input part names become a prefix (`rec_mag_eagle.cast`), then a numeric ladder (`rec_mag_eagle_2.cast`) guarantees a free name. Automatic names never overwrite; explicitly typed names keep the existing confirmation dialog.
+- Extend the native JSONL protocol with `inspect_arms` and `assemble` commands (target-bone override, engine error codes) and cover them with real-process protocol tests plus C# naming and workflow smokes.
+
 ## 1.3.0-preview.32 — 2026-09-20 (Animation blending and hand IK)
 
 Chinese release notes: [更新日志](docs/releases/1.3.0-preview.32.zh-CN.md). Based on preview.31.
