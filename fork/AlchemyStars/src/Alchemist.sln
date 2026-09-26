@@ -17,8 +17,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RedFox.Zenith", "..\..\RedF
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RedFox.Graphics3D.AnimationPlayback", "..\..\RedFox\src\cs\RedFox.Graphics3D.AnimationPlayback\RedFox.Graphics3D.AnimationPlayback.csproj", "{9590DC45-CD27-4956-9FCA-9F8E9BA0436A}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Alchemist.Scripting", "Alchemist.Scripting\Alchemist.Scripting.csproj", "{700AC685-2628-4254-A90C-BBBD0F8E705E}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RedFox.Graphics3D.SEModel", "..\..\RedFox\src\cs\RedFox.Graphics3D.SEModel\RedFox.Graphics3D.SEModel.csproj", "{1EB0BB0C-865E-4757-BE40-E31E0A423DFC}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RedFox.Graphics3D.SEAnim", "..\..\RedFox\src\cs\RedFox.Graphics3D.SEAnim\RedFox.Graphics3D.SEAnim.csproj", "{4F929521-6F18-4492-BC96-6F6B7C6C74EC}"

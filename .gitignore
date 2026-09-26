@@ -10,3 +10,5 @@ fork/alchemist-upstream.tar
 __pycache__/
 *.py[cod]
 cast.cfg
+.commandcode/
+.work-codweapondb/

@@ -34,7 +34,6 @@
     <ProjectReference Include="..\..\..\RedFox\src\cs\RedFox.Graphics3D\RedFox.Graphics3D.csproj" />
     <ProjectReference Include="..\..\..\RedFox\src\cs\RedFox.UI\RedFox.UI.csproj" />
     <ProjectReference Include="..\..\..\RedFox\src\cs\RedFox.Zenith\RedFox.Zenith.csproj" />
-    <ProjectReference Include="..\Alchemist.Scripting\Alchemist.Scripting.csproj" />
     <ProjectReference Include="..\Alchemist\Alchemist.csproj" />
   </ItemGroup>
 

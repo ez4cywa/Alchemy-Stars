@@ -143,7 +143,7 @@ Run("Hawk timeline metadata exposes the true clip durations", () =>
 {
     var source = sprintProject.Animations.Single();
     var clips = new[] { source.Name }.Concat(source.Layers.Select(layer => layer.Name)).ToArray();
-    var metadata = clips.Select(AnimationClipMetadataReader.Read).ToArray();
+    var metadata = clips.Select(clip => AnimationClipMetadataReader.Read(clip)).ToArray();
     Assert(metadata.All(item => item.FrameCount > 0 && item.Framerate > 0),
         "Every displayed CAST track must have valid timing metadata.");
     Assert(metadata.Select(item => item.FrameCount).Distinct().Count() > 1,

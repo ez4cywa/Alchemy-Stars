@@ -1,5 +1,4 @@
-﻿using Alchemist.Scripting;
-using MaterialDesignThemes.Wpf;
+﻿using MaterialDesignThemes.Wpf;
 using Microsoft.Win32;
 using RedFox.UI;
 using RedFox.Zenith;
