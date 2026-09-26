@@ -288,6 +288,8 @@ public sealed partial class MainWindow : Window
     private void PartsPageClick(object? sender, RoutedEventArgs e) => ViewModel.SelectPage(WorkspacePage.ModelParts);
     private void SettingsPageClick(object? sender, RoutedEventArgs e) => ViewModel.SelectPage(WorkspacePage.Settings);
     private void AboutPageClick(object? sender, RoutedEventArgs e) => ViewModel.SelectPage(WorkspacePage.About);
+    private void CommonSectionClick(object? sender, RoutedEventArgs e) => ViewModel.ToggleCommonSection();
+    private void OtherSectionClick(object? sender, RoutedEventArgs e) => ViewModel.ToggleOtherSection();
     private void CodWeaponDbPageClick(object? sender, RoutedEventArgs e) => ViewModel.SelectPage(WorkspacePage.CodWeaponDb);
     private void ModelMergerPageClick(object? sender, RoutedEventArgs e) => ViewModel.SelectPage(WorkspacePage.ModelMerger);
     private void LanguageClick(object? sender, RoutedEventArgs e) => ViewModel.ToggleLanguage();

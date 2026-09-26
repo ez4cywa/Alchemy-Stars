@@ -104,6 +104,12 @@ public sealed class ApplicationPreferencesStore
     public void SaveLanguage(string language) =>
         Update(preferences => preferences.Language = string.IsNullOrWhiteSpace(language) ? "system" : language);
 
+    public void SaveSidebarSections(bool commonExpanded, bool otherExpanded) => Update(preferences =>
+    {
+        preferences.SidebarCommonExpanded = commonExpanded;
+        preferences.SidebarOtherExpanded = otherExpanded;
+    });
+
     public void SaveAppearance(string style, string mode) => Update(preferences =>
     {
         preferences.ThemeStyle = NormalizeThemeStyle(style);
@@ -178,6 +184,8 @@ public sealed class AppPreferenceData
     public string ThemeStyle { get; set; } = "apple";
     public string ThemeMode { get; set; } = "light";
     public string Language { get; set; } = "system";
+    public bool SidebarCommonExpanded { get; set; } = true;
+    public bool SidebarOtherExpanded { get; set; } = true;
     public string DefaultOutputFormat { get; set; } = ".cast";
     public string DefaultOutputUpAxis { get; set; } = "source";
     public bool DefaultCastAnimationOnly { get; set; }
@@ -193,6 +201,8 @@ public sealed class AppPreferenceData
         UnifiedOutputDirectory = UnifiedOutputDirectory,
         CodWeaponDatasetDirectory = CodWeaponDatasetDirectory,
         Language = Language,
+        SidebarCommonExpanded = SidebarCommonExpanded,
+        SidebarOtherExpanded = SidebarOtherExpanded,
         ThemeStyle = ThemeStyle,
         ThemeMode = ThemeMode,
         DefaultOutputFormat = DefaultOutputFormat,

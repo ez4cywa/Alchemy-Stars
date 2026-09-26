@@ -20,7 +20,7 @@ internal static class DesktopSmoke
         var navigation = window.GetVisualDescendants().OfType<Button>()
             .Where(b => b.Classes.Contains("activity")).ToArray();
         // Must match the sidebar button order exactly; the loop clicks by index.
-        var pages = new[] { WorkspacePage.Animations, WorkspacePage.ModelParts, WorkspacePage.DualAnimations, WorkspacePage.CodWeaponDb, WorkspacePage.ModelMerger, WorkspacePage.Settings, WorkspacePage.About };
+        var pages = new[] { WorkspacePage.Animations, WorkspacePage.ModelParts, WorkspacePage.ModelMerger, WorkspacePage.DualAnimations, WorkspacePage.CodWeaponDb };
         try
         {
             // Reproduce scrolling away from the inspector before selecting a real project layer.
@@ -142,14 +142,15 @@ internal static class DesktopSmoke
             try
             {
                 var controls = window.GetVisualDescendants().OfType<Button>().Where(b => b.Classes.Contains("window-control")).ToArray();
-                Require(controls.Length == 3, "Window controls are missing.");
-                ((IInvokeProvider)ControlAutomationPeer.CreatePeerForElement(controls[1])!).Invoke();
+                // App menu, minimize, zoom, close — the integrated app menu sits left of minimize.
+                Require(controls.Length == 4, "Window controls are missing.");
+                ((IInvokeProvider)ControlAutomationPeer.CreatePeerForElement(controls[2])!).Invoke();
                 await Task.Delay(80);
                 Require(window.WindowState == WindowState.Maximized, "Window zoom did not maximize.");
-                ((IInvokeProvider)ControlAutomationPeer.CreatePeerForElement(controls[1])!).Invoke();
+                ((IInvokeProvider)ControlAutomationPeer.CreatePeerForElement(controls[2])!).Invoke();
                 await Task.Delay(80);
                 Require(window.WindowState == WindowState.Normal, "Window zoom did not restore.");
-                ((IInvokeProvider)ControlAutomationPeer.CreatePeerForElement(controls[0])!).Invoke();
+                ((IInvokeProvider)ControlAutomationPeer.CreatePeerForElement(controls[1])!).Invoke();
                 await Task.Delay(80);
                 Require(window.WindowState == WindowState.Minimized, "Window minimize command failed.");
             }

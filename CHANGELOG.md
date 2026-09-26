@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.3.0-preview.34 — 2026-09-26 (collapsible sidebar groups, integrated app menu, minimal-window fixes)
+
+Chinese release notes: [更新日志](docs/releases/1.3.0-preview.34.zh-CN.md). Based on preview.33; RF experimental work remains separate.
+
+- Regroup the left sidebar into two collapsible sections: Common (animation blend, model parts, model merger) and Other (dual-wield, COD weapon database). Collapse state persists in the application settings; compact icon-only mode keeps the chevron toggles.
+- Move Settings, About and the language switch out of the sidebar into one smaller integrated app-menu button placed left of the window minimize control. The language option now lives at the top of the Settings page, and the naming card becomes "Naming rules".
+- Fix minimal-window (900×600) clipping: the window-control column now fits all four buttons so the close button is fully visible, and the COD weapon-database page uses proportional columns with minimums so its right panel wraps text inside the visible area instead of running past the window edge.
+- Adapt the test contracts to the new shell: the desktop smoke counts four window controls and clicks the reordered sidebar, and the UI Automation script verifies the About page (actions, keyboard focus, external-link routing) in a dedicated `--page about` instance.
+
 ## 1.3.0-preview.33 — 2026-09-25 (ModelMerger 2.5.0 engine, arm assembly, conflict-safe naming)
 
 Chinese release notes: [更新日志](docs/releases/1.3.0-preview.33.zh-CN.md). Based on preview.32; RF experimental work remains separate.

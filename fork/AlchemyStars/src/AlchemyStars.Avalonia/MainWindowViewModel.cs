@@ -31,6 +31,8 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
     private WorkspacePage selectedPage = WorkspacePage.Animations;
     private string? currentProjectPath;
     private string languageMode;
+    private bool commonSectionExpanded = true;
+    private bool otherSectionExpanded = true;
     private UiText text;
     private bool isBusy;
     private string busyMessage = string.Empty;
@@ -78,6 +80,8 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
         themeModeIndex = preferenceSnapshot.ThemeMode switch { "dark" => 1, "system" => 2, _ => 0 };
         ApplyAppearance(false);
         languageMode = NormalizeLanguageMode(preferenceSnapshot.Language);
+        commonSectionExpanded = preferenceSnapshot.SidebarCommonExpanded;
+        otherSectionExpanded = preferenceSnapshot.SidebarOtherExpanded;
         text = new UiText(ResolveChinese(languageMode));
         InitializeLocalizedOptions();
         NativeTextResources.Apply(text);
@@ -708,6 +712,23 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
         ApplyLanguage();
     }
 
+    public bool IsCommonSectionExpanded => commonSectionExpanded;
+    public bool IsOtherSectionExpanded => otherSectionExpanded;
+
+    public void ToggleCommonSection()
+    {
+        commonSectionExpanded = !commonSectionExpanded;
+        preferences.SaveSidebarSections(commonSectionExpanded, otherSectionExpanded);
+        OnPropertyChanged(nameof(IsCommonSectionExpanded));
+    }
+
+    public void ToggleOtherSection()
+    {
+        otherSectionExpanded = !otherSectionExpanded;
+        preferences.SaveSidebarSections(commonSectionExpanded, otherSectionExpanded);
+        OnPropertyChanged(nameof(IsOtherSectionExpanded));
+    }
+
     public void UseSystemLanguage()
     {
         languageMode = "system";
@@ -1146,8 +1167,8 @@ public sealed partial class UiText
     public string OldCod => L("兼容旧版 Call of Duty", "Legacy Call of Duty compatibility");
     public string Prefix => L("输出前缀", "Output prefix");
     public string Suffix => L("输出后缀", "Output suffix");
-    public string NamingAndLanguage => L("命名与语言", "Naming and language");
-    public string NamingHelp => L("统一批处理名称并控制界面语言。", "Keep batch names consistent and control the interface language.");
+    public string NamingRules => L("命名规则", "Naming rules");
+    public string NamingHelp => L("统一批处理输出的名称。", "Keep batch output names consistent.");
     public string IkDefaults => L("IK 骨骼默认值", "IK bone defaults");
     public string IkHelp => L("左右手链分区显示，屏幕阅读器名称也保持唯一。", "Left and right chains stay visually grouped and expose unique screen-reader names.");
     public string LeftIk => L("左手 IK", "Left-hand IK");
@@ -1165,6 +1186,7 @@ public sealed partial class UiText
     public string RightEndBone => L("右手 IK 末端骨骼", "Right-hand IK end bone");
     public string RightTargetBone => L("右手 IK 目标骨骼", "Right-hand IK target bone");
     public string Language => L("界面语言", "Interface language");
+    public string LanguageHelp => L("切换立即生效并保存；跟随系统时使用 Windows 显示语言。", "Changes apply immediately and are saved; 'follow system' uses the Windows display language.");
     public string FollowSystem => L("跟随系统", "Follow system");
     public string SaveDefaults => L("保存为默认值", "Save as defaults");
     public string GenerateSprintBatch => L("生成冲刺批次", "Generate sprint batch");

@@ -3,11 +3,11 @@
  x:Class="AlchemyStars.Avalonia.CodWeaponDbView" x:DataType="local:MainWindowViewModel">
   <Grid x:Name="CodDbEditor">
     <Grid.ColumnDefinitions>
-      <ColumnDefinition Width="300" MinWidth="240" MaxWidth="420" />
+      <ColumnDefinition Width="300*" MinWidth="240" MaxWidth="420" />
       <ColumnDefinition Width="4" />
-      <ColumnDefinition Width="*" MinWidth="280" />
+      <ColumnDefinition Width="640*" MinWidth="280" />
       <ColumnDefinition Width="4" />
-      <ColumnDefinition Width="380" MinWidth="300" MaxWidth="560" />
+      <ColumnDefinition Width="380*" MinWidth="300" MaxWidth="560" />
     </Grid.ColumnDefinitions>
 
     <!-- Search, filters and the weapon list. -->

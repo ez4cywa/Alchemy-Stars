@@ -49,7 +49,7 @@ try {
     $buttonCondition = [System.Windows.Automation.PropertyCondition]::new(
         [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
         [System.Windows.Automation.ControlType]::Button)
-    $requiredButtons = @('New', 'Open', 'Save', 'Save as', 'Export selected', 'Export all', 'Animation blend', 'Model parts', 'Dual merge', 'Settings', 'About', 'Close')
+    $requiredButtons = @('New', 'Open', 'Save', 'Save as', 'Export selected', 'Export all', 'Animation blend', 'Model parts', 'Dual merge', 'Close')
     $keyTargets = @('New', 'Open', 'Save', 'Save as', 'Export selected', 'Export all', 'Close')
     $elements = @{}
     foreach ($name in $requiredButtons) {
@@ -135,55 +135,92 @@ try {
     ([System.Windows.Automation.InvokePattern]$closeButton.GetCurrentPattern(
         [System.Windows.Automation.InvokePattern]::Pattern)).Invoke()
     Start-Sleep -Milliseconds 150
-    foreach ($name in @('New', 'Open', 'Save', 'Save as', 'Export selected', 'Export all', 'About')) {
+    foreach ($name in @('New', 'Open', 'Save', 'Save as', 'Export selected', 'Export all')) {
         if (-not $elements[$name].Current.IsEnabled -or -not $elements[$name].Current.IsKeyboardFocusable) {
             throw "Closing the modal did not restore keyboard interaction: $name"
         }
     }
-    ([System.Windows.Automation.InvokePattern]$elements['About'].GetCurrentPattern(
-        [System.Windows.Automation.InvokePattern]::Pattern)).Invoke()
 
+    # The sidebar keeps only the two collapsible feature groups; Settings and About live
+    # behind the integrated app-menu button, so the About page contract is verified in a
+    # dedicated instance instead.
     $aboutActions = @(
         @{ Name = 'Open the Alchemy Stars repository'; Url = 'https://github.com/ez4cywa/Alchemy-Stars' },
         @{ Name = 'Open upstream project'; Url = 'https://github.com/Scobalula/Alchemist' }
     )
-    foreach ($action in $aboutActions) {
-        $actionButton = $null
+    $aboutLinkLog = Join-Path ([System.IO.Path]::GetTempPath()) ('AlchemyStars-about-links-' + [Guid]::NewGuid().ToString('N') + '.txt')
+    $aboutSettingsPath = Join-Path ([System.IO.Path]::GetTempPath()) ('AlchemyStars-accessibility-about-' + [Guid]::NewGuid().ToString('N') + '.json')
+    $previousAboutSettingsPath = $env:ALCHEMY_STARS_SETTINGS_PATH
+    $env:ALCHEMY_STARS_SETTINGS_PATH = $aboutSettingsPath
+    $aboutProcess = Start-Process -FilePath $executable -ArgumentList ('--page about --culture en-US --window-size 900x600 --external-link-log "' + $aboutLinkLog + '" "' + $standardProject + '"') -WorkingDirectory $publishPath -WindowStyle Hidden -PassThru
+    try {
+        $aboutDeadline = [DateTime]::UtcNow.AddSeconds($TimeoutSeconds)
+        $aboutProcessCondition = [System.Windows.Automation.PropertyCondition]::new(
+            [System.Windows.Automation.AutomationElement]::ProcessIdProperty,
+            $aboutProcess.Id)
+        $aboutWindow = $null
         do {
-            $actionCondition = [System.Windows.Automation.PropertyCondition]::new(
-                [System.Windows.Automation.AutomationElement]::NameProperty,
-                $action.Name)
-            $actionButton = $window.FindFirst(
-                [System.Windows.Automation.TreeScope]::Descendants,
-                [System.Windows.Automation.AndCondition]::new($buttonCondition, $actionCondition))
-            if ($null -eq $actionButton) { Start-Sleep -Milliseconds 100 }
-        } while ($null -eq $actionButton -and [DateTime]::UtcNow -lt $deadline)
-        if ($null -eq $actionButton -or -not $actionButton.Current.IsKeyboardFocusable) {
-            throw "The About action is missing or not keyboard operable: $($action.Name)"
+            Start-Sleep -Milliseconds 200
+            $aboutWindow = [System.Windows.Automation.AutomationElement]::RootElement.FindFirst(
+                [System.Windows.Automation.TreeScope]::Children,
+                $aboutProcessCondition)
+        } while ($null -eq $aboutWindow -and [DateTime]::UtcNow -lt $aboutDeadline -and -not $aboutProcess.HasExited)
+        if ($null -eq $aboutWindow) {
+            throw 'Windows UI Automation could not discover the About page window.'
         }
-        $actionBounds = $actionButton.Current.BoundingRectangle
-        if ($actionBounds.Height -lt 43) {
-            throw "The About target is smaller than 44 DIPs: $($action.Name), $($actionBounds.Height)"
+        foreach ($action in $aboutActions) {
+            $actionButton = $null
+            do {
+                $actionCondition = [System.Windows.Automation.PropertyCondition]::new(
+                    [System.Windows.Automation.AutomationElement]::NameProperty,
+                    $action.Name)
+                $actionButton = $aboutWindow.FindFirst(
+                    [System.Windows.Automation.TreeScope]::Descendants,
+                    [System.Windows.Automation.AndCondition]::new($buttonCondition, $actionCondition))
+                if ($null -eq $actionButton) { Start-Sleep -Milliseconds 100 }
+            } while ($null -eq $actionButton -and [DateTime]::UtcNow -lt $aboutDeadline)
+            if ($null -eq $actionButton -or -not $actionButton.Current.IsKeyboardFocusable) {
+                throw "The About action is missing or not keyboard operable: $($action.Name)"
+            }
+            $actionBounds = $actionButton.Current.BoundingRectangle
+            if ($actionBounds.Height -lt 43) {
+                throw "The About target is smaller than 44 DIPs: $($action.Name), $($actionBounds.Height)"
+            }
+            $actionButton.SetFocus()
+            Start-Sleep -Milliseconds 100
+            if (-not $actionButton.Current.HasKeyboardFocus) {
+                throw "The About action could not receive keyboard focus: $($action.Name)"
+            }
+            if ($actionButton.Current.IsOffscreen) {
+                throw "The About action stayed offscreen after receiving keyboard focus: $($action.Name)"
+            }
+            ([System.Windows.Automation.InvokePattern]$actionButton.GetCurrentPattern(
+                [System.Windows.Automation.InvokePattern]::Pattern)).Invoke()
         }
-        $actionButton.SetFocus()
-        Start-Sleep -Milliseconds 100
-        if (-not $actionButton.Current.HasKeyboardFocus) {
-            throw "The About action could not receive keyboard focus: $($action.Name)"
-        }
-        if ($actionButton.Current.IsOffscreen) {
-            throw "The About action stayed offscreen after receiving keyboard focus: $($action.Name)"
-        }
-        ([System.Windows.Automation.InvokePattern]$actionButton.GetCurrentPattern(
-            [System.Windows.Automation.InvokePattern]::Pattern)).Invoke()
-    }
 
-    do {
-        Start-Sleep -Milliseconds 100
-        $openedLinks = if (Test-Path -LiteralPath $linkLog) { @(Get-Content -LiteralPath $linkLog) } else { @() }
-    } while ($openedLinks.Count -lt $aboutActions.Count -and [DateTime]::UtcNow -lt $deadline)
-    $expectedLinks = @($aboutActions | ForEach-Object Url)
-    if ($openedLinks.Count -ne $expectedLinks.Count -or (Compare-Object $expectedLinks $openedLinks)) {
-        throw "About actions did not route the expected external links: $($openedLinks -join ', ')"
+        do {
+            Start-Sleep -Milliseconds 100
+            $openedLinks = if (Test-Path -LiteralPath $aboutLinkLog) { @(Get-Content -LiteralPath $aboutLinkLog) } else { @() }
+        } while ($openedLinks.Count -lt $aboutActions.Count -and [DateTime]::UtcNow -lt $aboutDeadline)
+        $expectedLinks = @($aboutActions | ForEach-Object Url)
+        if ($openedLinks.Count -ne $expectedLinks.Count -or (Compare-Object $expectedLinks $openedLinks)) {
+            throw "About actions did not route the expected external links: $($openedLinks -join ', ')"
+        }
+    }
+    finally {
+        $env:ALCHEMY_STARS_SETTINGS_PATH = $previousAboutSettingsPath
+        $aboutProcess.Refresh()
+        if (-not $aboutProcess.HasExited) {
+            Stop-Process -Id $aboutProcess.Id -Force
+            $aboutProcess.WaitForExit(5000) | Out-Null
+        }
+        $aboutProcess.Dispose()
+        if (Test-Path -LiteralPath $aboutLinkLog) {
+            [System.IO.File]::Delete($aboutLinkLog)
+        }
+        if (Test-Path -LiteralPath $aboutSettingsPath) {
+            [System.IO.File]::Delete($aboutSettingsPath)
+        }
     }
 
     Write-Output 'Windows UI Automation names, modal background isolation/help, restored keyboard interaction, selected export, 44x44 key targets, About actions and duration-aware track geometry: PASS'

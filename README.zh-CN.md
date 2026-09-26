@@ -2,10 +2,10 @@
 
 # Alchemy Stars（炼金之星）
 
-> **Avalonia AOT 预览测试分支：** 本测试线使用 .NET 11 Preview 7、Avalonia 12.1.2，版本为 `1.3.0-preview.33`，完整桌面工作流已可作为自包含 Native AOT 程序运行。正式版仍是 `main` 上的 v1.1.9；在 .NET 11 GA 前，现有 WPF 程序仍是稳定基线，请勿把本分支构建作为稳定版分发。
+> **Avalonia AOT 预览测试分支：** 本测试线使用 .NET 11 Preview 7、Avalonia 12.1.2，版本为 `1.3.0-preview.34`，完整桌面工作流已可作为自包含 Native AOT 程序运行。正式版仍是 `main` 上的 v1.1.9；在 .NET 11 GA 前，现有 WPF 程序仍是稳定基线，请勿把本分支构建作为稳定版分发。
 
 
-最新预览版：[preview.33 详细更新日志](docs/releases/1.3.0-preview.33.zh-CN.md)：模型合并核心升级到 ModelMergerGUI 2.5.0，新增可选的「手臂武器拼接」工具，并改进武器代号命名冲突处理——输出重名时自动以部件名称中的差异段做前缀区分，再退回数字递增。包含 preview.32 的动画手部 IK 与 pose 匹配修正，以及 preview.31 的多组合并、双任务队列、协作取消、弹匣填弹和独立深度预览。用法见 [模型合并工作区](docs/model-merger.zh-CN.md)。
+最新预览版：[preview.34 详细更新日志](docs/releases/1.3.0-preview.34.zh-CN.md)：左侧栏重组为可折叠的「常用功能」与「其他功能」分组；设置、关于收进窗口右上角的应用菜单按钮，语言选项移到设置页顶部；修复最小窗口（900×600）下关闭按钮与 COD 武器库栏目的文字裁切。包含 preview.33 的模型合并 2.5.0 引擎升级、手臂武器拼接与冲突区分命名。用法见 [模型合并工作区](docs/model-merger.zh-CN.md)。
 使用方法见 [Avalonia 预览版快速指南](docs/avalonia-aot-user-guide.zh-CN.md)；详细结果见 [Avalonia AOT 迁移报告](docs/avalonia-aot-migration.md)与 [.NET 11 Preview 兼容性报告](docs/dotnet11-preview.md)。
 
 本分支新增「双持动画」栏目和 Blender 4.3 FBX 转换，参见 [双持处理指南](docs/dual-wield.zh-CN.md)。可从一份手臂、一份武器模型和左右动画任务生成统一双持场景。
@@ -60,7 +60,7 @@ Alchemy Stars 保留原版批处理、动画层、IK 与 RedFox 转换管线，�
 
 ## 直接使用
 
-下载并完整解压 [preview.33 ZIP](https://github.com/ez4cywa/Alchemy-Stars/releases/tag/v1.3.0-preview.33)，运行 `AlchemyStars.Avalonia.exe`。请保留原生 DLL 与 `Converters` 目录，无需安装 .NET 或 Rust。
+下载并完整解压 [preview.34 ZIP](https://github.com/ez4cywa/Alchemy-Stars/releases/tag/v1.3.0-preview.34)，运行 `AlchemyStars.Avalonia.exe`。请保留原生 DLL 与 `Converters` 目录，无需安装 .NET 或 Rust。
 
 如需 WPF 稳定版，请下载 [v1.1.9](https://github.com/ez4cywa/Alchemy-Stars/releases/tag/v1.1.9) 并运行 `Alchemy Stars.exe`。稳定包不包含预览版的模型合并、弹匣填弹和 COD 武器库工作区。
 
@@ -122,7 +122,7 @@ Alchemy Stars 保留原版批处理、动画层、IK 与 RedFox 转换管线，�
 
 `run-tests.ps1` 会编译稳定 WPF 基线并执行 Maya 转换回归。`verify-avalonia-aot.ps1` 会发布裁剪后的本机程序，执行 AOT 契约与标准工程导出，启动真实 Win32 窗口，通过 Windows UI Automation 检查控件名称、焦点和操作区，并在 900 × 600 最小尺寸渲染五个页面与居中对话框。
 
-项目约定每次功能性改动都迭代版本；本次测试版本为 `1.3.0-preview.33`，稳定版本仍为 `1.1.9`。
+项目约定每次功能性改动都迭代版本；本次测试版本为 `1.3.0-preview.34`，稳定版本仍为 `1.1.9`。
 
 要检查某组手臂 + 武器同时满足动画混合与挂点双持，直接传入三个真实素材（不会作为测试夹具提交）：
 

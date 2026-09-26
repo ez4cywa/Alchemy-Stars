@@ -2,10 +2,10 @@
 
 # Alchemy Stars
 
-> **Avalonia AOT preview branch:** this test line targets .NET 11 Preview 7, Avalonia 12.1.2 and version `1.3.0-preview.33`. The complete desktop workflow now runs as a self-contained Native AOT application. Production remains v1.1.9 on `main`; the existing WPF application is still the stable baseline until .NET 11 GA. Do not distribute this build as a stable release.
+> **Avalonia AOT preview branch:** this test line targets .NET 11 Preview 7, Avalonia 12.1.2 and version `1.3.0-preview.34`. The complete desktop workflow now runs as a self-contained Native AOT application. Production remains v1.1.9 on `main`; the existing WPF application is still the stable baseline until .NET 11 GA. Do not distribute this build as a stable release.
 
 
-Latest preview release: [preview.33 notes (Chinese)](docs/releases/1.3.0-preview.33.zh-CN.md): upgrades the sidebar Model merger to the ModelMergerGUI 2.5.0 engine, adds the opt-in arm + weapon assembly tool, and resolves weapon-code name conflicts automatically by prefixing the differing part-name segments before falling back to a numeric ladder. Includes preview.32's animation hand-IK and pose-matching fixes as well as preview.31's grouped CAST merging, two-task scheduling, cooperative cancellation, ammunition filling and independent depth-tested previews. See the [Model merger guide (Chinese)](docs/model-merger.zh-CN.md).
+Latest preview release: [preview.34 notes (Chinese)](docs/releases/1.3.0-preview.34.zh-CN.md): regroups the left sidebar into collapsible Common and Other feature sections, moves Settings/About behind a single integrated app-menu button beside the window controls with the language option at the top of the Settings page, and fixes minimal-window (900×600) clipping of the close button and the COD weapon-database columns. Includes preview.33's ModelMergerGUI 2.5.0 engine upgrade with arm + weapon assembly and conflict-safe output naming. See the [Model merger guide (Chinese)](docs/model-merger.zh-CN.md).
 See the [Avalonia preview quick guide](docs/avalonia-aot-user-guide.md), [migration report](docs/avalonia-aot-migration.md) and [.NET 11 preview compatibility report](docs/dotnet11-preview.md).
 
 This preview adds attached dual-wield composition and Blender 4.3 FBX conversion. See the [dual-wield workflow and current limits (Chinese)](docs/dual-wield.zh-CN.md).
@@ -54,7 +54,7 @@ Alchemy Stars keeps the upstream animation-layer concepts intact. Attribution an
 
 ## Download and use
 
-Download and fully extract the [preview.33 ZIP](https://github.com/ez4cywa/Alchemy-Stars/releases/tag/v1.3.0-preview.33), then run `AlchemyStars.Avalonia.exe`. Keep its native DLLs and `Converters` folder together; no .NET or Rust installation is required.
+Download and fully extract the [preview.34 ZIP](https://github.com/ez4cywa/Alchemy-Stars/releases/tag/v1.3.0-preview.34), then run `AlchemyStars.Avalonia.exe`. Keep its native DLLs and `Converters` folder together; no .NET or Rust installation is required.
 
 For the WPF stable line, use [v1.1.9](https://github.com/ez4cywa/Alchemy-Stars/releases/tag/v1.1.9) and run `Alchemy Stars.exe`. The stable package does not include the preview-only Model merger, ammunition filling or COD database workspaces.
 
@@ -114,7 +114,7 @@ This preview branch requires .NET SDK `11.0.100-preview.7.26381.103` to build. `
 
 `run-tests.ps1` builds the stable WPF baseline and runs the Maya-backed conversion regressions. `verify-avalonia-aot.ps1` publishes the trimmed native application, runs its AOT contract/project export checks, starts a real Win32 window, validates Windows UI Automation names/focus/target bounds, and renders all five pages plus a centered dialog at the 900 × 600 minimum size.
 
-Every functional preview change increments the prerelease revision; this test version is `1.3.0-preview.33`. The stable release remains `1.1.9`.
+Every functional preview change increments the prerelease revision; this test version is `1.3.0-preview.34`. The stable release remains `1.1.9`.
 
 To check one arms + weapon pair against both the animation-blend and the attached dual-wield pipelines, pass the three real assets (they are never committed as fixtures):
 

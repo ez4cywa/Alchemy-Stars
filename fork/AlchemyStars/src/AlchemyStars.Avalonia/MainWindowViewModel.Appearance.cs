@@ -141,9 +141,9 @@ public sealed partial class MainWindowViewModel
 
 public sealed partial class UiText
 {
-    public string DesktopWorkspace => L("工作区", "Workspace");
-    public string DesktopPreferences => L("偏好设置", "Preferences");
-    public string DesktopLanguage => L("语言", "Language");
+    public string CommonFunctions => L("常用功能", "Common");
+    public string OtherFunctions => L("其他功能", "Other");
+    public string AppMenu => L("应用菜单", "App menu");
     public string WindowClose => L("关闭窗口", "Close window");
     public string WindowMinimize => L("最小化窗口", "Minimize window");
     public string WindowZoom => L("最大化或还原窗口", "Maximize or restore window");
