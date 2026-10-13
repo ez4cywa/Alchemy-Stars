@@ -2,7 +2,9 @@
 
 # Alchemy Stars
 
-> **Avalonia AOT preview branch:** this test line targets .NET 11 Preview 7, Avalonia 12.1.2 and version `1.3.0-preview.34`. The complete desktop workflow now runs as a self-contained Native AOT application. Production remains v1.1.9 on `main`; the existing WPF application is still the stable baseline until .NET 11 GA. Do not distribute this build as a stable release.
+> **Avalonia AOT preview branch:** this test line targets .NET 11 Preview 7, Avalonia 12.1.2 and development version `1.3.0-preview.35`. The complete desktop workflow now runs as a self-contained Native AOT application. Production remains v1.1.9 on `main`; the existing WPF application is still the stable baseline until .NET 11 GA. Do not distribute this build as a stable release.
+
+Development changes: [preview.35](docs/releases/1.3.0-preview.35.zh-CN.md) improves build reproducibility and export file protection. See the [engineering workflow (Chinese)](docs/engineering-workflow.zh-CN.md) for repeatable checks and version configuration.
 
 
 Latest preview release: [preview.34 notes (Chinese)](docs/releases/1.3.0-preview.34.zh-CN.md): regroups the left sidebar into collapsible Common and Other feature sections, moves Settings/About behind a single integrated app-menu button beside the window controls with the language option at the top of the Settings page, and fixes minimal-window (900×600) clipping of the close button and the COD weapon-database columns. Includes preview.33's ModelMergerGUI 2.5.0 engine upgrade with arm + weapon assembly and conflict-safe output naming. See the [Model merger guide (Chinese)](docs/model-merger.zh-CN.md).

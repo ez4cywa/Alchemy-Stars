@@ -4,10 +4,12 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$version = '1.3.0-preview.34'
 $repositoryRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
+. (Join-Path $PSScriptRoot 'avalonia-build-configuration.ps1')
+$build = Get-AvaloniaBuildConfiguration -RepositoryRoot $repositoryRoot
+$version = $build.Version
 $releaseRoot = [System.IO.Path]::GetFullPath((Join-Path $repositoryRoot 'release'))
-$publishDirectory = [System.IO.Path]::GetFullPath((Join-Path $repositoryRoot 'output\avalonia-aot-preview34'))
+$publishDirectory = $build.PublishDirectory
 $stagingDirectory = [System.IO.Path]::GetFullPath((Join-Path $releaseRoot "Alchemy Stars $version"))
 $resolvedArchive = if ([string]::IsNullOrWhiteSpace($ArchivePath)) {
     [System.IO.Path]::GetFullPath((Join-Path $releaseRoot "AlchemyStars-$version-win-x64.zip"))
@@ -25,6 +27,9 @@ function Assert-ReleaseChild([string]$Path) {
 
 Assert-ReleaseChild $stagingDirectory
 Assert-ReleaseChild $resolvedArchive
+if (-not (Test-Path -LiteralPath $build.ReleaseNotesPath -PathType Leaf)) {
+    throw "Release notes are missing for ${version}: $($build.ReleaseNotesPath)"
+}
 
 if (-not $SkipVerification) {
     & (Join-Path $PSScriptRoot 'verify-avalonia-aot.ps1')
@@ -32,6 +37,10 @@ if (-not $SkipVerification) {
 }
 if (-not (Test-Path -LiteralPath (Join-Path $publishDirectory 'AlchemyStars.Avalonia.exe'))) {
     throw "Native AOT publish is missing: $publishDirectory"
+}
+$publishedVersion = (Get-Item -LiteralPath (Join-Path $publishDirectory 'AlchemyStars.Avalonia.exe')).VersionInfo.ProductVersion
+if ($publishedVersion -ne $version) {
+    throw "Published executable version mismatch: expected $version, found $publishedVersion"
 }
 
 foreach ($target in @($stagingDirectory, $resolvedArchive)) {
@@ -48,7 +57,9 @@ $rootFiles = @(
     @{ Source = 'THIRD_PARTY_NOTICES.md'; Target = 'THIRD_PARTY_NOTICES.md' },
     @{ Source = 'docs\dual-wield.zh-CN.md'; Target = 'Docs\DUAL-WIELD.zh-CN.md' },
     @{ Source = 'docs\cod-weapon-db.zh-CN.md'; Target = 'Docs\COD-WEAPON-DB.zh-CN.md' },
-    @{ Source = 'docs\releases\1.3.0-preview.34.zh-CN.md'; Target = 'Docs\RELEASE-NOTES.zh-CN.md' },
+    @{ Source = "docs\releases\$version.zh-CN.md"; Target = 'Docs\RELEASE-NOTES.zh-CN.md' },
+    @{ Source = "docs\releases\$version.zh-CN.md"; Target = "Docs\releases\$version.zh-CN.md" },
+    @{ Source = 'docs\engineering-workflow.zh-CN.md'; Target = 'Docs\ENGINEERING-WORKFLOW.zh-CN.md' },
     @{ Source = 'docs\model-merger.zh-CN.md'; Target = 'Docs\MODEL-MERGER.zh-CN.md' },
     @{ Source = 'third_party\modelmerger\README.md'; Target = 'Docs\MODEL-MERGER-UPSTREAM.md' },
     @{ Source = 'docs\samples\appearance\theme.json'; Target = 'Samples\Appearance\theme.json' },
@@ -120,6 +131,9 @@ try {
     }
     foreach ($required in @('Converters/alchemy-model-merger.exe', 'Licenses/ModelMergerGUI-LICENSE.txt', 'Docs/MODEL-MERGER.zh-CN.md', 'Docs/MODEL-MERGER-UPSTREAM.md')) {
         if ($required -notin $names) { throw "Release archive is missing ModelMerger integration: $required" }
+    }
+    foreach ($required in @('Docs/ENGINEERING-WORKFLOW.zh-CN.md', "Docs/releases/$version.zh-CN.md")) {
+        if ($required -notin $names) { throw "Release archive is missing engineering documentation: $required" }
     }
     foreach ($required in @('Samples/Ubuntu-Yaru/theme.json', 'Samples/Ubuntu-Yaru/icons.zip', 'Samples/Ubuntu-Yaru/README.zh-CN.md')) {
         if ($required -notin $names) { throw "Release archive is missing Ubuntu theme input: $required" }

@@ -1,5 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+  <Import Project="..\..\BuildVersion.props" />
+
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net11.0</TargetFramework>
@@ -9,11 +11,8 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <ApplicationIcon>Assets\AlchemyStarsIcon.ico</ApplicationIcon>
-    <Version>1.3.0-preview.34</Version>
     <FileVersion>1.3.0.0</FileVersion>
     <AssemblyVersion>1.3.0.0</AssemblyVersion>
-    <InformationalVersion>1.3.0-preview.34</InformationalVersion>
-    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <PublishAot>true</PublishAot>
     <PublishTrimmed>true</PublishTrimmed>
     <TrimMode>link</TrimMode>

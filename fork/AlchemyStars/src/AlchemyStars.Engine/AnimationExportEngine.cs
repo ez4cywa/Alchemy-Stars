@@ -11,7 +11,7 @@ namespace AlchemyStars.Engine;
 
 public sealed class AnimationExportEngine : IAnimationExportEngine
 {
-    public const string EngineVersion = "1.3.0-preview.34";
+    public const string EngineVersion = BuildVersion.Value;
 
     /// <summary>Creates an independent bind skeleton for previewing animation-only CAST data.</summary>
     public static RedFox.Graphics3D.Skeletal.Skeleton CreatePreviewSkeleton(IReadOnlyList<ModelPartSpec> parts, bool legacy, string outputAxis = "source") =>
@@ -70,6 +70,10 @@ public sealed class AnimationExportEngine : IAnimationExportEngine
         ArgumentNullException.ThrowIfNull(request);
         if (index < 0 || index >= request.Animations.Count) throw new ArgumentOutOfRangeException(nameof(index));
         var job = request.Animations[index];
+        job = job with
+        {
+            OutputFolder = WorkspacePaths.ResolveAnimationOutputFolder(job.SourceFile, job.OutputFolder),
+        };
         var output = Path.GetFullPath(Path.Combine(job.OutputFolder,
             request.Options.OutputPrefix + job.OutputName + request.Options.OutputSuffix + ToExtension(request.Options.Format)));
         if (InputPaths(request).Contains(output, StringComparer.OrdinalIgnoreCase))

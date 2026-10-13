@@ -1,0 +1,7 @@
+<Project>
+  <PropertyGroup>
+    <Version>1.3.0-preview.35</Version>
+    <InformationalVersion>$(Version)</InformationalVersion>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+  </PropertyGroup>
+</Project>

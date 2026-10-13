@@ -1,8 +1,12 @@
 param(
-    [string]$PublishDirectory = (Join-Path $PSScriptRoot '..\output\avalonia-aot-preview16')
+    [string]$PublishDirectory = ''
 )
 
 $ErrorActionPreference = 'Stop'
+if ([string]::IsNullOrWhiteSpace($PublishDirectory)) {
+    . (Join-Path $PSScriptRoot 'avalonia-build-configuration.ps1')
+    $PublishDirectory = (Get-AvaloniaBuildConfiguration).PublishDirectory
+}
 $resolvedPublishDirectory = (Resolve-Path -LiteralPath $PublishDirectory).Path
 $executable = Join-Path $resolvedPublishDirectory 'AlchemyStars.Avalonia.exe'
 if (-not (Test-Path -LiteralPath $executable)) {

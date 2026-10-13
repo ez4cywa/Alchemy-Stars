@@ -2,7 +2,9 @@
 
 # Alchemy Stars（炼金之星）
 
-> **Avalonia AOT 预览测试分支：** 本测试线使用 .NET 11 Preview 7、Avalonia 12.1.2，版本为 `1.3.0-preview.34`，完整桌面工作流已可作为自包含 Native AOT 程序运行。正式版仍是 `main` 上的 v1.1.9；在 .NET 11 GA 前，现有 WPF 程序仍是稳定基线，请勿把本分支构建作为稳定版分发。
+> **Avalonia AOT 预览测试分支：** 本测试线使用 .NET 11 Preview 7、Avalonia 12.1.2，开发版本为 `1.3.0-preview.35`，完整桌面工作流已可作为自包含 Native AOT 程序运行。正式版仍是 `main` 上的 v1.1.9；在 .NET 11 GA 前，现有 WPF 程序仍是稳定基线，请勿把本分支构建作为稳定版分发。
+
+开发改进见 [preview.35](docs/releases/1.3.0-preview.35.zh-CN.md)：构建可复现性与导出文件保护。版本配置和可重跑检查见 [工程工作流](docs/engineering-workflow.zh-CN.md)。
 
 
 最新预览版：[preview.34 详细更新日志](docs/releases/1.3.0-preview.34.zh-CN.md)：左侧栏重组为可折叠的「常用功能」与「其他功能」分组；设置、关于收进窗口右上角的应用菜单按钮，语言选项移到设置页顶部；修复最小窗口（900×600）下关闭按钮与 COD 武器库栏目的文字裁切。包含 preview.33 的模型合并 2.5.0 引擎升级、手臂武器拼接与冲突区分命名。用法见 [模型合并工作区](docs/model-merger.zh-CN.md)。

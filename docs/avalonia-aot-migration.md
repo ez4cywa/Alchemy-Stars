@@ -75,7 +75,9 @@ Run the complete native verification with the pinned preview SDK:
 The standard-project path can also be exercised directly:
 
 ```powershell
-./output/avalonia-aot-preview28/AlchemyStars.Avalonia.exe --project-smoke ./fork/AlchemyStars/Example/Hawk/HawkSprint.aprj <output-folder>
+. ./scripts/avalonia-build-configuration.ps1
+$exe = Join-Path (Get-AvaloniaBuildConfiguration).PublishDirectory 'AlchemyStars.Avalonia.exe'
+& $exe --project-smoke ./fork/AlchemyStars/Example/Hawk/HawkSprint.aprj ./output/project-smoke
 ```
 
 ## Native AOT notes

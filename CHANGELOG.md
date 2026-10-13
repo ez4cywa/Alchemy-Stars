@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.3.0-preview.35 (unreleased, engineering and export protection)
+
+- Share build, runtime and packaging versions through `BuildVersion.props`; preserve the public engine version constant via generated code.
+- Resolve versioned publish directories centrally, restore before publishing, use the pinned SDK from the repository root, and restore caller environment/location on every verification exit.
+- Protect all workspace inputs when selected-animation exports infer their output directory.
+- Commit bound-model FBX output only after successful conversion; preserve existing results on converter failure.
+- Add reproducible build-contract and export-failure regressions. See the [development notes (Chinese)](docs/releases/1.3.0-preview.35.zh-CN.md).
+
 ## 1.3.0-preview.34 — 2026-09-26 (collapsible sidebar groups, integrated app menu, minimal-window fixes)
 
 Chinese release notes: [更新日志](docs/releases/1.3.0-preview.34.zh-CN.md). Based on preview.33; RF experimental work remains separate.

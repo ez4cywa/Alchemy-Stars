@@ -1,5 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+  <Import Project="..\..\BuildVersion.props" />
+
   <PropertyGroup>
     <TargetFramework>net11.0</TargetFramework>
     <AssemblyName>AlchemyStars.Engine</AssemblyName>
@@ -35,5 +37,15 @@
     <Compile Include="..\Alchemist.UI\SkeletonMergePlan.cs" Link="Shared\SkeletonMergePlan.cs" />
     <Compile Include="..\Alchemist.UI\SmdAnimationExporter.cs" Link="Shared\SmdAnimationExporter.cs" />
   </ItemGroup>
+
+  <Target Name="GenerateEngineVersion" BeforeTargets="CoreCompile">
+    <WriteLinesToFile File="$(IntermediateOutputPath)BuildVersion.g.cs"
+                      Lines="namespace AlchemyStars.Engine { internal static class BuildVersion { public const string Value = &quot;$(Version)&quot;%3B } }"
+                      Overwrite="true" WriteOnlyWhenDifferent="true" />
+    <ItemGroup>
+      <Compile Include="$(IntermediateOutputPath)BuildVersion.g.cs" />
+      <FileWrites Include="$(IntermediateOutputPath)BuildVersion.g.cs" />
+    </ItemGroup>
+  </Target>
 
 </Project>

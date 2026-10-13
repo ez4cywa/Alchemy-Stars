@@ -15,6 +15,15 @@ public sealed record ModelExportResult(string OutputFile, int BoneCount, int Mes
 /// <summary>Exports the model parts with the same skeleton merge and skin remapping used by animation export.</summary>
 public sealed class ModelExportEngine
 {
+    private readonly Action<string, string, float> exportFbx;
+
+    public ModelExportEngine() : this(DesktopFbxExporter.Export) { }
+
+    internal ModelExportEngine(Action<string, string, float> exportFbx)
+    {
+        this.exportFbx = exportFbx ?? throw new ArgumentNullException(nameof(exportFbx));
+    }
+
     public ModelExportResult Export(ModelExportRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -54,7 +63,7 @@ public sealed class ModelExportEngine
             switch (request.Format)
             {
                 case ExportFormat.Fbx:
-                    DesktopFbxExporter.Export(mergedCast, output, WorkspacePaths.StandardAnimationFramerate);
+                    SaveAtomically(output, temporary => exportFbx(mergedCast, temporary, WorkspacePaths.StandardAnimationFramerate));
                     break;
                 case ExportFormat.Smd:
                     SaveAtomically(output, temporary => SmdModelExporter.Save(temporary, mergedCast, plan.Skeleton));

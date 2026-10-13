@@ -72,6 +72,8 @@ internal static class SingleAnimationExportSmoke
         var source = Path.Combine(folder, "source.cast");
         CastAxisSmoke.Write(source, "y");
         CastAxisSmoke.AddGeometry(source);
+        VerifyBoundModelFbxProtection(source, folder);
+        VerifyDefaultOutputProtection(source, folder);
         var real = new AnimationExportRequest([new(source, ModelPartKind.ViewHands)],
             [new(Path.Combine(folder, "missing.cast"), "other", folder),
              new(source, "chosen", folder, EnableLeftHandIk: false, EnableRightHandIk: false)],
@@ -102,7 +104,131 @@ internal static class SingleAnimationExportSmoke
             && outputChildren.OfType<Cast.NET.Nodes.AnimationNode>().Count() == 1,
             "Formal CAST animation output still contains model data.");
         Require(!File.Exists(Path.Combine(folder, "untouched.cast")), "Selected export wrote an unselected animation.");
-        Console.WriteLine("Single animation export: selected index, settings/layers, unified output, guards, all-export, protected workspace inputs and real CAST PASS");
+        Console.WriteLine("Single animation export: selected index, settings/layers, unified output, guards, all-export, protected workspace inputs, inferred output and real CAST PASS");
+    }
+
+    private static void VerifyDefaultOutputProtection(string source, string folder)
+    {
+        var inferredFolder = Path.Combine(Path.GetDirectoryName(source)!, "output");
+        Directory.CreateDirectory(inferredFolder);
+        var sourceBytes = File.ReadAllBytes(source);
+        var cases = 0;
+        foreach (var configuredFolder in new[] { "", " \t " })
+        {
+            foreach (var format in Enum.GetValues<ExportFormat>())
+            {
+                var extension = "." + format.ToString().ToLowerInvariant();
+                var destination = Path.Combine(inferredFolder, "prefix-protected-suffix" + extension);
+                foreach (var input in new[] { "source", "left-pose", "right-pose", "layer" })
+                {
+                    File.WriteAllBytes(destination, sourceBytes);
+                    var other = new AnimationExportJob(Path.Combine(folder, "unselected.cast"), "unused", folder);
+                    other = input switch
+                    {
+                        "source" => other with { SourceFile = destination },
+                        "left-pose" => other with { LeftHandPoseFile = destination },
+                        "right-pose" => other with { RightHandPoseFile = destination },
+                        _ => other with { Layers = [new(destination)] },
+                    };
+                    var selected = new AnimationExportJob(source, "protected", configuredFolder,
+                        EnableLeftHandIk: false, EnableRightHandIk: false);
+                    var request = new AnimationExportRequest([new(source, ModelPartKind.ViewHands)], [other, selected],
+                        new(new("", "", "", ""), new("", "", "", ""), format, "prefix-", "-suffix"));
+                    var rejected = false;
+                    try { AnimationExportEngine.SelectAnimation(request, 1); }
+                    catch (ExportValidationException error) when (error.Code == ExportErrorCode.OutputWouldOverwriteInput)
+                    {
+                        rejected = true;
+                    }
+                    Require(sourceBytes.SequenceEqual(File.ReadAllBytes(source))
+                        && sourceBytes.SequenceEqual(File.ReadAllBytes(destination)),
+                        "Default-output collision validation changed an input.");
+                    Require(rejected, $"Default output could overwrite an unselected {input}: {format}, folder '{configuredFolder}'.");
+                    cases++;
+                }
+            }
+            var safeJob = new AnimationExportJob(source, configuredFolder.Length == 0 ? "safe-empty" : "safe-whitespace",
+                configuredFolder, EnableLeftHandIk: false, EnableRightHandIk: false);
+            var safeRequest = new AnimationExportRequest([new(source, ModelPartKind.ViewHands)],
+                [new(Path.Combine(folder, "missing-unselected.cast"), "unused", folder), safeJob],
+                new(new("", "", "", ""), new("", "", "", ""), OutputPrefix: "prefix-", OutputSuffix: "-suffix"));
+            var selectedRequest = AnimationExportEngine.SelectAnimation(safeRequest, 1);
+            Require(selectedRequest.Animations.Single() == safeJob with { OutputFolder = inferredFolder },
+                "Selected export did not preserve its normalized default output folder/settings.");
+            Require(safeRequest.Animations[1].OutputFolder == configuredFolder,
+                "Selecting a default-output task mutated the original request.");
+            var result = new AnimationExportEngine().Export(selectedRequest);
+            Require(result.OutputFiles.Single() == Path.Combine(inferredFolder, "prefix-" + safeJob.OutputName + "-suffix.cast")
+                && File.Exists(result.OutputFiles.Single()), "Default-output single export did not write its inferred destination.");
+            Require(sourceBytes.SequenceEqual(File.ReadAllBytes(source)), "Default-output single export changed its source.");
+        }
+        Console.WriteLine($"Single export default-output protection: PASS ({cases} source/pose/layer collision cases, 2 real CAST exports)");
+    }
+
+    private static void VerifyBoundModelFbxProtection(string hands, string folder)
+    {
+        var weapon = Path.Combine(folder, "atomic-weapon.cast");
+        var weaponCast = Cast.NET.CastReader.Load(hands);
+        weaponCast.RootNodes.Single().Children.OfType<Cast.NET.Nodes.ModelNode>().Single().Skeleton!.Bones[0]
+            .AddString("n", "weapon_root");
+        Cast.NET.CastWriter.Save(weapon, weaponCast);
+        var destinationFolder = Path.Combine(folder, "atomic-fbx");
+        Directory.CreateDirectory(destinationFolder);
+        var destination = Path.Combine(destinationFolder, "atomic-weapon_model.fbx");
+        var request = new ModelExportRequest([new(hands, ModelPartKind.ViewHands), new(weapon, ModelPartKind.Weapon, "tag_origin")],
+            destinationFolder, ExportFormat.Fbx);
+        var oldBytes = "previous complete FBX"u8.ToArray();
+        var newBytes = "replacement complete FBX"u8.ToArray();
+        var handsBytes = File.ReadAllBytes(hands);
+        var weaponBytes = File.ReadAllBytes(weapon);
+        string? stagedCast = null;
+        string? stagedFbx = null;
+        void VerifyStage(string cast, string fbx, float framerate)
+        {
+            stagedCast = cast; stagedFbx = fbx;
+            var model = Cast.NET.CastReader.Load(cast).RootNodes.Single().Children.OfType<Cast.NET.Nodes.ModelNode>().Single();
+            Require(model.Meshes.Length > 0 && model.Skeleton!.Bones.Length > 0,
+                "Bound-model FBX regression did not exercise a real merged CAST.");
+            Require(framerate == WorkspacePaths.StandardAnimationFramerate, "Bound-model FBX framerate changed.");
+        }
+        var expectedFailure = new IOException("Simulated FBX converter failure after a partial write.");
+        var failingEngine = new ModelExportEngine((cast, fbx, framerate) =>
+        {
+            VerifyStage(cast, fbx, framerate);
+            File.WriteAllBytes(fbx, "partial FBX"u8.ToArray());
+            throw expectedFailure;
+        });
+        foreach (var existingOutput in new[] { true, false })
+        {
+            if (existingOutput) File.WriteAllBytes(destination, oldBytes);
+            else File.Delete(destination);
+            var observedFailure = false;
+            try { failingEngine.Export(request); }
+            catch (IOException error) when (ReferenceEquals(error, expectedFailure)) { observedFailure = true; }
+            Require(observedFailure, "Bound-model FBX converter failure was not preserved.");
+            Require(existingOutput ? oldBytes.SequenceEqual(File.ReadAllBytes(destination)) : !File.Exists(destination),
+                "Failed bound-model FBX export replaced an existing result or left a partial new result.");
+            Require(stagedFbx is not null && !File.Exists(stagedFbx) && stagedCast is not null && !File.Exists(stagedCast)
+                && !Directory.EnumerateFiles(destinationFolder).Any(path => path != destination),
+                "Failed bound-model FBX export retained staged files.");
+        }
+        File.WriteAllBytes(destination, oldBytes);
+        var successfulEngine = new ModelExportEngine((cast, fbx, framerate) =>
+        {
+            VerifyStage(cast, fbx, framerate);
+            Require(oldBytes.SequenceEqual(File.ReadAllBytes(destination)), "FBX destination changed before conversion completed.");
+            Require(fbx != destination && Path.GetDirectoryName(fbx) == destinationFolder && Path.GetExtension(fbx) == ".fbx",
+                "FBX converter was not given a same-directory temporary FBX.");
+            File.WriteAllBytes(fbx, newBytes);
+        });
+        var result = successfulEngine.Export(request);
+        Require(result.OutputFile == destination && newBytes.SequenceEqual(File.ReadAllBytes(destination)),
+            "Successful bound-model FBX export did not commit its replacement.");
+        Require(stagedFbx is not null && !File.Exists(stagedFbx) && stagedCast is not null && !File.Exists(stagedCast)
+            && Directory.EnumerateFiles(destinationFolder).Count() == 1, "Successful bound-model FBX export retained staged files.");
+        Require(handsBytes.SequenceEqual(File.ReadAllBytes(hands)) && weaponBytes.SequenceEqual(File.ReadAllBytes(weapon)),
+            "Bound-model FBX regression changed its model inputs.");
+        Console.WriteLine("Bound-model FBX atomic protection: PASS (real merged CAST, existing/new output failures, successful replacement, staged cleanup, unchanged inputs)");
     }
 
     private static void Require(bool condition, string message)
