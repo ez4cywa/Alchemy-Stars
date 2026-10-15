@@ -90,6 +90,8 @@ public sealed partial class App : Application
                         await viewModel.WaitForCodWeaponDbAsync(TimeSpan.FromSeconds(60));
                     if (Program.AppearanceSmokeRequested)
                         await AppearanceSmoke.RunAsync(mainWindow, viewModel);
+                    if (Program.CustomAppearanceSmokeRequested)
+                        await CustomAppearanceSmoke.RunAsync(mainWindow, viewModel, Path.GetDirectoryName(Program.RenderSmokePath!)!);
                     if (Program.AppearanceSamplesSmokeRequested)
                         await CustomAppearanceSmoke.RunSamplesAsync(mainWindow, viewModel, Path.GetDirectoryName(Program.RenderSmokePath!)!);
                     if (Program.UbuntuThemeSmokeRequested)

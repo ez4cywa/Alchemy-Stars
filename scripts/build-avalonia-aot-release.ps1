@@ -67,8 +67,11 @@ $rootFiles = @(
     @{ Source = 'docs\samples\appearance\README.zh-CN.md'; Target = 'Samples\Appearance\README.zh-CN.md' },
     @{ Source = 'fork\RedFox\LICENSE'; Target = 'Licenses\RedFox-LICENSE.txt' },
     @{ Source = 'third_party\cast\LICENSE'; Target = 'Licenses\Maya-CAST-LICENSE.txt' },
+    @{ Source = 'design-system\references\awesome-design-md\LICENSE'; Target = 'Licenses\awesome-design-md-LICENSE.txt' },
     @{ Source = 'docs\avalonia-aot-user-guide.md'; Target = 'Docs\USER-GUIDE.en-US.md' },
     @{ Source = 'docs\avalonia-aot-user-guide.zh-CN.md'; Target = 'Docs\USER-GUIDE.zh-CN.md' },
+    @{ Source = 'docs\images\linear-workbench-dark.zh-CN.png'; Target = 'Docs\images\linear-workbench-dark.zh-CN.png' },
+    @{ Source = 'docs\images\linear-workbench-light.en-US.png'; Target = 'Docs\images\linear-workbench-light.en-US.png' },
     @{ Source = 'docs\avalonia-aot-migration.md'; Target = 'Docs\AVALONIA-AOT-MIGRATION.md' },
     @{ Source = 'docs\dotnet11-preview.md'; Target = 'Docs\DOTNET11-PREVIEW.md' }
 )
@@ -132,7 +135,7 @@ try {
     foreach ($required in @('Converters/alchemy-model-merger.exe', 'Licenses/ModelMergerGUI-LICENSE.txt', 'Docs/MODEL-MERGER.zh-CN.md', 'Docs/MODEL-MERGER-UPSTREAM.md')) {
         if ($required -notin $names) { throw "Release archive is missing ModelMerger integration: $required" }
     }
-    foreach ($required in @('Docs/ENGINEERING-WORKFLOW.zh-CN.md', "Docs/releases/$version.zh-CN.md")) {
+    foreach ($required in @('Docs/ENGINEERING-WORKFLOW.zh-CN.md', "Docs/releases/$version.zh-CN.md", 'Licenses/awesome-design-md-LICENSE.txt', 'Docs/images/linear-workbench-dark.zh-CN.png', 'Docs/images/linear-workbench-light.en-US.png')) {
         if ($required -notin $names) { throw "Release archive is missing engineering documentation: $required" }
     }
     foreach ($required in @('Samples/Ubuntu-Yaru/theme.json', 'Samples/Ubuntu-Yaru/icons.zip', 'Samples/Ubuntu-Yaru/README.zh-CN.md')) {

@@ -8,6 +8,7 @@ internal static class Program
     internal static bool StartupSmokeRequested { get; private set; }
     internal static bool DesktopSmokeRequested { get; private set; }
     internal static bool AppearanceSmokeRequested { get; private set; }
+    internal static bool CustomAppearanceSmokeRequested { get; private set; }
     internal static bool AppearanceSamplesSmokeRequested { get; private set; }
     internal static string? RenderSmokePath { get; private set; }
     internal static bool UbuntuThemeSmokeRequested { get; private set; }
@@ -96,6 +97,7 @@ internal static class Program
         UbuntuThemeSmokeRequested = args.Contains("--ubuntu-theme-smoke", StringComparer.OrdinalIgnoreCase);
         DesktopSmokeRequested = args.Contains("--desktop-smoke", StringComparer.OrdinalIgnoreCase);
         AppearanceSmokeRequested = args.Contains("--appearance-smoke", StringComparer.OrdinalIgnoreCase);
+        CustomAppearanceSmokeRequested = args.Contains("--custom-appearance-smoke", StringComparer.OrdinalIgnoreCase);
         AppearanceSamplesSmokeRequested = args.Contains("--appearance-samples-smoke", StringComparer.OrdinalIgnoreCase);
         RenderSmokePath = renderPath is not null
             ? Path.GetFullPath(renderPath)

@@ -56,6 +56,12 @@ internal static class CodWeaponDbUiSmoke
 
             // Sidebar and header chrome.
             Require(navigation.Bounds.Width >= 44 && navigation.Bounds.Height >= 44, "The sidebar hit target is too small.");
+            for (var language = 0; language < 2; language++)
+            {
+                view.VerifyHeaderLayout();
+                vm.ToggleLanguage();
+                await Task.Delay(80);
+            }
             foreach (var icon in view.GetVisualDescendants().OfType<ThemedIcon>().Where(item => item.IsEffectivelyVisible))
                 Require(icon.HasOriginalIcon || icon.HasClassicIcon || icon.HasWindowsXpIcon || icon.HasWindows2000Icon
                         || icon.HasCustomIcon || icon.HasDesktopIcon,

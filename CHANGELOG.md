@@ -1,6 +1,15 @@
 # Changelog
 
-## 1.3.0-preview.35 (unreleased, engineering and export protection)
+## 1.3.0-preview.36 — 2026-10-15 (Linear workbench and storage protection)
+
+- Adapt the original appearance to the user-selected Linear workbench reference: neutral light/dark surfaces, compact typography, restrained selection states and tintable line icons. Preserve the existing theme selector, custom theme JSON and saved `apple` / `modern-desktop` / `neumorphic` compatibility.
+- Apply imported Button radii to navigation, icon, toolbar and panel-command controls, and derive the custom icon capacity from the supported glyph list.
+- Reject null entries in project collections before replacing the active workspace; retain the current selection and save path on a failed load, while preserving legacy null-container normalization.
+- Recover preferences after a transient initial read failure without replacing unrelated persisted fields; retain edits made while the file is locked and keep writes best-effort.
+- Fix narrow COD detail headers with accessible 44-DIP icon commands and verify localized layout boundaries.
+- Extend appearance coverage to the COD database and Model merger pages and add storage failure regressions. Managed build, Native AOT, both full appearance matrices, accessibility and real CAST preview checks passed. See the [development notes (Chinese)](docs/releases/1.3.0-preview.36.zh-CN.md).
+
+## 1.3.0-preview.35 — 2026-10-13 (engineering and export protection)
 
 - Share build, runtime and packaging versions through `BuildVersion.props`; preserve the public engine version constant via generated code.
 - Resolve versioned publish directories centrally, restore before publishing, use the pinned SDK from the repository root, and restore caller environment/location on every verification exit.
@@ -164,7 +173,6 @@ Chinese release notes: [更新日志](docs/releases/1.3.0-preview.19.zh-CN.md).
 - Preserve filename suffixes with middle ellipsis in asset lists.
 - Keep default output names synchronized with the first animation layer across renaming, replacement, reordering and project reloads, preserving custom names.
 - Bind the About badge to the current version and give inspector headers localized accessible names.
-
 
 ## 1.3.0-preview.18 — 2026-09-08 (inspector and selection stability)
 

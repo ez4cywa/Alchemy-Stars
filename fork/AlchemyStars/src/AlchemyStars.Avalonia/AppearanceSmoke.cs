@@ -24,6 +24,8 @@ internal static class AppearanceSmoke
         (WorkspacePage.Animations, "animations"),
         (WorkspacePage.ModelParts, "parts"),
         (WorkspacePage.DualAnimations, "dual"),
+        (WorkspacePage.CodWeaponDb, "cod-weapons"),
+        (WorkspacePage.ModelMerger, "model-merger"),
         (WorkspacePage.Settings, "settings"),
         (WorkspacePage.About, "about"),
     ];
@@ -56,11 +58,12 @@ internal static class AppearanceSmoke
                 var shadow = (BoxShadows)app.Resources["AppearancePanelShadow"]!;
                 Require(shadow.Equals(BoxShadows.Parse("none")) == (style == 0), "Style switch left stale shadows.");
                 Require((bool)app.Resources["AppearanceUseClassicIcons"]! == (style == 1), "Theme icon mode did not switch.");
+                Require(app.Styles.OfType<ModernDesktopStyles>().Count() == (style == 0 ? 1 : 0), "Linear control skin leaked into another theme or was not installed.");
                 var snapshot = new ApplicationPreferencesStore().Snapshot();
                 Require(snapshot.ThemeStyle == styleKey
                     && snapshot.ThemeMode == (mode == 1 ? "dark" : "light"), "Appearance selection did not survive a disk reload.");
                 VerifyVerticalContentAlignment(window);
-                VerifyThemedIcons(window, style == 1, style == 2, false, style == 3);
+                VerifyThemedIcons(window, style == 1, style == 2, style == 0, style == 3);
                 await VerifyQuickToggleAsync(window, vm, style, mode);
                 if (style == 1) VerifyClassicAppleHasNoBlue(app);
                 window.VerifyToolbarLayout();
@@ -72,7 +75,10 @@ internal static class AppearanceSmoke
                     window.VerifyToolbarLayout();
                     VerifyVerticalContentAlignment(window);
                     VerifyScrubberBounds(window);
-                    VerifyThemedIcons(window, style == 1, style == 2, false, style == 3);
+                    VerifyThemedIcons(window, style == 1, style == 2, style == 0, style == 3);
+                    if (style == 0) LinearAppearanceSmoke.Verify(window);
+                    if (page == WorkspacePage.CodWeaponDb)
+                        window.GetVisualDescendants().OfType<CodWeaponDbView>().Single().VerifyHeaderLayout();
                     if (page == WorkspacePage.Settings)
                     {
                         VerifyCheckBoxSkin(window, style);
@@ -105,7 +111,7 @@ internal static class AppearanceSmoke
             // path used by OS light/dark notifications), without changing Windows.
             app.RequestedThemeVariant = ThemeVariant.Dark;
             await Task.Delay(80);
-            Require(((SolidColorBrush)app.Resources["AlchemySurfaceBrush"]!).Color == Color.Parse("#272729"), "Actual dark change did not update palette.");
+            Require(((SolidColorBrush)app.Resources["AlchemySurfaceBrush"]!).Color == Color.Parse("#0f1011"), "Actual dark change did not update the Linear palette.");
             app.RequestedThemeVariant = ThemeVariant.Light;
             await Task.Delay(80);
             Require(((SolidColorBrush)app.Resources["AlchemySurfaceBrush"]!).Color == Colors.White, "Actual light change did not update palette.");
@@ -216,7 +222,7 @@ internal static class AppearanceSmoke
     {
         // Styles are applied lazily to hidden pages; visit every page and inspect its visible controls.
         var icons = window.GetVisualDescendants().OfType<ThemedIcon>().Where(icon => icon.IsEffectivelyVisible).ToArray();
-        Require(icons.All(icon => icon.HasOriginalIcon == (!classic && !xp && !desktop && !win2000)), "Original theme did not retain its bitmap icons.");
+        Require(icons.All(icon => icon.HasOriginalIcon == (!classic && !xp && !desktop && !win2000)), "Legacy bitmap visibility did not follow the selected icon family.");
         Require(icons.All(icon => icon.UseWindows2000Glyph == win2000 && icon.HasWindows2000Icon == win2000), "Windows 2000 icon artwork did not follow its mode.");
         Require(icons.All(icon => icon.UseDesktopGlyph == desktop && icon.HasDesktopIcon == desktop), "Desktop icons did not follow the selected theme.");
         Require(icons.Length >= 5, "The visible icon system was not instantiated.");

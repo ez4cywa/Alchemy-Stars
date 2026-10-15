@@ -2,12 +2,11 @@
 
 # Alchemy Stars
 
-> **Avalonia AOT preview branch:** this test line targets .NET 11 Preview 7, Avalonia 12.1.2 and development version `1.3.0-preview.35`. The complete desktop workflow now runs as a self-contained Native AOT application. Production remains v1.1.9 on `main`; the existing WPF application is still the stable baseline until .NET 11 GA. Do not distribute this build as a stable release.
+> **Avalonia AOT preview branch:** this test line targets .NET 11 Preview 7, Avalonia 12.1.2 and preview version `1.3.0-preview.36`. The complete desktop workflow now runs as a self-contained Native AOT application. Production remains v1.1.9 on `main`; the existing WPF application is still the stable baseline until .NET 11 GA. Do not distribute this build as a stable release.
 
-Development changes: [preview.35](docs/releases/1.3.0-preview.35.zh-CN.md) improves build reproducibility and export file protection. See the [engineering workflow (Chinese)](docs/engineering-workflow.zh-CN.md) for repeatable checks and version configuration.
+Development changes: [preview.36](docs/releases/1.3.0-preview.36.zh-CN.md) adapts the original appearance into a Linear-inspired workbench and protects project loading and preference recovery. The [design contract](DESIGN.md) records the chosen reference and compatibility rules; the [engineering workflow (Chinese)](docs/engineering-workflow.zh-CN.md) covers repeatable checks and version configuration.
 
-
-Latest preview release: [preview.34 notes (Chinese)](docs/releases/1.3.0-preview.34.zh-CN.md): regroups the left sidebar into collapsible Common and Other feature sections, moves Settings/About behind a single integrated app-menu button beside the window controls with the language option at the top of the Settings page, and fixes minimal-window (900×600) clipping of the close button and the COD weapon-database columns. Includes preview.33's ModelMergerGUI 2.5.0 engine upgrade with arm + weapon assembly and conflict-safe output naming. See the [Model merger guide (Chinese)](docs/model-merger.zh-CN.md).
+Published preview: [preview.36 notes (Chinese)](docs/releases/1.3.0-preview.36.zh-CN.md) covers the Linear workbench, project/preference protection and verified UI compatibility. It also includes the collapsible sidebar groups, integrated app menu and ModelMergerGUI 2.5.0 engine with arm + weapon assembly and conflict-safe output naming. See the [Model merger guide (Chinese)](docs/model-merger.zh-CN.md).
 See the [Avalonia preview quick guide](docs/avalonia-aot-user-guide.md), [migration report](docs/avalonia-aot-migration.md) and [.NET 11 preview compatibility report](docs/dotnet11-preview.md).
 
 This preview adds attached dual-wield composition and Blender 4.3 FBX conversion. See the [dual-wield workflow and current limits (Chinese)](docs/dual-wield.zh-CN.md).
@@ -15,6 +14,12 @@ This preview adds attached dual-wield composition and Blender 4.3 FBX conversion
 Alchemy Stars (炼金之星) is a production-focused improvement of [Scobalula/Alchemist](https://github.com/Scobalula/Alchemist) for Windows, first-person CAST weapon assets, and Autodesk Maya 2025. The stable line retains Alchemist's WPF interface, while this test branch moves the complete workflow to Avalonia and Native AOT without forking the proven RedFox animation pipeline.
 
 The maintained source lives in `fork/AlchemyStars` and pins the matching RedFox revision to keep builds reproducible. The earlier standalone rewrite remains preserved on the `independent-rewrite-v1` branch and is no longer the active implementation.
+
+## Linear workbench preview
+
+Actual Native AOT window with a loaded Hawk CAST, in English/light mode. The [Chinese/dark screenshot](docs/images/linear-workbench-dark.zh-CN.png) shows the same workspace; both are application captures, not mockups. The stable WPF release retains its original interface.
+
+![Linear workbench with asset library, CAST viewport, layer tracks and inspector](docs/images/linear-workbench-light.en-US.png)
 
 ## Improvements over upstream Alchemist
 
@@ -49,6 +54,7 @@ Alchemy Stars keeps the upstream animation-layer concepts intact. Attribution an
 - Keeps all completion, warning, and error dialogs centered over the application; long diagnostics are scrollable and copyable.
 - Uses a redesigned alchemy-flask-and-star application icon and function-specific toolbar icons.
 - The Avalonia preview adapts Beutl's editor hierarchy into a functional asset-library / composition / layer-track / inspector workspace. AtomBox informs the restrained form spacing and list treatment without adding either project's UI dependencies.
+- The development branch offers **Linear · Workbench** with neutral surfaces, compact controls and tintable line icons, while preserving Classic Apple, Windows XP, Windows 2000 and imported appearance packs.
 - CAST preview uses Avalonia's GPU-backed Skia custom rendering for smooth skinned shading, and includes a fixed first-person camera with a 90° horizontal FOV and Maya transform `T(0,0,0)`, `R(90°,0°,-90°)`, alongside the existing orbit view. Preview-only whole-scene fitting keeps weapons fully framed without altering CAST data.
 - Layer-track bars read each CAST source in the background and scale their width to its true frame count; configured positive or negative offsets move the bar on the shared frame range. Frame-count text and localized accessible names keep duration understandable without relying on length or color alone.
 - Merged skinned meshes write Dual Quaternion (`quaternion`) as their CAST skinning method, and the bundled Maya importer also uses DQS when an older CAST has no explicit method.
@@ -56,7 +62,7 @@ Alchemy Stars keeps the upstream animation-layer concepts intact. Attribution an
 
 ## Download and use
 
-Download and fully extract the [preview.34 ZIP](https://github.com/ez4cywa/Alchemy-Stars/releases/tag/v1.3.0-preview.34), then run `AlchemyStars.Avalonia.exe`. Keep its native DLLs and `Converters` folder together; no .NET or Rust installation is required.
+Download and fully extract the [preview.36 ZIP](https://github.com/ez4cywa/Alchemy-Stars/releases/tag/v1.3.0-preview.36), then run `AlchemyStars.Avalonia.exe`. Keep its native DLLs and `Converters` folder together; no .NET or Rust installation is required.
 
 For the WPF stable line, use [v1.1.9](https://github.com/ez4cywa/Alchemy-Stars/releases/tag/v1.1.9) and run `Alchemy Stars.exe`. The stable package does not include the preview-only Model merger, ammunition filling or COD database workspaces.
 
@@ -116,7 +122,7 @@ This preview branch requires .NET SDK `11.0.100-preview.7.26381.103` to build. `
 
 `run-tests.ps1` builds the stable WPF baseline and runs the Maya-backed conversion regressions. `verify-avalonia-aot.ps1` publishes the trimmed native application, runs its AOT contract/project export checks, starts a real Win32 window, validates Windows UI Automation names/focus/target bounds, and renders all five pages plus a centered dialog at the 900 × 600 minimum size.
 
-Every functional preview change increments the prerelease revision; this test version is `1.3.0-preview.34`. The stable release remains `1.1.9`.
+Every functional preview change increments the prerelease revision; this preview version is `1.3.0-preview.36`. The stable release remains `1.1.9`.
 
 To check one arms + weapon pair against both the animation-blend and the attached dual-wield pipelines, pass the three real assets (they are never committed as fixtures):
 

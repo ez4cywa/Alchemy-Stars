@@ -2,6 +2,7 @@ using System.IO.Compression;
 using System.Text;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Diagnostics;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
@@ -16,7 +17,7 @@ internal static class CustomAppearanceSmoke
         {"version":1,"name":"Import smoke","baseStyle":"apple",
          "light":{"Accent":"#285D3D","Icon":"#285D3D","Surface":"#FAFCF8"},
          "dark":{"Accent":"#A8D59F","Icon":"#A8D59F","Surface":"#28352C"},
-         "radii":{"Button":4}}
+         "radii":{"Button":4,"Card":9}}
         """;
 
     internal static void VerifyThemeParser()
@@ -25,7 +26,8 @@ internal static class CustomAppearanceSmoke
         var legacy = CustomAppearance.ParseTheme(Encoding.UTF8.GetBytes(ValidTheme.Replace("\"baseStyle\":\"apple\"", "\"baseStyle\":\"neumorphic\"")));
         Require(legacy.BaseStyle == "apple" && legacy.Light["Accent"][0] == "#285D3D",
             "Legacy custom theme bases must migrate while retaining imported colors.");
-        Require(parsed.Name == "Import smoke" && parsed.Light["Accent"][0] == "#285D3D" && parsed.Radii["Button"] == 4, "Theme parse lost fields.");
+        Require(parsed.Name == "Import smoke" && parsed.Light["Accent"][0] == "#285D3D"
+            && parsed.Radii["Button"] == 4 && parsed.Radii["Card"] == 9, "Theme parse lost fields.");
         var gtk = CustomAppearance.ParseTheme(Encoding.UTF8.GetBytes(ValidTheme
             .Replace("\"baseStyle\":\"apple\"", "\"baseStyle\":\"ubuntu-yaru\"")
             .Replace("\"Icon\":\"#285D3D\"", "\"GtkButton\":[\"#FFFFFF\",\"#EEEEEE\"]")));
@@ -92,6 +94,7 @@ internal static class CustomAppearanceSmoke
             vm.ImportAppearance(iconSource, true);
             await Task.Delay(100);
             Require(CustomAppearance.IconCount == 1, "Partial icon pack did not import.");
+            Require(vm.CustomAppearanceStatus.EndsWith($"1/{ThemedIcon.GlyphNames.Count()}", StringComparison.Ordinal), "Custom icon status did not use the supported glyph count.");
             var visibleIcons = window.GetVisualDescendants().OfType<ThemedIcon>().Where(icon => icon.IsEffectivelyVisible).ToArray();
             Require(visibleIcons.Any(icon => icon.Glyph == "save" && icon.HasCustomIcon), "Visible save icon did not refresh after import.");
             Require(visibleIcons.Where(icon => icon.Glyph != "save").All(icon => !icon.HasCustomIcon), "Missing icons did not retain built-in artwork.");
@@ -163,12 +166,28 @@ internal static class CustomAppearanceSmoke
             {
                 File.WriteAllText(themeSource, ValidTheme.Replace("\"baseStyle\":\"apple\"", $"\"baseStyle\":\"{basis}\""));
                 vm.ImportAppearance(themeSource, false);
-                await Task.Delay(70);
-                var importButton = window.FindControl<Button>("ImportThemeButton")!;
-                Require(importButton.CornerRadius.TopLeft == 4, $"Custom button radius was ignored by {basis}.");
+                foreach (var mode in new[] { 0, 1 })
+                {
+                    vm.ThemeModeIndex = mode;
+                    vm.SelectPage(WorkspacePage.Settings);
+                    await Task.Delay(70);
+                    var importButton = window.FindControl<Button>("ImportThemeButton")!;
+                    Require(importButton.CornerRadius == new CornerRadius(4), $"Custom button radius was ignored by {basis}.");
+                    var cards = window.GetVisualDescendants().OfType<Border>()
+                        .Where(border => border.Classes.Contains("card") && border.IsEffectivelyVisible).ToArray();
+                    Require(cards.Length > 0, $"No visible settings card was available to verify custom radii for {basis}.");
+                    foreach (var card in cards)
+                        Require(card.CornerRadius == new CornerRadius(9),
+                            $"Custom Card radius was ignored by {basis} in mode {mode}: {card.Name}, actual {card.CornerRadius}.");
+                    vm.SelectPage(WorkspacePage.ModelParts);
+                    await Task.Delay(70);
+                    VerifyCustomButtonRadii(window, basis);
+                }
+                vm.SelectPage(WorkspacePage.Settings);
+                await Task.Delay(40);
             }
             vm.ResetCustomAppearance(false);
-            Console.WriteLine("Custom appearance smoke passed: parser rejection, actual picker, light/dark, partial icons, immediate refresh, rejected-import rollback, copied-source reload, built-in switching and restore buttons.");
+            Console.WriteLine("Custom appearance smoke passed: parser rejection, actual picker, light/dark, partial icons, immediate refresh, rejected-import rollback, copied-source reload, custom control radii, built-in switching and restore buttons.");
         }
         finally
         {
@@ -181,6 +200,23 @@ internal static class CustomAppearanceSmoke
     }
 
     private static Color Accent() => ((SolidColorBrush)Application.Current!.Resources["AlchemyAccentBrush"]!).Color;
+
+    private static void VerifyCustomButtonRadii(MainWindow window, string basis)
+    {
+        var buttons = window.GetVisualDescendants().OfType<Button>().Where(button => button.IsEffectivelyVisible).ToArray();
+        foreach (var category in new[] { "activity", "icon", "toolbar", "panel-command" })
+        {
+            var matching = buttons.Where(button => button.Classes.Contains(category)).ToArray();
+            Require(matching.Length > 0, $"No visible {category} control was available to verify custom radii for {basis}.");
+            foreach (var button in matching)
+            {
+                Require(button.CornerRadius == new CornerRadius(4), $"Custom Button radius was ignored by {basis} on {category}: {button.Name} [{string.Join(',', button.Classes)}], actual {button.CornerRadius}, token {Application.Current!.Resources["AppearanceButtonRadius"]}, priority {button.GetDiagnostic(Button.CornerRadiusProperty).Priority}.");
+                var presenter = button.GetVisualDescendants().OfType<global::Avalonia.Controls.Presenters.ContentPresenter>().First();
+                Require(presenter.CornerRadius == new CornerRadius(4), $"Custom Button radius did not reach the {basis} {category} presenter.");
+            }
+        }
+    }
+
     internal static async Task RunSamplesAsync(MainWindow window, MainWindowViewModel vm, string outputDirectory)
     {
         Directory.CreateDirectory(outputDirectory);

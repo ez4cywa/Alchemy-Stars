@@ -79,7 +79,7 @@ internal static class AppearanceTheme
         {
             ClassicAppleAppearance.Remove(app);
             WindowsXpAppearance.Remove(app);
-            ModernDesktopAppearance.Apply(app, dark, desktopIcons: false);
+            ModernDesktopAppearance.Apply(app, dark, desktopIcons: true);
             if (currentStyle == "custom") CustomAppearance.Apply(app, dark);
             return;
         }

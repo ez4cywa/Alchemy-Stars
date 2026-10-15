@@ -1,5 +1,16 @@
 # Third-party notices
 
+## Linear design reference
+
+The design reference under `design-system/references/awesome-design-md` is from
+[VoltAgent/awesome-design-md](https://github.com/VoltAgent/awesome-design-md), pinned
+at `3b605329240ce735b510037cca322f1831fdd7f8`, under the MIT License (copyright
+2026 VoltAgent). The original license is retained in that directory and in the
+release's `Licenses/awesome-design-md-LICENSE.txt`. Alchemy Stars adapts the
+document's visual principles to its own desktop workbench. It does not bundle
+Linear's proprietary fonts, website assets, or application code, and is not
+affiliated with Linear.
+
 ## ModelMergerGUI core
 
 The CAST codec, merge, ammunition filling and preview analysis core under

@@ -1,6 +1,14 @@
 <Styles xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
   <!-- Only visual tokens vary: hit targets, padding and panel sizes remain stable. -->
-  <Style Selector="Button, Button.panel-command, Button.activity.selected, ToggleButton.preview-command, TextBox, ComboBox">
+  <Style Selector="Button, TextBox, ComboBox">
+    <Setter Property="CornerRadius" Value="{DynamicResource AppearanceButtonRadius}" />
+  </Style>
+  <!-- Keep conditional selectors separate from bare Button: an unconditional
+       OR match has Style priority and loses to the existing class triggers. -->
+  <Style Selector="Button.activity, Button.icon, Button.toolbar, Button.panel-command, Button.activity.selected, ToggleButton.preview-command">
+    <Setter Property="CornerRadius" Value="{DynamicResource AppearanceButtonRadius}" />
+  </Style>
+  <Style Selector="Button.activity /template/ ContentPresenter, Button.activity.selected /template/ ContentPresenter, Button.icon /template/ ContentPresenter, Button.toolbar /template/ ContentPresenter, Button.panel-command /template/ ContentPresenter">
     <Setter Property="CornerRadius" Value="{DynamicResource AppearanceButtonRadius}" />
   </Style>
   <Style Selector="Button.primary, Button.secondary">

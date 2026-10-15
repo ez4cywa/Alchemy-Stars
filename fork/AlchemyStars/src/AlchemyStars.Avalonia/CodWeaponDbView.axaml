@@ -71,17 +71,24 @@
     <!-- Weapon details and blueprints. -->
     <Border Classes="workspace-panel" Grid.Column="2">
       <Grid RowDefinitions="44,*">
-        <Border Classes="dock-header"><Grid ColumnDefinitions="*,Auto">
-          <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-            <local:ThemedIcon Classes="product-icon" Glyph="output-naming" IsHitTestVisible="False" />
-            <TextBlock Text="{Binding Text.CodDbTitle}" Classes="dock-title" />
-          </StackPanel>
-          <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
-            <Button x:Name="CodUpdateHeaderButton" Classes="secondary" Click="UpdateHeaderClick"
-                Content="{Binding Text.CodDbUpdateSection}" ToolTip.Tip="{Binding Text.CodDbUpdateHelp}"
-                IsEnabled="{Binding CodCanUpdateDatabase}" AutomationProperties.Name="{Binding Text.CodDbUpdateSection}" />
-            <Button x:Name="CodCopyCodenameButton" Click="CopyCodenameClick" IsEnabled="{Binding CodHasSelection}"
-                Content="{Binding Text.CodDbCopyCodename}" AutomationProperties.Name="{Binding Text.CodDbCopyCodename}" />
+        <Border Classes="dock-header" BorderThickness="0"><Grid x:Name="CodDetailsHeaderGrid" ColumnDefinitions="*,8,Auto">
+          <Border Grid.ColumnSpan="3" Height="1" VerticalAlignment="Bottom" Background="{DynamicResource AlchemyBorderBrush}" IsHitTestVisible="False" />
+          <Grid x:Name="CodDetailsHeading" ColumnDefinitions="20,8,*" VerticalAlignment="Center">
+            <local:ThemedIcon Classes="product-icon" Glyph="output-naming" IsHitTestVisible="False" Width="20" Height="20" />
+            <TextBlock x:Name="CodDetailsTitle" Grid.Column="2" Text="{Binding Text.CodDbTitle}" Classes="dock-title"
+                TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Text.CodDbTitle}" />
+          </Grid>
+          <StackPanel x:Name="CodDetailsHeaderCommands" Grid.Column="2" Orientation="Horizontal">
+            <Button x:Name="CodUpdateHeaderButton" Classes="panel-command" Width="44" Height="44" Click="UpdateHeaderClick"
+                ToolTip.Tip="{Binding Text.CodDbUpdateHelp}" IsEnabled="{Binding CodCanUpdateDatabase}"
+                AutomationProperties.Name="{Binding Text.CodDbUpdateSection}">
+              <local:AppIcon Kind="restore-layout" />
+            </Button>
+            <Button x:Name="CodCopyCodenameButton" Classes="panel-command" Width="44" Height="44" Click="CopyCodenameClick"
+                IsEnabled="{Binding CodHasSelection}" ToolTip.Tip="{Binding Text.CodDbCopyCodename}"
+                AutomationProperties.Name="{Binding Text.CodDbCopyCodename}">
+              <local:AppIcon Kind="copy" />
+            </Button>
           </StackPanel>
         </Grid></Border>
 

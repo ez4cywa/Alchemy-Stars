@@ -91,8 +91,8 @@ public sealed partial class MainWindowViewModel
     public string CustomAppearanceStatus => CustomAppearance.LoadError is { } error
         ? (IsChinese ? "自定义外观加载失败，已回退：" : "Custom appearance could not load; using defaults: ") + error
         : IsChinese
-            ? $"自定义主题：{CustomAppearance.CurrentTheme?.Name ?? "未导入"} · 自定义图标：{CustomAppearance.IconCount}/34"
-            : $"Custom theme: {CustomAppearance.CurrentTheme?.Name ?? "not imported"} · Custom icons: {CustomAppearance.IconCount}/34";
+            ? $"自定义主题：{CustomAppearance.CurrentTheme?.Name ?? "未导入"} · 自定义图标：{CustomAppearance.IconCount}/{ThemedIcon.GlyphNames.Count()}"
+            : $"Custom theme: {CustomAppearance.CurrentTheme?.Name ?? "not imported"} · Custom icons: {CustomAppearance.IconCount}/{ThemedIcon.GlyphNames.Count()}";
 
     internal void ImportAppearance(string path, bool icons)
     {
@@ -159,7 +159,7 @@ public sealed partial class UiText
     public string ThemeMode => L("明暗模式", "Color mode");
     public string[] ThemeStyles =>
     [
-        L("原版 · 简洁", "Original · Minimal"),
+        L("Linear · 工作台", "Linear · Workbench"),
         L("经典 Apple", "Classic Apple"),
         L("Windows XP · 经典蓝", "Windows XP · Luna"),
         L("Windows 2000 · 经典桌面", "Windows 2000 · Classic desktop"),

@@ -2,9 +2,9 @@
 
 # Alchemy Stars Avalonia preview quick guide
 
-This guide applies to `1.3.0-preview.30`. WPF v1.1.9 remains the supported release until .NET 11 GA.
+This guide applies to preview version `1.3.0-preview.36`. WPF v1.1.9 remains the supported release until .NET 11 GA.
 
-The sidebar switches between Animation blend, Model parts, Dual merge, COD weapon DB, Settings and About. It shows icons and labels at normal widths and collapses to icons in narrow windows. The base-animation library sits on the left, a real CAST preview in the center, composition layers across the bottom, and collapsible properties on the right. Drag the dividers or focus them and use arrow keys to resize panels. Icon commands have localized tooltips and UI Automation names; the titlebar displays the current page, with window controls at the upper right.
+The sidebar groups Animation blend, Model parts and Model merger under Common, with Dual merge and COD weapon DB under Other. Settings and About are in the app menu beside the upper-right window controls. The sidebar shows icons and labels at normal widths and collapses to icons in narrow windows. The base-animation library sits on the left, a real CAST preview in the center, composition layers across the bottom, and collapsible properties on the right. Drag the dividers or focus them and use arrow keys to resize panels. Icon commands have localized tooltips and UI Automation names.
 
 COD weapon DB (Ctrl+6) looks weapon names and console codenames up offline and fetches reference icons from the Call of Duty Wiki for comparison. Its Database update card (also reachable from the panel header) re-reads the commit-pinned upstream weapon tables online; blueprints are carried over. See the [COD weapon database guide (Chinese)](cod-weapon-db.zh-CN.md).
 
@@ -68,7 +68,9 @@ Installation requires saving the current project and confirming restart after th
 
 Appearance settings are below Utilities in Settings.
 
-Settings provides the Original, Classic Apple and Windows XP styles. Original uses the modern desktop controls with its original icons. The standalone Modern desktop style has been removed; its saved preference migrates to Original. Choose light, dark or system appearance, or use the one-click light/dark switch. Appearance preferences are saved separately from animation projects.
+Settings provides **Linear · Workbench**, Classic Apple, Windows XP and Windows 2000 styles. Linear updates the original appearance with neutral surfaces, compact controls and tintable line icons. Choose light, dark or system appearance, or use the one-click light/dark switch. Appearance preferences are saved separately from animation projects.
+
+Existing Original preferences continue to select Linear: the stored key remains `apple`, and older `modern-desktop` and `neumorphic` values still map to it. Imported version-1 themes keep their colors, radii and independent icons; `baseStyle: "apple"` now inherits the Linear controls. No JSON migration is required. Custom `radii.Button` also applies to navigation, icon, toolbar and panel-command buttons.
 
 Preview.15 completely redraws Classic Apple controls and all 35 functional icons in an independent platinum-light/graphite-dark skin. Windows XP also has its own controls and 35 matching icons.
 

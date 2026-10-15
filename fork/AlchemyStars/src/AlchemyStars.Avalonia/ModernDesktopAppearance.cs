@@ -23,67 +23,70 @@ internal static class ModernDesktopAppearance
             r["Alchemy" + name + "Brush"] = new SolidColorBrush(value);
         }
 
-        var background = dark ? "#202022" : "#f2f2f4";
-        var surface = dark ? "#272729" : "#ffffff";
-        var raised = dark ? "#2a2a2c" : "#fafafc";
-        var ink = dark ? "#f5f5f7" : "#1d1d1f";
-        var muted = dark ? "#b8bbc2" : "#6e6e73";
-        var accent = dark ? "#2997ff" : "#0066cc";
+        // Linear-inspired desktop tokens. Keep the legacy "apple" preference key
+        // in AppearanceTheme so existing settings and custom themes remain valid.
+        var background = dark ? "#010102" : "#f6f7f8";
+        var surface = dark ? "#0f1011" : "#ffffff";
+        var raised = dark ? "#18191a" : "#f4f5f6";
+        var ink = dark ? "#f7f8f8" : "#202125";
+        var muted = dark ? "#a0a4ad" : "#646970";
+        const string action = "#5e6ad2";
+        var accent = dark ? "#9da7ff" : "#535fbc";
         Brush("Background", background);
-        Brush("Sidebar", dark ? "#29292c" : "#e9e9ed");
-        Brush("Header", dark ? "#2d2d30" : "#f4f4f6");
+        Brush("Sidebar", dark ? "#101112" : "#f6f7f8");
+        Brush("Header", surface);
         Brush("Surface", surface);
         Brush("SubtleSurface", raised);
         Brush("SurfaceRaised", raised);
-        Brush("Canvas", dark ? "#252527" : "#f5f5f7");
-        Brush("CommandBar", dark ? "#303033" : "#eeeef1");
+        Brush("Canvas", background);
+        Brush("CommandBar", surface);
         Brush("CommandText", ink);
         Brush("OnDarkMuted", muted);
-        Brush("DarkTile", dark ? "#353840" : "#272729");
+        Brush("DarkTile", raised);
         Brush("Text", ink);
         Brush("MutedText", muted);
-        Brush("Border", dark ? "#414145" : "#dedee3");
-        Brush("BorderStrong", dark ? "#626267" : "#c8c8cf");
+        Brush("Border", dark ? "#23252a" : "#e3e5e8");
+        Brush("BorderStrong", dark ? "#686c74" : "#878b95");
         Brush("Accent", accent);
-        Brush("Action", "#0066cc"); // White primary labels retain contrast in both modes.
-        Brush("Focus", dark ? "#64b3ff" : "#0071e3");
-        Brush("AccentHover", "#0071e3");
+        Brush("Action", action); // White labels meet 4.5:1 in both modes.
+        Brush("Focus", dark ? "#9da7ff" : accent);
+        Brush("AccentHover", "#535fbc");
         Brush("AccentBorder", accent);
-        Brush("Hover", dark ? "#353d49" : "#e9edf3");
-        Brush("Pressed", dark ? "#1b2028" : "#d3dde9");
-        Brush("Selected", dark ? "#253e59" : "#e4effb");
-        Brush("NavigationSelected", dark ? "#075ec1" : "#0869da");
-        Brush("NavigationSelectedText", "#ffffff");
-        Brush("Control", dark ? "#39393d" : "#ffffff");
+        Brush("Hover", dark ? "#202125" : "#eceef0");
+        Brush("Pressed", dark ? "#2b2d33" : "#e0e2e6");
+        Brush("Selected", dark ? "#24262b" : "#e9eaed");
+        Brush("NavigationSelected", dark ? "#24262b" : "#e9eaed");
+        Brush("NavigationSelectedText", ink);
+        Brush("Control", dark ? "#141516" : "#ffffff");
         Brush("Hero", raised);
-        Brush("Success", muted);
-        Brush("Error", dark ? "#ff8896" : "#b83d50");
-        Brush("Chip", dark ? "#414853" : "#d2d2d7");
-        Brush("BaseClip", dark ? "#253e59" : "#e4effb");
+        Brush("Success", dark ? "#67ce8d" : "#237542");
+        Brush("Error", dark ? "#ff8d9b" : "#b3263b");
+        Brush("Chip", dark ? "#24262b" : "#e9eaed");
+        Brush("BaseClip", dark ? "#24262b" : "#e9eaed");
         Brush("BaseEdge", accent);
         Brush("LayerClip", raised);
         Brush("LayerEdge", muted);
-        r["SystemAccentColor"] = Color.Parse("#0066cc");
-        r["SystemAccentColorDark1"] = Color.Parse("#0066cc");
-        r["SystemAccentColorLight1"] = Color.Parse("#0071e3");
+        r["SystemAccentColor"] = Color.Parse(action);
+        r["SystemAccentColorDark1"] = Color.Parse("#535fbc");
+        r["SystemAccentColorLight1"] = Color.Parse("#9da7ff");
 
         r["AppearanceRaisedShadow"] = BoxShadows.Parse("none");
         r["AppearanceInsetShadow"] = BoxShadows.Parse("none");
         r["AppearancePanelShadow"] = BoxShadows.Parse("none");
-        r["AppearancePanelRadius"] = new CornerRadius(8);
-        r["AppearanceHeaderRadius"] = new CornerRadius(8, 8, 0, 0);
-        r["AppearanceButtonRadius"] = new CornerRadius(7);
-        r["AppearanceActionRadius"] = new CornerRadius(7);
-        r["AppearanceCardRadius"] = new CornerRadius(10);
+        r["AppearancePanelRadius"] = new CornerRadius(0);
+        r["AppearanceHeaderRadius"] = new CornerRadius(0);
+        r["AppearanceButtonRadius"] = new CornerRadius(6);
+        r["AppearanceActionRadius"] = new CornerRadius(6);
+        r["AppearanceCardRadius"] = new CornerRadius(8);
         r["AppearanceCardBorder"] = new Thickness(1);
-        Brush("Icon", accent);
+        Brush("Icon", muted);
         r["AppearanceUseClassicIcons"] = false;
         r["AppearanceUseWindowsXpIcons"] = false;
         r["AppearanceUseDesktopIcons"] = desktopIcons;
         r["AppearanceControlFontSize"] = 13d;
         r["AppearanceActionFontSize"] = 13d;
         r["AppearanceActionFontWeight"] = FontWeight.SemiBold;
-        r["AppearanceCardPadding"] = new Thickness(20);
+        r["AppearanceCardPadding"] = new Thickness(16);
         if (!app.Styles.Contains(Controls)) app.Styles.Add(Controls);
     }
 }

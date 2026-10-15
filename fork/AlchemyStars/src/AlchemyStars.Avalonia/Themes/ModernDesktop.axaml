@@ -1,12 +1,17 @@
 <Styles x:Class="AlchemyStars.Avalonia.ModernDesktopStyles" xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="using:AlchemyStars.Avalonia">
   <Style Selector="Window">
-    <Setter Property="FontFamily" Value="Segoe UI, Microsoft YaHei UI, sans-serif" />
+    <Setter Property="FontFamily" Value="Inter, Segoe UI, Microsoft YaHei UI, sans-serif" />
     <Setter Property="FontSize" Value="13" />
   </Style>
   <Style Selector="MenuItem, ToolTip">
-    <Setter Property="FontFamily" Value="Segoe UI, Microsoft YaHei UI, sans-serif" />
+    <Setter Property="FontFamily" Value="Inter, Segoe UI, Microsoft YaHei UI, sans-serif" />
   </Style>
-  <Style Selector="Button.activity"><Setter Property="CornerRadius" Value="7" /></Style>
+  <Style Selector="Button.activity, Button.icon, Button.toolbar, Button.panel-command, Button.section-toggle">
+    <Setter Property="CornerRadius" Value="{DynamicResource AppearanceButtonRadius}" />
+  </Style>
+  <Style Selector="Button.activity /template/ ContentPresenter, Button.icon /template/ ContentPresenter, Button.toolbar /template/ ContentPresenter, Button.panel-command /template/ ContentPresenter">
+    <Setter Property="CornerRadius" Value="{DynamicResource AppearanceButtonRadius}" />
+  </Style>
   <Style Selector="Button.activity.selected /template/ ContentPresenter">
     <Setter Property="Background" Value="{DynamicResource AlchemyNavigationSelectedBrush}" />
     <Setter Property="Foreground" Value="{DynamicResource AlchemyNavigationSelectedTextBrush}" />
@@ -37,10 +42,8 @@
     <Setter Property="Foreground" Value="{DynamicResource AlchemyTextBrush}" />
     <Setter Property="BorderThickness" Value="1" />
   </Style>
-  <Style Selector="Button.icon"><Setter Property="CornerRadius" Value="7" /></Style>
   <Style Selector="Button.toolbar, Button.panel-command">
     <Setter Property="Background" Value="Transparent" />
-    <Setter Property="CornerRadius" Value="6" />
   </Style>
   <Style Selector="Border.command-bar Button.toolbar:pointerover /template/ ContentPresenter">
     <Setter Property="Background" Value="{DynamicResource AlchemyHoverBrush}" />
@@ -70,14 +73,42 @@
     <Setter Property="LetterSpacing" Value="0" />
   </Style>
   <Style Selector="Border.card, Border.subcard">
-    <Setter Property="Padding" Value="20" />
+    <Setter Property="Padding" Value="{DynamicResource AppearanceCardPadding}" />
+    <Setter Property="Background" Value="{DynamicResource AlchemySurfaceBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AlchemyBorderBrush}" />
+    <Setter Property="CornerRadius" Value="{DynamicResource AppearanceCardRadius}" />
+    <Setter Property="BoxShadow" Value="none" />
+  </Style>
+  <Style Selector="Border.card Border.subcard">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0,1,0,0" />
+    <Setter Property="Padding" Value="0,12,0,0" />
+  </Style>
+  <Style Selector="Border.dialog-card">
+    <Setter Property="CornerRadius" Value="{DynamicResource AppearanceCardRadius}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AlchemyBorderBrush}" />
+    <Setter Property="Padding" Value="24" />
+  </Style>
+  <Style Selector="TextBlock.display-title">
+    <Setter Property="FontFamily" Value="Inter, Segoe UI, Microsoft YaHei UI, sans-serif" />
+    <Setter Property="FontSize" Value="18" />
+    <Setter Property="LetterSpacing" Value="0" />
+  </Style>
+  <Style Selector="TextBlock.command-text">
+    <Setter Property="Foreground" Value="{DynamicResource AlchemyCommandTextBrush}" />
   </Style>
   <Style Selector="Border.feature-icon">
-    <Setter Property="CornerRadius" Value="9" />
-    <Setter Property="Background" Value="{DynamicResource AlchemySelectedBrush}" />
+    <Setter Property="CornerRadius" Value="0" />
+    <Setter Property="Background" Value="Transparent" />
+  </Style>
+  <Style Selector="Border.feature-icon local|ThemedIcon.product-icon">
+    <Setter Property="Width" Value="24" /><Setter Property="Height" Value="24" />
+    <Setter Property="IconBrush" Value="{DynamicResource AlchemyMutedTextBrush}" />
   </Style>
   <Style Selector="Border.hero-card">
     <Setter Property="BorderBrush" Value="{DynamicResource AlchemyBorderBrush}" />
+    <Setter Property="Background" Value="{DynamicResource AlchemySurfaceBrush}" />
+    <Setter Property="Padding" Value="16" />
   </Style>
   <Style Selector="CheckBox">
     <Setter Property="FontSize" Value="13" />
@@ -101,12 +132,34 @@
   <Style Selector="CheckBox:checked /template/ Border#CheckIndicator, CheckBox:indeterminate /template/ Border#CheckIndicator">
     <Setter Property="Background" Value="{DynamicResource AlchemyActionBrush}" /><Setter Property="BorderBrush" Value="{DynamicResource AlchemyActionBrush}" />
   </Style>
+  <Style Selector="ToggleButton.dual-export-switch:checked /template/ Border#SwitchTrack">
+    <Setter Property="Background" Value="{DynamicResource AlchemyActionBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AlchemyActionBrush}" />
+  </Style>
   <Style Selector="CheckBox:checked /template/ Path#CheckMark"><Setter Property="Opacity" Value="1" /></Style>
   <Style Selector="CheckBox:indeterminate /template/ Border#MixedMark"><Setter Property="Opacity" Value="1" /></Style>
   <Style Selector="CheckBox:pointerover /template/ Border#CheckIndicator"><Setter Property="BorderBrush" Value="{DynamicResource AlchemyFocusBrush}" /></Style>
   <Style Selector="CheckBox:pressed /template/ Border#CheckIndicator"><Setter Property="Opacity" Value="0.7" /></Style>
   <Style Selector="CheckBox:focus-visible /template/ Border#CheckFocus"><Setter Property="BorderBrush" Value="{DynamicResource AlchemyFocusBrush}" /></Style>
   <Style Selector="CheckBox:disabled"><Setter Property="Opacity" Value="0.55" /></Style>
+  <Style Selector="Expander">
+    <Setter Property="Background" Value="{DynamicResource AlchemySurfaceBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AlchemyBorderBrush}" />
+    <Setter Property="CornerRadius" Value="{DynamicResource AppearancePanelRadius}" />
+    <Setter Property="Foreground" Value="{DynamicResource AlchemyTextBrush}" />
+  </Style>
+  <Style Selector="Expander /template/ ToggleButton#ExpanderHeader">
+    <Setter Property="Background" Value="{DynamicResource AlchemySurfaceBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AlchemyBorderBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource AlchemyTextBrush}" />
+  </Style>
+  <Style Selector="Expander /template/ ToggleButton#ExpanderHeader:pointerover /template/ Border#ToggleButtonBackground">
+    <Setter Property="Background" Value="{DynamicResource AlchemyHoverBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AlchemyBorderBrush}" />
+  </Style>
+  <Style Selector="Expander /template/ ToggleButton#ExpanderHeader:pressed /template/ Border#ToggleButtonBackground">
+    <Setter Property="Background" Value="{DynamicResource AlchemyPressedBrush}" />
+  </Style>
   <Style Selector="Expander.property-group /template/ ToggleButton">
     <Setter Property="FontSize" Value="12" /><Setter Property="Foreground" Value="{DynamicResource AlchemyTextBrush}" />
   </Style>

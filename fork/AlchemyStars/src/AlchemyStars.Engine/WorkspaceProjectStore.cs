@@ -86,9 +86,15 @@ public sealed class WorkspaceProjectStore
         document.OutputFormat = OutputFormats.Normalize(document.OutputFormat);
         document.Parts ??= [];
         document.Animations ??= [];
+        if (document.Parts.Any(part => part is null) || document.Animations.Any(animation => animation is null)
+            || document.DualAnimations.Any(animation => animation is null))
+            throw new InvalidDataException("Project collections cannot contain null entries.");
         var ids = new HashSet<string>(StringComparer.Ordinal);
         foreach (var animation in document.Animations)
         {
+            animation.Layers ??= [];
+            if (animation.Layers.Any(layer => layer is null))
+                throw new InvalidDataException("Animation layers cannot contain null entries.");
             if (string.IsNullOrWhiteSpace(animation.Id)) animation.Id = Guid.NewGuid().ToString("N");
             if (!ids.Add(animation.Id)) throw new InvalidDataException("Duplicate animation task identifiers.");
         }
@@ -108,7 +114,6 @@ public sealed class WorkspaceProjectStore
             animation.RightHandPoseFile = animation.RightHandPoseFile;
             animation.LeftIKTargetBoneName ??= string.Empty;
             animation.RightIKTargetBoneName ??= string.Empty;
-            animation.Layers ??= [];
             foreach (var layer in animation.Layers)
                 layer.Name = layer.Name;
         }

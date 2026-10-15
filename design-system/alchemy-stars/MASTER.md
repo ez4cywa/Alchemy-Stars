@@ -1,227 +1,71 @@
-# Design System Master File
+# Alchemy Stars design contract
 
-> **LOGIC:** When building a specific page, first check `design-system/pages/[page-name].md`.
-> If that file exists, its rules **override** this Master file.
-> If not, strictly follow the rules below.
+Updated 2026-10-15. See [source and provenance](../../DESIGN.md). This contract adapts the pinned Linear reference to an Avalonia desktop editor; it is not a landing-page template.
 
----
+## Product and layout
 
-**Project:** Alchemy Stars
-**Generated:** 2026-09-04 11:46:12
-**Category:** Analytics Dashboard
-**Design Dials:** Variance 4/10 (Balanced / Modern) | Motion 2/10 (Subtle) | Density 8/10 (Dense / Dashboard)
+Alchemy Stars is a CAST animation and model workbench. Keep the asset library, central viewport, layer timeline, inspector, Model merger, dual-wield workspace and COD database. Favor flat adjoining panels with hairline dividers over floating or nested cards.
 
----
+- Normal window: 1460 × 900 DIP. Supported minimum: 900 × 600 DIP.
+- Sidebar: 172 DIP, compact mode: 56 DIP. Preserve collapsible groups and remembered state.
+- Keep primary controls at least 44 DIP high. Density comes from hierarchy and spacing, not smaller hit targets.
+- One primary export action, quieter supporting commands, visible selection and keyboard focus.
+- Do not copy marketing heroes, pricing cards, promotional copy or website motion into this application.
 
-## Global Rules
+## Semantic color tokens
 
-### Color Palette
+Use the existing `Alchemy…Brush` resources, owned by `ModernDesktopAppearance`, rather than page-specific literals.
 
-| Role | Hex | CSS Variable |
-|------|-----|--------------|
-| Primary | `#1E1B4B` | `--color-primary` |
-| On Primary | `#FFFFFF` | `--color-on-primary` |
-| Secondary | `#312E81` | `--color-secondary` |
-| Accent/CTA | `#F97316` | `--color-accent` |
-| Background | `#0F0F23` | `--color-background` |
-| Foreground | `#F8FAFC` | `--color-foreground` |
-| Muted | `#27273B` | `--color-muted` |
-| Border | `#4338CA` | `--color-border` |
-| Destructive | `#EF4444` | `--color-destructive` |
-| Ring | `#1E1B4B` | `--color-ring` |
+| Role | Light | Dark |
+| --- | --- | --- |
+| Canvas | #f6f7f8 | #010102 |
+| Sidebar | #f6f7f8 | #101112 |
+| Surface | #ffffff | #0f1011 |
+| Raised surface | #f4f5f6 | #18191a |
+| Primary text | #202125 | #f7f8f8 |
+| Secondary text | #646970 | #a0a4ad |
+| Decorative divider | #e3e5e8 | #23252a |
+| Interactive boundary | #878b95 | #686c74 |
+| Primary action | #5e6ad2 | #5e6ad2 |
+| Accent text / focus | #535fbc | #9da7ff |
+| Primary hover | #535fbc | #535fbc |
+| Neutral selection | #e9eaed | #24262b |
+| Error | #b3263b | #ff8d9b |
+| Success | #237542 | #67ce8d |
 
-**Color Notes:** Dark audio + warm accent
+Reserve indigo for primary actions, focus and meaningful active controls. Navigation and icons remain neutral. Decorative hairlines do not replace the stronger boundary needed to identify inputs. Aim for at least 4.5:1 normal-text contrast and 3:1 meaningful non-text contrast. Disabled controls are exempt but still identifiable.
 
-### Typography
+## Typography, spacing and shape
 
-- **Heading Font:** Inter
-- **Body Font:** Inter
-- **Mood:** dark, cinematic, technical, precision, clean, premium, developer, professional, high-end utility
-- **Google Fonts:** [Inter + Inter](https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap)
+- Font stack: Inter, Segoe UI, Microsoft YaHei UI, sans-serif. Do not bundle Linear's proprietary fonts.
+- Body and controls: 13 DIP; secondary labels: 12; section titles: 15; page titles: 18.
+- Normal letter spacing, including headings. Keep technical identifiers readable and selectable where appropriate.
+- Spacing scale: 4, 8, 12, 16, 24 DIP.
+- Controls: radius 6; dialogs: radius 8; adjoining panels: radius 0.
+- No decorative shadows, gradients, ambient glows, spring motion or press scaling.
+- Preserve imported theme radius overrides for both controls and their template presenters.
 
-**CSS Import:**
-```css
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-```
+## Components and states
 
-### Spacing Variables
+- Use the existing consistent vector icon family, with user-imported icon packs taking precedence. No emoji substitutions.
+- Navigation: neutral hover and selection, readable label and icon; expose the current page without relying on color alone.
+- Forms: aligned labels, complete text, visible input boundaries, stable 44-DIP controls.
+- Settings: flat sections and dividers; do not nest framed cards just to group related fields.
+- Dialogs: one quiet raised surface; preserve modal focus containment, error/success semantics and return focus.
+- Explicit enabled, disabled, hovered, pressed, selected and keyboard-focus states. Do not animate layout geometry.
+- Keep localized tooltips, automation names and existing shortcuts.
 
-*Density: 8/10 — Dense / Dashboard*
+## Compatibility and ownership
 
-| Token | Value | Usage |
-|-------|-------|-------|
-| `--space-xs` | `2px` / `0.125rem` | Tight gaps |
-| `--space-sm` | `4px` / `0.25rem` | Icon gaps, inline spacing |
-| `--space-md` | `8px` / `0.5rem` | Standard padding |
-| `--space-lg` | `12px` / `0.75rem` | Section padding |
-| `--space-xl` | `16px` / `1rem` | Large gaps |
-| `--space-2xl` | `24px` / `1.5rem` | Section margins |
-| `--space-3xl` | `32px` / `2rem` | Hero padding |
+The default style is displayed as **Linear · Workbench / Linear · 工作台**. Its persistent identifier remains `apple`; `modern-desktop` and `neumorphic` continue to normalize to that key. Do not migrate project files or add an unnecessary theme identifier.
 
-### Shadow Depths
+Classic Apple, Windows XP, Windows 2000 and imported themes remain independent. Apply base tokens first, then custom overrides. Remove the previous control skin before adding the next so style frames cannot leak between themes. Appearance preferences remain separate from animation data.
 
-| Level | Value | Usage |
-|-------|-------|-------|
-| `--shadow-sm` | `0 1px 2px rgba(0,0,0,0.05)` | Subtle lift |
-| `--shadow-md` | `0 4px 6px rgba(0,0,0,0.1)` | Cards, buttons |
-| `--shadow-lg` | `0 10px 15px rgba(0,0,0,0.1)` | Modals, dropdowns |
-| `--shadow-xl` | `0 20px 25px rgba(0,0,0,0.15)` | Hero images, featured cards |
+## Finish gate
 
----
-
-## Component Specs
-
-### Buttons
-
-```css
-/* Primary Button */
-.btn-primary {
-  background: #F97316;
-  color: white;
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-weight: 600;
-  transition: all 200ms ease;
-  cursor: pointer;
-}
-
-.btn-primary:hover {
-  opacity: 0.9;
-  transform: translateY(-1px);
-}
-
-/* Secondary Button */
-.btn-secondary {
-  background: transparent;
-  color: #1E1B4B;
-  border: 2px solid #1E1B4B;
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-weight: 600;
-  transition: all 200ms ease;
-  cursor: pointer;
-}
-```
-
-### Cards
-
-```css
-.card {
-  background: #0F0F23;
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: var(--shadow-md);
-  transition: all 200ms ease;
-  cursor: pointer;
-}
-
-.card:hover {
-  box-shadow: var(--shadow-lg);
-  transform: translateY(-2px);
-}
-```
-
-### Inputs
-
-```css
-.input {
-  padding: 12px 16px;
-  border: 1px solid #E2E8F0;
-  border-radius: 8px;
-  font-size: 16px;
-  transition: border-color 200ms ease;
-}
-
-.input:focus {
-  border-color: #1E1B4B;
-  outline: none;
-  box-shadow: 0 0 0 3px #1E1B4B20;
-}
-```
-
-### Modals
-
-```css
-.modal-overlay {
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-}
-
-.modal {
-  background: white;
-  border-radius: 16px;
-  padding: 32px;
-  box-shadow: var(--shadow-xl);
-  max-width: 500px;
-  width: 90%;
-}
-```
-
----
-
-## Style Guidelines
-
-**Style:** Modern Dark (Cinema Mobile)
-
-**Keywords:** dark mode, cinematic, ambient light, glassmorphism, deep black, indigo, glow, blur, atmospheric, reanimated, haptic, premium, layered, frosted glass, linear gradient
-
-**Best For:** Developer tools, pro productivity apps, fintech/trading dashboards, media/streaming platforms, AI tool interfaces, high-end gaming companion apps
-
-**Key Effects:** Expo.out Bezier(0.16,1,0.3,1) easing; spring modals (damping:20 stiffness:90); haptic-linked press (Impact Light/Medium); animated ambient light blobs (Reanimated translateX/Y slow oscillation); BlurView glassmorphism headers/nav (intensity 20); scale press 0.97 → 1.0; avoid pure #000000 (OLED smear)
-
-### Page Pattern
-
-**Pattern Name:** Funnel (3-Step Conversion)
-
-- **Conversion Strategy:** Progressive disclosure. Show only essential info per step. Use progress indicators. Multiple CTAs.
-- **CTA Placement:** Each step: mini-CTA. Final: main CTA
-- **Section Order:** 1. Hero, 2. Step 1 (problem), 3. Step 2 (solution), 4. Step 3 (action), 5. CTA progression
-
----
-
-## Motion
-
-**Scroll Reveal** (Subtle) — Trigger: scroll (viewport enter) | Duration: 300-400ms | Easing: `power1.out`
-
-```js
-gsap.from(el, { opacity: 0, y: 12, duration: 0.35, ease: 'power1.out', scrollTrigger: { trigger: el, start: 'top 90%', toggleActions: 'play none none reverse' } });
-```
-
-**Framework notes:** Requires the ScrollTrigger plugin registered once via gsap.registerPlugin(ScrollTrigger)
-
-- ✅ Keep the y offset small (8-16px) so it reads as a fade, not a slide
-- ❌ Don't reveal below-the-fold content needed for SEO/crawlers as invisible-by-default without a no-JS fallback
-- ⚡ toggleActions 'play none none reverse' avoids re-triggering on every scroll direction change
-
----
-
-## Anti-Patterns (Do NOT Use)
-
-- ❌ Ornate design
-- ❌ No filtering
-
-### Additional Forbidden Patterns
-
-- ❌ **Emojis as icons** — Use SVG icons (Heroicons, Lucide, Simple Icons)
-- ❌ **Missing cursor:pointer** — All clickable elements must have cursor:pointer
-- ❌ **Layout-shifting hovers** — Avoid scale transforms that shift layout
-- ❌ **Low contrast text** — Maintain 4.5:1 minimum contrast ratio
-- ❌ **Instant state changes** — Always use transitions (150-300ms)
-- ❌ **Invisible focus states** — Focus states must be visible for a11y
-
----
-
-## Pre-Delivery Checklist
-
-Before delivering any UI code, verify:
-
-- [ ] No emojis used as icons (use SVG instead)
-- [ ] All icons from consistent icon set (Heroicons/Lucide)
-- [ ] `cursor-pointer` on all clickable elements
-- [ ] Hover states with smooth transitions (150-300ms)
-- [ ] Light mode: text contrast 4.5:1 minimum
-- [ ] Focus states visible for keyboard navigation
-- [ ] `prefers-reduced-motion` respected
-- [ ] Responsive: 375px, 768px, 1024px, 1440px
-- [ ] No content hidden behind fixed navbars
-- [ ] No horizontal scroll on mobile
+- Render and inspect all seven pages, a real CAST preview and centered dialogs.
+- Verify light, dark and system modes; Chinese and English; 900 × 600 and normal desktop sizes.
+- Switch themes in the running application; confirm the workspace is unchanged and no stale skin remains.
+- Import, reject, reload and reset custom themes/icons; verify custom radii reach real template presenters.
+- Exercise keyboard navigation, modal focus, toolbar clipping and export workflows.
+- Run managed self-tests and the Native AOT verification suite. State skipped asset-dependent checks explicitly.

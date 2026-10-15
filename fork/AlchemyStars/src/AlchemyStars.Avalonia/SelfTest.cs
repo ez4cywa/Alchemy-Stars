@@ -102,6 +102,7 @@ internal static partial class SelfTest
             OutputDirectorySmoke.RunAsync(testDirectory).GetAwaiter().GetResult();
             try
             {
+                ProjectStorageSmoke.Run(testDirectory);
                 CastAxisSmoke.Run(testDirectory);
                 SingleAnimationExportSmoke.RunAsync(testDirectory).GetAwaiter().GetResult();
                 CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo("zh-CN");

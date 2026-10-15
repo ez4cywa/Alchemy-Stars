@@ -7,6 +7,25 @@ public sealed class ApplicationPreferencesStore
     private readonly object sync = new();
     private readonly string settingsPath;
     private AppPreferenceData? data;
+    private bool settingsLoaded;
+    private PreferenceChanges pendingReadChanges;
+
+    [Flags]
+    private enum PreferenceChanges
+    {
+        None = 0,
+        RememberArms = 1,
+        ArmsPath = 2,
+        AutoUpdate = 4,
+        SkippedUpdate = 8,
+        UnifiedOutput = 16,
+        CodDataset = 32,
+        LastDirectories = 64,
+        Defaults = 128,
+        Language = 256,
+        Sidebar = 512,
+        Appearance = 1024,
+    }
 
     public ApplicationPreferencesStore(string? settingsPath = null)
     {
@@ -25,7 +44,7 @@ public sealed class ApplicationPreferencesStore
 
     internal static string NormalizeThemeStyle(string? style) => style switch
     {
-        "neumorphic" or "modern-desktop" => "apple", // Removed styles inherit the current Original theme.
+        "neumorphic" or "modern-desktop" => "apple", // Legacy keys inherit the default Linear workbench.
         "classic-apple" or "windows-xp" or "windows-2000" or "custom" => style,
         _ => "apple",
     };
@@ -37,24 +56,48 @@ public sealed class ApplicationPreferencesStore
     /// <summary>Where an in-app COD weapon database refresh publishes its dataset.</summary>
     public string CodWeaponDbDirectory => Path.Combine(Path.GetDirectoryName(settingsPath)!, "CodWeaponDb");
 
-    public void SaveRememberArms(bool enabled) => Update(p => p.RememberArms = enabled);
-    public void SaveArmsPath(string? path) => Update(p => p.SavedArmsPath = path ?? string.Empty);
+    public void SaveRememberArms(bool enabled) => Update(p =>
+    {
+        p.RememberArms = enabled;
+        return PreferenceChanges.RememberArms;
+    });
+    public void SaveArmsPath(string? path) => Update(p =>
+    {
+        p.SavedArmsPath = path ?? string.Empty;
+        return PreferenceChanges.ArmsPath;
+    });
     public void RememberFirstArms(string path)
     {
         if (!File.Exists(path) || !string.Equals(Path.GetExtension(path), ".cast", StringComparison.OrdinalIgnoreCase)) return;
         Update(p =>
         {
-            if (p.RememberArms && string.IsNullOrWhiteSpace(p.SavedArmsPath)) p.SavedArmsPath = Path.GetFullPath(path);
+            if (!p.RememberArms || !string.IsNullOrWhiteSpace(p.SavedArmsPath)) return PreferenceChanges.None;
+            p.SavedArmsPath = Path.GetFullPath(path);
+            return PreferenceChanges.ArmsPath;
         });
     }
-    public void SaveAutoUpdate(bool enabled) => Update(p => p.AutoUpdateEnabled = enabled);
-    public void SaveSkippedUpdate(string version) => Update(p => p.SkippedUpdateVersion = version);
-    public void SaveUnifiedOutputDirectory(string? path) => Update(p => p.UnifiedOutputDirectory =
-        string.IsNullOrWhiteSpace(path) ? string.Empty : Path.GetFullPath(path));
+    public void SaveAutoUpdate(bool enabled) => Update(p =>
+    {
+        p.AutoUpdateEnabled = enabled;
+        return PreferenceChanges.AutoUpdate;
+    });
+    public void SaveSkippedUpdate(string version) => Update(p =>
+    {
+        p.SkippedUpdateVersion = version;
+        return PreferenceChanges.SkippedUpdate;
+    });
+    public void SaveUnifiedOutputDirectory(string? path) => Update(p =>
+    {
+        p.UnifiedOutputDirectory = string.IsNullOrWhiteSpace(path) ? string.Empty : Path.GetFullPath(path);
+        return PreferenceChanges.UnifiedOutput;
+    });
 
     /// <summary>Remembers an external CODWeaponDB dataset; empty means the bundled snapshot.</summary>
-    public void SaveCodWeaponDatasetDirectory(string? path) => Update(p => p.CodWeaponDatasetDirectory =
-        string.IsNullOrWhiteSpace(path) ? string.Empty : Path.GetFullPath(path));
+    public void SaveCodWeaponDatasetDirectory(string? path) => Update(p =>
+    {
+        p.CodWeaponDatasetDirectory = string.IsNullOrWhiteSpace(path) ? string.Empty : Path.GetFullPath(path);
+        return PreferenceChanges.CodDataset;
+    });
 
     public WorkspaceDocument CreateWorkspace()
     {
@@ -85,7 +128,11 @@ public sealed class ApplicationPreferencesStore
         var directory = Directory.Exists(normalized) ? normalized : Path.GetDirectoryName(normalized);
         if (string.IsNullOrWhiteSpace(directory) || !Directory.Exists(directory))
             return;
-        Update(preferences => preferences.LastDirectories[scope] = Path.GetFullPath(directory));
+        Update(preferences =>
+        {
+            preferences.LastDirectories[scope] = Path.GetFullPath(directory);
+            return PreferenceChanges.LastDirectories;
+        });
     }
 
     public void SaveDefaults(string language, WorkspaceDocument document)
@@ -98,37 +145,53 @@ public sealed class ApplicationPreferencesStore
             preferences.DefaultOutputUpAxis = document.OutputUpAxis;
             preferences.DefaultCastAnimationOnly = document.CastAnimationOnly;
             preferences.DefaultBakeRelevantBonesOnly = document.BakeRelevantBonesOnly;
+            return PreferenceChanges.Defaults | PreferenceChanges.Language;
         });
     }
 
-    public void SaveLanguage(string language) =>
-        Update(preferences => preferences.Language = string.IsNullOrWhiteSpace(language) ? "system" : language);
+    public void SaveLanguage(string language) => Update(preferences =>
+    {
+        preferences.Language = string.IsNullOrWhiteSpace(language) ? "system" : language;
+        return PreferenceChanges.Language;
+    });
 
     public void SaveSidebarSections(bool commonExpanded, bool otherExpanded) => Update(preferences =>
     {
         preferences.SidebarCommonExpanded = commonExpanded;
         preferences.SidebarOtherExpanded = otherExpanded;
+        return PreferenceChanges.Sidebar;
     });
 
     public void SaveAppearance(string style, string mode) => Update(preferences =>
     {
         preferences.ThemeStyle = NormalizeThemeStyle(style);
         preferences.ThemeMode = mode is "dark" or "system" ? mode : "light";
+        return PreferenceChanges.Appearance;
     });
 
     private AppPreferenceData Read()
     {
-        if (data is not null)
-            return data;
+        if (settingsLoaded)
+            return data!;
         try
         {
-            data = File.Exists(settingsPath)
-                ? JsonSerializer.Deserialize(File.ReadAllText(settingsPath), WorkspaceJsonContext.Default.AppPreferenceData)
-                : null;
+            AppPreferenceData loaded;
+            try
+            {
+                loaded = JsonSerializer.Deserialize(File.ReadAllText(settingsPath), WorkspaceJsonContext.Default.AppPreferenceData)
+                    ?? new AppPreferenceData();
+            }
+            catch (FileNotFoundException) { loaded = new AppPreferenceData(); }
+            catch (DirectoryNotFoundException) { loaded = new AppPreferenceData(); }
+            loaded.LastDirectories ??= new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            if (data is not null) MergeReadChanges(loaded, data, pendingReadChanges);
+            data = loaded;
+            settingsLoaded = true;
+            pendingReadChanges = PreferenceChanges.None;
         }
         catch
         {
-            data = null;
+            // Keep this fallback usable in memory, but retry before any future disk write.
         }
         data ??= new AppPreferenceData();
         data.LastDirectories ??= new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -138,12 +201,49 @@ public sealed class ApplicationPreferencesStore
         return data;
     }
 
-    private void Update(Action<AppPreferenceData> update)
+    private static void MergeReadChanges(AppPreferenceData destination, AppPreferenceData source, PreferenceChanges changes)
+    {
+        if (changes.HasFlag(PreferenceChanges.RememberArms)) destination.RememberArms = source.RememberArms;
+        if (changes.HasFlag(PreferenceChanges.ArmsPath)) destination.SavedArmsPath = source.SavedArmsPath;
+        if (changes.HasFlag(PreferenceChanges.AutoUpdate)) destination.AutoUpdateEnabled = source.AutoUpdateEnabled;
+        if (changes.HasFlag(PreferenceChanges.SkippedUpdate)) destination.SkippedUpdateVersion = source.SkippedUpdateVersion;
+        if (changes.HasFlag(PreferenceChanges.UnifiedOutput)) destination.UnifiedOutputDirectory = source.UnifiedOutputDirectory;
+        if (changes.HasFlag(PreferenceChanges.CodDataset)) destination.CodWeaponDatasetDirectory = source.CodWeaponDatasetDirectory;
+        if (changes.HasFlag(PreferenceChanges.Language)) destination.Language = source.Language;
+        if (changes.HasFlag(PreferenceChanges.Defaults))
+        {
+            destination.DefaultOutputFormat = source.DefaultOutputFormat;
+            destination.DefaultOutputUpAxis = source.DefaultOutputUpAxis;
+            destination.DefaultCastAnimationOnly = source.DefaultCastAnimationOnly;
+            destination.DefaultBakeRelevantBonesOnly = source.DefaultBakeRelevantBonesOnly;
+        }
+        if (changes.HasFlag(PreferenceChanges.Sidebar))
+        {
+            destination.SidebarCommonExpanded = source.SidebarCommonExpanded;
+            destination.SidebarOtherExpanded = source.SidebarOtherExpanded;
+        }
+        if (changes.HasFlag(PreferenceChanges.Appearance))
+        {
+            destination.ThemeStyle = source.ThemeStyle;
+            destination.ThemeMode = source.ThemeMode;
+        }
+        if (changes.HasFlag(PreferenceChanges.LastDirectories))
+            foreach (var (scope, directory) in source.LastDirectories)
+                destination.LastDirectories[scope] = directory;
+    }
+
+    private void Update(Func<AppPreferenceData, PreferenceChanges> update)
     {
         lock (sync)
         {
             var preferences = Read();
-            update(preferences);
+            var changes = update(preferences);
+            if (!settingsLoaded)
+            {
+                // A fixed set of field groups keeps repeated edits bounded while the file is unavailable.
+                pendingReadChanges |= changes;
+                return;
+            }
             try
             {
                 var directory = Path.GetDirectoryName(settingsPath)

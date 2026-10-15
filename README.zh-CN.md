@@ -2,12 +2,11 @@
 
 # Alchemy Stars（炼金之星）
 
-> **Avalonia AOT 预览测试分支：** 本测试线使用 .NET 11 Preview 7、Avalonia 12.1.2，开发版本为 `1.3.0-preview.35`，完整桌面工作流已可作为自包含 Native AOT 程序运行。正式版仍是 `main` 上的 v1.1.9；在 .NET 11 GA 前，现有 WPF 程序仍是稳定基线，请勿把本分支构建作为稳定版分发。
+> **Avalonia AOT 预览测试分支：** 本测试线使用 .NET 11 Preview 7、Avalonia 12.1.2，预览版本为 `1.3.0-preview.36`，完整桌面工作流已可作为自包含 Native AOT 程序运行。正式版仍是 `main` 上的 v1.1.9；在 .NET 11 GA 前，现有 WPF 程序仍是稳定基线，请勿把本分支构建作为稳定版分发。
 
-开发改进见 [preview.35](docs/releases/1.3.0-preview.35.zh-CN.md)：构建可复现性与导出文件保护。版本配置和可重跑检查见 [工程工作流](docs/engineering-workflow.zh-CN.md)。
+开发改进见 [preview.36](docs/releases/1.3.0-preview.36.zh-CN.md)：原版外观调整为 Linear 工作台，补齐工程加载与设置恢复的存储保护。选定参考与兼容规则见 [设计约定](DESIGN.md)；版本配置和可重跑检查见 [工程工作流](docs/engineering-workflow.zh-CN.md)。
 
-
-最新预览版：[preview.34 详细更新日志](docs/releases/1.3.0-preview.34.zh-CN.md)：左侧栏重组为可折叠的「常用功能」与「其他功能」分组；设置、关于收进窗口右上角的应用菜单按钮，语言选项移到设置页顶部；修复最小窗口（900×600）下关闭按钮与 COD 武器库栏目的文字裁切。包含 preview.33 的模型合并 2.5.0 引擎升级、手臂武器拼接与冲突区分命名。用法见 [模型合并工作区](docs/model-merger.zh-CN.md)。
+已发布预览版：[preview.36 详细更新日志](docs/releases/1.3.0-preview.36.zh-CN.md)，包含 Linear 工作台、工程与偏好存储保护及界面兼容性验收，并保留可折叠侧栏、集成应用菜单、模型合并 2.5.0 引擎、手臂武器拼接与冲突区分命名。用法见 [模型合并工作区](docs/model-merger.zh-CN.md)。
 使用方法见 [Avalonia 预览版快速指南](docs/avalonia-aot-user-guide.zh-CN.md)；详细结果见 [Avalonia AOT 迁移报告](docs/avalonia-aot-migration.md)与 [.NET 11 Preview 兼容性报告](docs/dotnet11-preview.md)。
 
 本分支新增「双持动画」栏目和 Blender 4.3 FBX 转换，参见 [双持处理指南](docs/dual-wield.zh-CN.md)。可从一份手臂、一份武器模型和左右动画任务生成统一双持场景。
@@ -15,6 +14,12 @@
 Alchemy Stars 是 [Scobalula/Alchemist](https://github.com/Scobalula/Alchemist) 的可用化改进版，面向 Windows、CAST 第一人称武器资产与 Autodesk Maya 2025。稳定版保留原版 Alchemist 的 WPF 界面；本测试分支在不分叉已验证 RedFox 动画管线的前提下，把完整工作流迁移到 Avalonia 与 Native AOT。
 
 主源码位于 `fork/AlchemyStars`，固定使用与原项目同期的 RedFox 提交，避免上游变动破坏构建。先前的独立重写已保存在 Git 分支 `independent-rewrite-v1`，不再是当前实现。
+
+## Linear 工作台预览
+
+下图为加载 Hawk CAST 的原生程序中文深色窗口；另见[英文浅色截图](docs/images/linear-workbench-light.en-US.png)。两者均为软件实际渲染，不是设计示意图。稳定 WPF 版保留原有界面。
+
+![Linear 工作台：资源库、CAST 预览、动画层轨道与属性检查器](docs/images/linear-workbench-dark.zh-CN.png)
 
 ## 相比原版 Alchemist 的改进
 
@@ -55,6 +60,7 @@ Alchemy Stars 保留原版批处理、动画层、IK 与 RedFox 转换管线，�
 - 设置窗口按“输出 / IK 骨骼”重新分区，在最小窗口尺寸下仍可滚动使用；语言与 About 固定在受保护的右侧区域，不再被工具栏遮挡。
 - 使用“炼金术瓶 + 星芒”主题的新应用图标。
 - Avalonia 预览界面把 Beutl 的编辑器层级改造为可实际操作的“资源库 / 合成工作区 / 动画层轨道 / 属性检查器”；表单间距和列表细节参考 AtomBox，但不引入两个项目的 UI 依赖。
+- 开发版提供 **Linear · 工作台**：中性工作面、紧凑控件和可着色线性图标，同时保留经典 Apple、Windows XP、Windows 2000 与已导入的外观包。
 - CAST 预览通过 Avalonia 的 GPU 加速 Skia 自定义绘制实现平滑蒙皮着色，并在原有环绕视角之外提供固定第一人称摄像机：水平 FOV 90°，Maya 变换为 `T(0,0,0)`、`R(90°,0°,-90°)`。仅用于预览的整体取景会保持武器完整显示，不会修改 CAST 数据。
 - 动画层轨道会在后台读取每个 CAST 的真实帧数，并按时长显示不同宽度；正、负帧偏移会改变条状物在共同帧范围内的起点。帧数文字和本地化无障碍名称让用户不必只依赖长度或颜色判断。
 - 合并后的有权重网格会在 CAST 中明确写入双四元数（`quaternion`）蒙皮方法；较旧 CAST 未指定蒙皮方法时，随附的 Maya 导入器也默认使用 DQS。
@@ -62,7 +68,7 @@ Alchemy Stars 保留原版批处理、动画层、IK 与 RedFox 转换管线，�
 
 ## 直接使用
 
-下载并完整解压 [preview.34 ZIP](https://github.com/ez4cywa/Alchemy-Stars/releases/tag/v1.3.0-preview.34)，运行 `AlchemyStars.Avalonia.exe`。请保留原生 DLL 与 `Converters` 目录，无需安装 .NET 或 Rust。
+下载并完整解压 [preview.36 ZIP](https://github.com/ez4cywa/Alchemy-Stars/releases/tag/v1.3.0-preview.36)，运行 `AlchemyStars.Avalonia.exe`。请保留原生 DLL 与 `Converters` 目录，无需安装 .NET 或 Rust。
 
 如需 WPF 稳定版，请下载 [v1.1.9](https://github.com/ez4cywa/Alchemy-Stars/releases/tag/v1.1.9) 并运行 `Alchemy Stars.exe`。稳定包不包含预览版的模型合并、弹匣填弹和 COD 武器库工作区。
 
@@ -124,7 +130,7 @@ Alchemy Stars 保留原版批处理、动画层、IK 与 RedFox 转换管线，�
 
 `run-tests.ps1` 会编译稳定 WPF 基线并执行 Maya 转换回归。`verify-avalonia-aot.ps1` 会发布裁剪后的本机程序，执行 AOT 契约与标准工程导出，启动真实 Win32 窗口，通过 Windows UI Automation 检查控件名称、焦点和操作区，并在 900 × 600 最小尺寸渲染五个页面与居中对话框。
 
-项目约定每次功能性改动都迭代版本；本次测试版本为 `1.3.0-preview.34`，稳定版本仍为 `1.1.9`。
+项目约定每次功能性改动都迭代版本；当前预览版本为 `1.3.0-preview.36`，稳定版本仍为 `1.1.9`。
 
 要检查某组手臂 + 武器同时满足动画混合与挂点双持，直接传入三个真实素材（不会作为测试夹具提交）：
 
